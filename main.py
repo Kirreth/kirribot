@@ -9,7 +9,6 @@ from typing import List
 load_dotenv()
 TOKEN: str | None = os.getenv("TOKEN")
 
-# Discord-Intents und Bot
 intents: discord.Intents = discord.Intents.all()
 bot: commands.Bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -18,7 +17,6 @@ async def on_ready() -> None:
     """Wird aufgerufen, wenn der Bot erfolgreich gestartet ist."""
     print(f"Bot ist online als {bot.user}")
 
-    # Lade alle Cogs
     cogs: List[str] = [
         "cogs.leveling",
         "cogs.info",
@@ -33,7 +31,6 @@ async def on_ready() -> None:
         except Exception as e:
             print(f"❌ Fehler beim Laden von {cog}: {e}")
 
-# Datenbank aufsetzen
 db.setup_database()
 
 if TOKEN:
