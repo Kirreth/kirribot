@@ -4,7 +4,7 @@ from discord import app_commands
 from datetime import datetime
 from utils import database as db
 
-DISBOARD_ID = 302050872383242240  # Disboard Bot ID
+DISBOARD_ID = 302050872383242240
 
 class Bumps(commands.Cog):
     def __init__(self, bot):
@@ -12,16 +12,14 @@ class Bumps(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        # Nur Disboard-Nachrichten abfangen
         if message.author.id != DISBOARD_ID:
             return
 
-        # Prüfen, ob eine Bump-Bestätigung drin ist
         if "Bump done" in message.content or "Bump erfolgreich" in message.content:
             if message.interaction and message.interaction.user:
                 bumper = message.interaction.user
             else:
-                return  # Falls kein User ermittelt werden konnte
+                return  
 
             db.log_bump(bumper.id, datetime.utcnow())
             print(f"✅ Bump von {bumper} gespeichert")

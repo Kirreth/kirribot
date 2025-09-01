@@ -22,7 +22,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"Fehler beim Muten: {e}", ephemeral=True)
 
-    # --- Warn ---
+
     @app_commands.command(name="warn", description="Verwarnt einen Benutzer")
     @app_commands.describe(member="Der Benutzer, der verwarnt werden soll", reason="Grund")
     async def warn(self, interaction: discord.Interaction, member: discord.Member, reason: str):
@@ -35,7 +35,6 @@ class Moderation(commands.Cog):
 
         await interaction.response.send_message(f"{member.mention} wurde verwarnt. Grund: {reason} (Warnungen in 24h: {len(warns)})")
 
-        # Automatischer Timeout nach 2 Warnungen innerhalb von 24 Stunden
         if len(warns) >= 2:
             try:
                 await member.timeout(discord.utils.utcnow() + discord.timedelta(hours=24), reason="Automatischer Timeout nach 2 Warnungen")
@@ -44,7 +43,7 @@ class Moderation(commands.Cog):
             except Exception as e:
                 await interaction.followup.send(f"Fehler beim automatischen Timeout: {e}", ephemeral=True)
 
-    # --- Ban ---
+
     @app_commands.command(name="ban", description="Bannt einen Benutzer")
     @app_commands.describe(member="Der Benutzer, der gebannt werden soll", reason="Grund")
     async def ban(self, interaction: discord.Interaction, member: discord.Member, reason: str):

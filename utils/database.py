@@ -6,14 +6,14 @@ DB_PATH = "users.db"
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # Damit wir mit dict-artigem Zugriff arbeiten können
+    conn.row_factory = sqlite3.Row  
     return conn
 
 def setup_database():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # User-Tabelle (bestehend)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
             name TEXT,
@@ -23,7 +23,7 @@ def setup_database():
         );
     """)
 
-    # Tabelle für Warnungen
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
             user_id TEXT,
@@ -33,7 +33,7 @@ def setup_database():
         );
     """)
 
-    # Tabelle für Timeouts
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
             user_id TEXT,
@@ -44,7 +44,7 @@ def setup_database():
         );
     """)
 
-    # Tabelle für Bans
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
             user_id TEXT,
@@ -54,7 +54,7 @@ def setup_database():
         );
     """)
 
-    # Tabelle für Bumps
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bumps (
             user_id TEXT,
@@ -67,7 +67,7 @@ def setup_database():
     conn.close()
 
 
-# --- Level-Logik ---
+
 def berechne_level(counter):
     return int(math.sqrt(counter))
 
@@ -80,7 +80,6 @@ def berechne_level_und_progress(counter):
     return level, progress
 
 
-# --- Moderation: Warns ---
 def add_warn(user_id, guild_id, reason):
     conn = get_connection()
     cursor = conn.cursor()
@@ -101,7 +100,6 @@ def get_warns(user_id, guild_id, within_hours=None):
     return rows
 
 
-# --- Moderation: Timeouts ---
 def add_timeout(user_id, guild_id, duration_minutes, reason):
     conn = get_connection()
     cursor = conn.cursor()
@@ -118,7 +116,6 @@ def get_timeouts(user_id, guild_id):
     return rows
 
 
-# --- Moderation: Bans ---
 def add_ban(user_id, guild_id, reason):
     conn = get_connection()
     cursor = conn.cursor()
@@ -135,7 +132,6 @@ def get_bans(user_id, guild_id):
     return rows
 
 
-# --- Disboard Bumps ---
 def log_bump(user_id, guild_id, timestamp=None):
     conn = get_connection()
     cursor = conn.cursor()
