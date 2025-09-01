@@ -1,20 +1,32 @@
+import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import os
 from utils import database as db
+from typing import List
 
+# .env laden
 load_dotenv()
-TOKEN = os.getenv("TOKEN")
+TOKEN: str | None = os.getenv("TOKEN")
 
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix="!", intents=intents)
+# Discord-Intents und Bot
+intents: discord.Intents = discord.Intents.all()
+bot: commands.Bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
+    """Wird aufgerufen, wenn der Bot erfolgreich gestartet ist."""
     print(f"Bot ist online als {bot.user}")
-    # Lade Cogs
-    for cog in ["cogs.leveling", "cogs.info", "cogs.moderation", "cogs.quote", "cogs.bumps"]:
+
+    # Lade alle Cogs
+    cogs: List[str] = [
+        "cogs.leveling",
+        "cogs.info",
+        "cogs.moderation",
+        "cogs.quote",
+        "cogs.bumps",
+    ]
+    for cog in cogs:
         try:
             await bot.load_extension(cog)
             print(f"✅ Cog geladen: {cog}")
@@ -24,4 +36,7 @@ async def on_ready():
 # Datenbank aufsetzen
 db.setup_database()
 
-bot.run(TOKEN)
+if TOKEN:
+    bot.run(TOKEN)
+else:
+    raise ValueError("❌ Kein TOKEN in .env gefunden")
