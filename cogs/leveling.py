@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands import Context
+from typing import Union
 from utils import database as db
-from typing import Optional
-
 
 class Leveling(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -18,58 +18,57 @@ class Leveling(commands.Cog):
 
         conn = db.get_connection()
         cursor = conn.cursor()
-
         cursor.execute("SELECT counter FROM user WHERE id = ?", (uid,))
-        result: Optional[tuple[int]] = cursor.fetchone()
+        result = cursor.fetchone()
 
         if result is None:
-            counter: int = 1
-            level: int = db.berechne_level(counter)
+            counter = 1  # Typ nicht erneut deklarieren
+            level = db.berechne_level(counter)
             cursor.execute(
                 "INSERT INTO user (name, id, counter, level) VALUES (?, ?, ?, ?)",
-                (uname, uid, counter, level),
+                (uname, uid, counter, level)
             )
         else:
-            counter: int = result[0] + 1
-            level: int = db.berechne_level(counter)
+            counter = result[0] + 1  # Typ nicht erneut deklarieren
+            level = db.berechne_level(counter)
             cursor.execute(
                 "UPDATE user SET counter = ?, level = ? WHERE id = ?",
-                (counter, level, uid),
+                (counter, level, uid)
             )
 
         conn.commit()
         conn.close()
 
-    @commands.hybrid_command(
-        name="hau",
-        description="Zeigt den Nachrichten-Counter eines Users"
-    )
-    async def hau(self, ctx: commands.Context, user: discord.User) -> None:
+    @commands.hybrid_command(name="hau", description="Zeigt den Nachrichten-Counter eines Users")  # type: ignore[arg-type]
+    async def hau(
+        self,
+        ctx: Context[commands.Bot],
+        user: Union[discord.User, discord.Member]
+    ) -> None:
+        uid: str = str(user.id)
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter FROM user WHERE id = ?", (str(user.id),))
-        result: Optional[tuple[int]] = cursor.fetchone()
+        cursor.execute("SELECT counter FROM user WHERE id = ?", (uid,))
+        result = cursor.fetchone()
         conn.close()
 
         if result is None:
             await ctx.send(f"{user.mention} hat noch keine Nachrichten geschrieben.")
-        else:
-            counter: int = result[0]
-            level, progress = db.berechne_level_und_progress(counter)
-            await ctx.send(
-                f"{user.mention} hat **{counter} Nachrichten** geschrieben und ist "
-                f"Level **{level}** ({progress*100:.1f}% zum nächsten Level)."
-            )
+            return
 
-    @commands.hybrid_command(
-        name="top10",
-        description="Zeigt die Top 10 User nach Nachrichten-Counter"
-    )
-    async def top10(self, ctx: commands.Context) -> None:
+        counter = result[0]  # Typ nicht erneut deklarieren
+        level, progress = db.berechne_level_und_progress(counter)
+        await ctx.send(
+            f"{user.mention} hat **{counter} Nachrichten** geschrieben "
+            f"und ist Level **{level}** ({progress*100:.1f}% zum nächsten Level)."
+        )
+
+    @commands.hybrid_command(name="top10", description="Zeigt die Top 10 User nach Nachrichten-Counter")  # type: ignore[arg-type]
+    async def top10(self, ctx: Context[commands.Bot]) -> None:
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name, counter, level FROM user ORDER BY counter DESC LIMIT 10")
-        results: list[tuple[str, int, int]] = cursor.fetchall()
+        results = cursor.fetchall()
         conn.close()
 
         if not results:
