@@ -12,25 +12,45 @@ class Moderation(commands.Cog):
         self.bot = bot
 
     # ------------------ CLEAR ------------------
-    @commands.hybrid_command(
-        name="clear",
-        description="Löscht die angegebene Anzahl an Nachrichten im aktuellen Kanal"
-    )
+    @commands.hybrid_command(name="clear", description="Löscht Nachrichten im Channel")
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx: Context, anzahl: int) -> None:
-        if anzahl <= 0:
-            await ctx.send("❌ Bitte gib eine gültige Anzahl größer als 0 an.", ephemeral=True)
+        """Löscht die gewünschte Anzahl an Nachrichten im aktuellen Channel."""
+        if anzahl < 1:
+            msg = "⚠️ Bitte gib eine Zahl größer als 0 an."
+            if ctx.interaction:
+                await ctx.interaction.response.send_message(msg, ephemeral=True)
+            else:
+                await ctx.send(msg, delete_after=5)
             return
 
-        deleted = await ctx.channel.purge(limit=anzahl + 1)
-        await ctx.send(f"🧹 Es wurden {len(deleted) - 1} Nachrichten gelöscht.", delete_after=5)
+        deleted = await ctx.channel.purge(limit=anzahl + 1)  # +1 um auch den Aufruf selbst zu löschen
+        msg = f"🧹 Es wurden {len(deleted) - 1} Nachrichten gelöscht."
+
+        # Bei Slash Commands ist ctx.interaction gesetzt
+        if ctx.interaction:
+            # Erstantwort oder Folgeantwort?
+            if not ctx.interaction.response.is_done():
+                await ctx.interaction.response.send_message(msg, ephemeral=True)
+            else:
+                await ctx.interaction.followup.send(msg, ephemeral=True)
+        else:
+            await ctx.send(msg, delete_after=5)
 
     @clear.error
     async def clear_error(self, ctx: Context, error: commands.CommandError) -> None:
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ Du hast keine Berechtigung, Nachrichten zu löschen.", ephemeral=True)
+            msg = "🚫 Du hast keine Berechtigung, Nachrichten zu löschen."
         else:
-            await ctx.send("⚠️ Es ist ein Fehler beim Ausführen von `clear` aufgetreten.", ephemeral=True)
+            msg = "⚠️ Es ist ein Fehler beim Ausführen von `clear` aufgetreten."
+
+        if ctx.interaction:
+            if not ctx.interaction.response.is_done():
+                await ctx.interaction.response.send_message(msg, ephemeral=True)
+            else:
+                await ctx.interaction.followup.send(msg, ephemeral=True)
+        else:
+            await ctx.send(msg, delete_after=5)
 
     # ------------------ MUTE ------------------
     @app_commands.command(name="mute", description="Setzt einen Benutzer auf Timeout")
