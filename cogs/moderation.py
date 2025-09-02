@@ -24,12 +24,10 @@ class Moderation(commands.Cog):
                 await ctx.send(msg, delete_after=5)
             return
 
-        deleted = await ctx.channel.purge(limit=anzahl + 1)  # +1 um auch den Aufruf selbst zu löschen
+        deleted = await ctx.channel.purge(limit=anzahl + 1) 
         msg = f"🧹 Es wurden {len(deleted) - 1} Nachrichten gelöscht."
 
-        # Bei Slash Commands ist ctx.interaction gesetzt
         if ctx.interaction:
-            # Erstantwort oder Folgeantwort?
             if not ctx.interaction.response.is_done():
                 await ctx.interaction.response.send_message(msg, ephemeral=True)
             else:
