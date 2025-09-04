@@ -66,6 +66,15 @@ def setup_database() -> None:
         );
     """)
 
+    # --- Messages ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            user_id TEXT,
+            guild_id TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
     conn.commit()
     conn.close()
 
@@ -226,6 +235,35 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 10) -> 
         """, (guild_id, limit))
     rows = cursor.fetchall()
     conn.close()
-    # sqlite3.Row -> Tuple[str, int]
     return [(str(row[0]), int(row[1])) for row in rows]
 
+
+# --- Messages ---
+def log_message(user_id: str, guild_id: str, timestamp: Optional[datetime] = None) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    if not timestamp:
+        timestamp = datetime.utcnow()
+    cursor.execute(
+        "INSERT INTO messages (user_id, guild_id, timestamp) VALUES (?, ?, ?)",
+        (user_id, guild_id, timestamp)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_top_messages(guild_id: str, days: int = 30, limit: int = 3) -> List[Tuple[str, int]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    cursor.execute("""
+        SELECT user_id, COUNT(*) as total
+        FROM messages
+        WHERE guild_id=? AND timestamp>=?
+        GROUP BY user_id
+        ORDER BY total DESC
+        LIMIT ?
+    """, (guild_id, cutoff, limit))
+    rows = cursor.fetchall()
+    conn.close()
+    return [(str(row[0]), int(row[1])) for row in rows]

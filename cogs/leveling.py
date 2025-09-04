@@ -85,6 +85,31 @@ class Leveling(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.hybrid_command(
+        name="topmf",
+        description="Zeigt die Top 3 Flooder (meiste Nachrichten in den letzten 30 Tagen)"
+    )
+    async def topmf(self, ctx: commands.Context) -> None:
+        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
+        top_users = db.get_top_messages(guild_id, days=30, limit=3)
+
+        if not top_users:
+            await ctx.send("📊 Es gibt noch keine Nachrichten in den letzten 30 Tagen.")
+            return
+
+        description = ""
+        for index, (user_id, count) in enumerate(top_users, start=1):
+            user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+            username = user.mention if user else f"Unbekannt ({user_id})"
+            description += f"**#{index}** {username} – **{count} Nachrichten**\n"
+
+        embed = discord.Embed(
+            title="💬 Top 3 Monthly Flooder (Letzte 30 Tage)",
+            description=description,
+            color=discord.Color.purple()
+        )
+        await ctx.send(embed=embed)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Leveling(bot))
