@@ -28,37 +28,53 @@ class Bumps(commands.Cog):
 
     @commands.hybrid_command(
         name="topb",
-        description="Zeigt deine gesamte Anzahl an Bumps"
+        description="Zeigt die Top 3 mit den meisten Bumps insgesamt"
     )
-    async def topb(
-        self,
-        ctx: commands.Context,
-        user: Optional[Union[discord.User, discord.Member]] = None
-    ) -> None:
-        user = user or ctx.author
-        if user is None:
-            return
-        user_id: str = str(user.id)
+    async def topb(self, ctx: commands.Context) -> None:
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        count: int = db.get_bumps_total(user_id, guild_id)
-        await ctx.send(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
+        top_users = db.get_bump_top(guild_id, days=None, limit=3)
+
+        if not top_users:
+            await ctx.send("📊 Es gibt noch keine Bumps in diesem Server.")
+            return
+
+        description = ""
+        for index, (user_id, count) in enumerate(top_users, start=1):
+            user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+            username = user.mention if user else f"Unbekannt ({user_id})"
+            description += f"**#{index}** {username} – **{count} Bumps**\n"
+
+        embed = discord.Embed(
+            title="🏆 Top 3 Bumper (Gesamt)",
+            description=description,
+            color=discord.Color.gold()
+        )
+        await ctx.send(embed=embed)
 
     @commands.hybrid_command(
         name="topmb",
-        description="Zeigt deine Anzahl an Bumps der letzten 30 Tage"
+        description="Zeigt die Top 3 mit den meisten Bumps in den letzten 30 Tagen"
     )
-    async def topmb(
-        self,
-        ctx: commands.Context,
-        user: Optional[Union[discord.User, discord.Member]] = None
-    ) -> None:
-        user = user or ctx.author
-        if user is None:
-            return
-        user_id: str = str(user.id)
+    async def topmb(self, ctx: commands.Context) -> None:
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        count: int = db.get_bumps_30d(user_id, guild_id)
-        await ctx.send(f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht.")
+        top_users = db.get_bump_top(guild_id, days=30, limit=3)
+
+        if not top_users:
+            await ctx.send("📊 Es gibt noch keine Bumps in den letzten 30 Tagen.")
+            return
+
+        description = ""
+        for index, (user_id, count) in enumerate(top_users, start=1):
+            user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+            username = user.mention if user else f"Unbekannt ({user_id})"
+            description += f"**#{index}** {username} – **{count} Bumps**\n"
+
+        embed = discord.Embed(
+            title="⏳ Top 3 Bumper (Letzte 30 Tage)",
+            description=description,
+            color=discord.Color.blue()
+        )
+        await ctx.send(embed=embed)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Bumps(bot))
