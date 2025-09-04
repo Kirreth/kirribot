@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 from datetime import datetime
 from utils import database as db
 from typing import Optional, Union
@@ -27,37 +26,61 @@ class Bumps(commands.Cog):
             db.log_bump(user_id, guild_id, datetime.utcnow())
             print(f"✅ Bump von {bumper} gespeichert")
 
-    @app_commands.command(name="topb", description="Zeigt deine gesamte Anzahl an Bumps")
+    @commands.hybrid_command(name="topb", description="Zeigt deine gesamte Anzahl an Bumps")
     async def topb(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,  # Kontext für Textbefehle
         user: Optional[Union[discord.User, discord.Member]] = None
     ) -> None:
-        user = user or interaction.user
+        user = user or ctx.author  # Standardmäßig der Benutzer, der den Befehl ausführt
         if user is None:
             return
         user_id: str = str(user.id)
-        guild_id: str = str(interaction.guild.id) if interaction.guild else "0"
+        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"  # Server-ID für Textbefehl
         count: int = db.get_bumps_total(user_id, guild_id)
-        await interaction.response.send_message(
-            f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht."
-        )
+        await ctx.send(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
 
-    @app_commands.command(name="topmb", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage")
+    @commands.hybrid_command(name="topmb", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage")
     async def topmb(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,  # Kontext für Textbefehle
         user: Optional[Union[discord.User, discord.Member]] = None
     ) -> None:
-        user = user or interaction.user
+        user = user or ctx.author  # Standardmäßig der Benutzer, der den Befehl ausführt
         if user is None:
             return
         user_id: str = str(user.id)
-        guild_id: str = str(interaction.guild.id) if interaction.guild else "0"
+        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"  # Server-ID für Textbefehl
         count: int = db.get_bumps_30d(user_id, guild_id)
-        await interaction.response.send_message(
-            f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht."
-        )
+        await ctx.send(f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht.")
+
+    @commands.hybrid_command(name="topbslash", description="Zeigt deine gesamte Anzahl an Bumps (mit Slash-Befehl)")
+    async def topbslash(
+        self,
+        interaction: discord.Interaction,  # Für Slash-Befehl
+        user: Optional[Union[discord.User, discord.Member]] = None
+    ) -> None:
+        user = user or interaction.user  # Standardmäßig der Benutzer, der den Slash-Befehl ausgeführt hat
+        if user is None:
+            return
+        user_id: str = str(user.id)
+        guild_id: str = str(interaction.guild.id) if interaction.guild else "0"  # Server-ID für Slash-Befehl
+        count: int = db.get_bumps_total(user_id, guild_id)
+        await interaction.response.send_message(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
+
+    @commands.hybrid_command(name="topmbslash", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (mit Slash-Befehl)")
+    async def topmbslash(
+        self,
+        interaction: discord.Interaction,  # Für Slash-Befehl
+        user: Optional[Union[discord.User, discord.Member]] = None
+    ) -> None:
+        user = user or interaction.user  # Standardmäßig der Benutzer, der den Slash-Befehl ausgeführt hat
+        if user is None:
+            return
+        user_id: str = str(user.id)
+        guild_id: str = str(interaction.guild.id) if interaction.guild else "0"  # Server-ID für Slash-Befehl
+        count: int = db.get_bumps_30d(user_id, guild_id)
+        await interaction.response.send_message(f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht.")
 
 
 async def setup(bot: commands.Bot) -> None:

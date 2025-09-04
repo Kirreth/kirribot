@@ -1,42 +1,49 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import Context
 from discord import app_commands
 from datetime import timedelta
 from utils import database as db
 from typing import Optional
 
-
 class Moderation(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     # ------------------ CLEAR ------------------
     @commands.hybrid_command(name="clear", description="Löscht Nachrichten im Channel")
     @commands.has_permissions(manage_messages=True)
-    async def clear(self, ctx: Context, anzahl: int) -> None:
+    async def clear(self, ctx: commands.Context, anzahl: int) -> None:
         """Löscht die gewünschte Anzahl an Nachrichten im aktuellen Channel."""
+        
+        if ctx.interaction:
+            await ctx.interaction.response.defer(ephemeral=True)
+
         if anzahl < 1:
             msg = "⚠️ Bitte gib eine Zahl größer als 0 an."
             if ctx.interaction:
-                await ctx.interaction.response.send_message(msg, ephemeral=True)
+                await ctx.interaction.followup.send(msg, ephemeral=True)
             else:
                 await ctx.send(msg, delete_after=5)
             return
 
-        deleted = await ctx.channel.purge(limit=anzahl + 1) 
-        msg = f"🧹 Es wurden {len(deleted) - 1} Nachrichten gelöscht."
+        if not isinstance(ctx.channel, discord.TextChannel):
+            msg = "❌ Dieser Befehl funktioniert nur in Text-Channels."
+            if ctx.interaction:
+                await ctx.interaction.followup.send(msg, ephemeral=True)
+            else:
+                await ctx.send(msg, delete_after=5)
+            return
+
+        deleted = await ctx.channel.purge(limit=anzahl + 1)
+        msg = f"🧹 Es wurden {len(deleted)} Nachrichten gelöscht."
 
         if ctx.interaction:
-            if not ctx.interaction.response.is_done():
-                await ctx.interaction.response.send_message(msg, ephemeral=True)
-            else:
-                await ctx.interaction.followup.send(msg, ephemeral=True)
+            await ctx.interaction.followup.send(msg, ephemeral=True)
         else:
             await ctx.send(msg, delete_after=5)
 
     @clear.error
-    async def clear_error(self, ctx: Context, error: commands.CommandError) -> None:
+    async def clear_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
         if isinstance(error, commands.MissingPermissions):
             msg = "🚫 Du hast keine Berechtigung, Nachrichten zu löschen."
         else:
