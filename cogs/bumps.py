@@ -26,7 +26,7 @@ class Bumps(commands.Cog):
             db.log_bump(user_id, guild_id, datetime.utcnow())
             print(f"✅ Bump von {bumper} gespeichert")
 
-    @commands.hybrid_command(name="topb", description="Zeigt deine gesamte Anzahl an Bumps (Textbefehl)")
+    @commands.hybrid_command(name="topb-text", description="Zeigt deine gesamte Anzahl an Bumps (Textbefehl)")
     async def topb_text(
         self,
         ctx: commands.Context,  # Kontext für Textbefehle
@@ -40,7 +40,7 @@ class Bumps(commands.Cog):
         count: int = db.get_bumps_total(user_id, guild_id)
         await ctx.send(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
 
-    @commands.hybrid_command(name="topmb", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (Textbefehl)")
+    @commands.hybrid_command(name="topmb-text", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (Textbefehl)")
     async def topmb_text(
         self,
         ctx: commands.Context,  # Kontext für Textbefehle
@@ -54,7 +54,7 @@ class Bumps(commands.Cog):
         count: int = db.get_bumps_30d(user_id, guild_id)
         await ctx.send(f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht.")
 
-    @commands.hybrid_command(name="topb", description="Zeigt deine gesamte Anzahl an Bumps (Slash-Befehl)")
+    @commands.hybrid_command(name="topb-slash", description="Zeigt deine gesamte Anzahl an Bumps (Slash-Befehl)")
     async def topb_slash(
         self,
         interaction: discord.Interaction,  # Für Slash-Befehl
@@ -68,7 +68,7 @@ class Bumps(commands.Cog):
         count: int = db.get_bumps_total(user_id, guild_id)
         await interaction.response.send_message(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
 
-    @commands.hybrid_command(name="topmb", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (Slash-Befehl)")
+    @commands.hybrid_command(name="topmb-slash", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (Slash-Befehl)")
     async def topmb_slash(
         self,
         interaction: discord.Interaction,  # Für Slash-Befehl
