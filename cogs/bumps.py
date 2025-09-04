@@ -26,61 +26,39 @@ class Bumps(commands.Cog):
             db.log_bump(user_id, guild_id, datetime.utcnow())
             print(f"✅ Bump von {bumper} gespeichert")
 
-    @commands.hybrid_command(name="topb-text", description="Zeigt deine gesamte Anzahl an Bumps (Textbefehl)")
-    async def topb_text(
+    @commands.hybrid_command(
+        name="topb",
+        description="Zeigt deine gesamte Anzahl an Bumps"
+    )
+    async def topb(
         self,
-        ctx: commands.Context,  # Kontext für Textbefehle
+        ctx: commands.Context,
         user: Optional[Union[discord.User, discord.Member]] = None
     ) -> None:
-        user = user or ctx.author  # Standardmäßig der Benutzer, der den Befehl ausführt
+        user = user or ctx.author
         if user is None:
             return
         user_id: str = str(user.id)
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"  # Server-ID für Textbefehl
+        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         count: int = db.get_bumps_total(user_id, guild_id)
         await ctx.send(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
 
-    @commands.hybrid_command(name="topmb-text", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (Textbefehl)")
-    async def topmb_text(
+    @commands.hybrid_command(
+        name="topmb",
+        description="Zeigt deine Anzahl an Bumps der letzten 30 Tage"
+    )
+    async def topmb(
         self,
-        ctx: commands.Context,  # Kontext für Textbefehle
+        ctx: commands.Context,
         user: Optional[Union[discord.User, discord.Member]] = None
     ) -> None:
-        user = user or ctx.author  # Standardmäßig der Benutzer, der den Befehl ausführt
+        user = user or ctx.author
         if user is None:
             return
         user_id: str = str(user.id)
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"  # Server-ID für Textbefehl
+        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         count: int = db.get_bumps_30d(user_id, guild_id)
         await ctx.send(f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht.")
-
-    @commands.hybrid_command(name="topb-slash", description="Zeigt deine gesamte Anzahl an Bumps (Slash-Befehl)")
-    async def topb_slash(
-        self,
-        interaction: discord.Interaction,  # Für Slash-Befehl
-        user: Optional[Union[discord.User, discord.Member]] = None
-    ) -> None:
-        user = user or interaction.user  # Standardmäßig der Benutzer, der den Slash-Befehl ausgeführt hat
-        if user is None:
-            return
-        user_id: str = str(user.id)
-        guild_id: str = str(interaction.guild.id) if interaction.guild else "0"  # Server-ID für Slash-Befehl
-        count: int = db.get_bumps_total(user_id, guild_id)
-        await interaction.response.send_message(f"📈 {user.mention} hat insgesamt **{count} Bumps** gemacht.")
-
-    @commands.hybrid_command(name="topmb-slash", description="Zeigt deine Anzahl an Bumps der letzten 30 Tage (Slash-Befehl)")
-    async def topmb_slash(
-        self,
-        interaction: discord.Interaction,  # Für Slash-Befehl
-        user: Optional[Union[discord.User, discord.Member]] = None
-    ) -> None:
-        user = user or interaction.user  # Standardmäßig der Benutzer, der den Slash-Befehl ausgeführt hat
-        if user is None:
-            return
-        user_id: str = str(user.id)
-        guild_id: str = str(interaction.guild.id) if interaction.guild else "0"  # Server-ID für Slash-Befehl
-        count: int = db.get_bumps_30d(user_id, guild_id)
-        await interaction.response.send_message(f"⏳ {user.mention} hat in den letzten 30 Tagen **{count} Bumps** gemacht.")
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Bumps(bot))
