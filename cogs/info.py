@@ -8,7 +8,7 @@ class Info(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="userinfo", description="Zeigt Infos über einen Benutzer")  # type: ignore[arg-type]
+    @commands.hybrid_command(name="userinfo", description="Zeigt Infos über einen Benutzer")
     async def userinfo(self, ctx: Context[commands.Bot], user: discord.Member) -> None:
         embed = discord.Embed(title=f"Infos über {user.name}", color=discord.Color.blurple())
         embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
@@ -18,7 +18,6 @@ class Info(commands.Cog):
         if user.joined_at:
             embed.add_field(name="Beigetreten", value=user.joined_at.strftime("%d.%m.%Y %H:%M:%S"), inline=False)
 
-        # Rollen-Liste, falls ctx.guild vorhanden
         roles: list[str] = []
         if ctx.guild:
             default_role = getattr(ctx.guild, "default_role", None)
@@ -26,7 +25,6 @@ class Info(commands.Cog):
 
         embed.add_field(name="Rollen", value=", ".join(roles) if roles else "Keine Rollen", inline=False)
 
-        # Level und Nachrichten aus DB
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT counter, level FROM user WHERE id = ?", (str(user.id),))

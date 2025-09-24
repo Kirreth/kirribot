@@ -24,7 +24,6 @@ class Help(commands.Cog):
         category = category.lower() if category else None
         embed = discord.Embed(color=discord.Color.green())
 
-        # Kategorienliste anzeigen
         if category is None:
             embed.title = "Hilfe – Kategorien"
             embed.description = (
@@ -36,7 +35,6 @@ class Help(commands.Cog):
         elif category == "user":
             embed.title = "User-Befehle"
             for cmd in self.bot.commands:
-                # Prüfen, ob der Befehl aus den Cogs info oder leveling kommt
                 if cmd.cog_name in {"Info", "Leveling"}:
                     embed.add_field(
                         name=cmd.name,
@@ -47,7 +45,6 @@ class Help(commands.Cog):
         elif category == "staff":
             embed.title = "Staff-Befehle"
             for cmd in self.bot.commands:
-                # Prüfen, ob der Befehl aus dem Cog moderation kommt
                 if cmd.cog_name == "Moderation":
                     embed.add_field(
                         name=cmd.name,
@@ -58,14 +55,13 @@ class Help(commands.Cog):
         elif category == "roles":
             embed.title = "Rollen-Befehle"
             for cmd in self.bot.commands:
-                # Prüfen, ob der Befehl aus dem Cog roles kommt
                 if cmd.cog_name == "Roles":
                     embed.add_field(
                         name=cmd.name,
                         value=cmd.help or "Keine Beschreibung",
                         inline=False
                     )
-                    
+
 
         else:
             embed.title = "Unbekannte Kategorie"

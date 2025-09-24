@@ -13,7 +13,6 @@ class Quote(commands.Cog):
 
         if message.reference and self.bot.user in message.mentions:
             referenced_raw = message.reference.resolved
-            # Nur echte Nachrichten akzeptieren, keine gelöschten Referenzen
             if not isinstance(referenced_raw, discord.Message):
                 return
             referenced: discord.Message = referenced_raw
@@ -28,7 +27,6 @@ class Quote(commands.Cog):
                 icon_url=referenced.author.display_avatar.url
             )
 
-            # channel.name existiert nicht bei DMChannel, daher getattr mit Default
             channel_name: str = getattr(referenced.channel, "name", "Direktnachricht")
             embed.set_footer(text=f"In #{channel_name}")
 

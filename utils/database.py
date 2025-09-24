@@ -8,7 +8,7 @@ DB_PATH: str = "users.db"
 
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # Zugriff per Spaltenname
+    conn.row_factory = sqlite3.Row  
     return conn
 
 
@@ -16,7 +16,6 @@ def setup_database() -> None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    # --- User ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
             name TEXT,
@@ -26,7 +25,6 @@ def setup_database() -> None:
         );
     """)
 
-    # --- Warnungen ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
             user_id TEXT,
@@ -36,7 +34,6 @@ def setup_database() -> None:
         );
     """)
 
-    # --- Timeouts ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
             user_id TEXT,
@@ -47,7 +44,6 @@ def setup_database() -> None:
         );
     """)
 
-    # --- Bans ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
             user_id TEXT,
@@ -57,7 +53,6 @@ def setup_database() -> None:
         );
     """)
 
-    # --- Bumps ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bumps (
             user_id TEXT,
@@ -66,7 +61,6 @@ def setup_database() -> None:
         );
     """)
 
-    # --- Messages ---
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             user_id TEXT,
@@ -79,7 +73,6 @@ def setup_database() -> None:
     conn.close()
 
 
-# --- Level-Logik ---
 def berechne_level(counter: int) -> int:
     return int(math.sqrt(counter))
 
@@ -98,7 +91,6 @@ def berechne_level_und_rest(counter: int) -> tuple[int, int]:
 
 
 
-# --- Warns ---
 def add_warn(user_id: str, guild_id: str, reason: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -129,7 +121,6 @@ def get_warns(user_id: str, guild_id: str, within_hours: Optional[int] = None) -
     return rows
 
 
-# --- Timeouts ---
 def add_timeout(user_id: str, guild_id: str, duration_minutes: int, reason: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -153,7 +144,6 @@ def get_timeouts(user_id: str, guild_id: str) -> List[sqlite3.Row]:
     return rows
 
 
-# --- Bans ---
 def add_ban(user_id: str, guild_id: str, reason: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -177,7 +167,6 @@ def get_bans(user_id: str, guild_id: str) -> List[sqlite3.Row]:
     return rows
 
 
-# --- Bumps ---
 def log_bump(user_id: str, guild_id: str, timestamp: Optional[datetime] = None) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -243,7 +232,6 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 10) -> 
     return [(str(row[0]), int(row[1])) for row in rows]
 
 
-# --- Messages ---
 def log_message(user_id: str, guild_id: str, timestamp: Optional[datetime] = None) -> None:
     conn = get_connection()
     cursor = conn.cursor()

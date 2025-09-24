@@ -64,7 +64,6 @@ class Leveling(commands.Cog):
             return
 
         counter = result[0]
-        # NEU: nutzt die Funktion, die Level und Restnachrichten zurückgibt
         level, rest = db.berechne_level_und_rest(counter)
 
         await ctx.send(
