@@ -13,7 +13,12 @@ TOKEN: Optional[str] = os.getenv("TOKEN")  # Sicherstellen, dass der Typ korrekt
 intents: discord.Intents = discord.Intents.all()
 
 # Bot-Initialisierung
-bot: commands.Bot = commands.Bot(command_prefix="!", intents=intents)
+bot: commands.Bot = commands.Bot(
+    command_prefix="!",
+    intents=intents,
+    help_command=None  # <- Standard-HelpCommand deaktivieren
+)
+
 
 @bot.event
 async def on_ready() -> None:
@@ -27,6 +32,7 @@ async def on_ready() -> None:
         "cogs.moderation",
         "cogs.quote",
         "cogs.bumps",
+        "cogs.help"
     ]
 
     # Laden der Cogs
