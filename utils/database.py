@@ -84,13 +84,18 @@ def berechne_level(counter: int) -> int:
     return int(math.sqrt(counter))
 
 
-def berechne_level_und_progress(counter: int) -> Tuple[int, float]:
-    level: int = int(math.sqrt(counter))
-    naechstes_level_anfang: int = level ** 2
-    naechstes_level_ende: int = (level + 1) ** 2
-    progress: float = (counter - naechstes_level_anfang) / (naechstes_level_ende - naechstes_level_anfang)
-    progress = max(0.0, min(progress, 1.0))
-    return level, progress
+def berechne_level_und_rest(counter: int) -> tuple[int, int]:
+    """
+    Gibt aktuelles Level und die noch nötigen Nachrichten
+    bis zum nächsten Level zurück.
+    Beispiel: Level = floor(sqrt(counter))
+    """
+    level = int(counter ** 0.5)
+    next_level = level + 1
+    needed_for_next = next_level ** 2
+    rest = max(needed_for_next - counter, 0)
+    return level, rest
+
 
 
 # --- Warns ---
