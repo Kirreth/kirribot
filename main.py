@@ -30,7 +30,7 @@ async def on_ready() -> None:
         "cogs.leveling",
         "cogs.info",
         "cogs.moderation",
-        "cogs.quote",
+        "cogs.quote", 
         "cogs.bumps",
         "cogs.help"
     ]
