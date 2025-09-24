@@ -1,55 +1,76 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
-from typing import Optional, Union
+from typing import Optional
 
 class Help(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # Hybrid-Befehl: !help und /help in einem
     @commands.hybrid_command(
         name="help",
-        description="Zeigt eine Übersicht aller Befehle oder Details zu einem bestimmten Befehl."
+        description="Zeigt alle Kategorien oder die Befehle einer Kategorie an."
     )
     async def help(
         self,
         ctx: Context[commands.Bot],
-        command_name: Optional[str] = None
+        category: Optional[str] = None
     ) -> None:
         """
-        Zeigt alle Befehle an oder Infos zu einem einzelnen Befehl.
-        Funktioniert als Prefix-Command (!help) und Slash-Command (/help).
+        /help           -> nur Kategorien
+        /help user      -> Befehle aus info + leveling
+        /help staff     -> Befehle aus moderation
         """
-        if command_name:
-            command = self.bot.get_command(command_name)
-            if command:
-                embed = discord.Embed(
-                    title=f"Hilfe: {command_name}",
-                    description=command.help or "Keine Beschreibung verfügbar.",
-                    color=discord.Color.green()
-                )
-            else:
-                embed = discord.Embed(
-                    title="Fehler",
-                    description="Befehl nicht gefunden.",
-                    color=discord.Color.red()
-                )
-        else:
-            embed = discord.Embed(
-                title="Hilfe Übersicht",
-                description="Liste aller Befehle:",
-                color=discord.Color.green()
+        category = category.lower() if category else None
+        embed = discord.Embed(color=discord.Color.green())
+
+        # Kategorienliste anzeigen
+        if category is None:
+            embed.title = "Hilfe – Kategorien"
+            embed.description = (
+                "Verwende `/help <kategorie>` für Details.\n\n"
+                "**user** – Befehle aus info & leveling\n"
+                "**staff** – Befehle aus moderation"
             )
+
+        elif category == "user":
+            embed.title = "User-Befehle"
             for cmd in self.bot.commands:
-                if not cmd.hidden:
+                # Prüfen, ob der Befehl aus den Cogs info oder leveling kommt
+                if cmd.cog_name in {"Info", "Leveling"}:
                     embed.add_field(
                         name=cmd.name,
                         value=cmd.help or "Keine Beschreibung",
                         inline=False
                     )
 
-        # ctx.reply funktioniert für Prefix & Slash gleichermaßen
+        elif category == "staff":
+            embed.title = "Staff-Befehle"
+            for cmd in self.bot.commands:
+                # Prüfen, ob der Befehl aus dem Cog moderation kommt
+                if cmd.cog_name == "Moderation":
+                    embed.add_field(
+                        name=cmd.name,
+                        value=cmd.help or "Keine Beschreibung",
+                        inline=False
+                    )
+
+        elif category == "roles":
+            embed.title = "Rollen-Befehle"
+            for cmd in self.bot.commands:
+                # Prüfen, ob der Befehl aus dem Cog roles kommt
+                if cmd.cog_name == "Roles":
+                    embed.add_field(
+                        name=cmd.name,
+                        value=cmd.help or "Keine Beschreibung",
+                        inline=False
+                    )
+                    
+
+        else:
+            embed.title = "Unbekannte Kategorie"
+            embed.description = "Verfügbare Kategorien: **user**, **staff**"
+
         await ctx.reply(embed=embed)
 
 async def setup(bot: commands.Bot) -> None:
