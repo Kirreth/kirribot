@@ -32,7 +32,8 @@ async def on_ready() -> None:
         "cogs.moderation",
         "cogs.quote", 
         "cogs.bumps",
-        "cogs.help"
+        "cogs.help",
+        "cogs.roles"
     ]
 
     # Laden der Cogs
