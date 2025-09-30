@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from utils import database as db
 from typing import Optional
+from datetime import datetime
 
 class Info(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -35,6 +36,38 @@ class Info(commands.Cog):
             counter, level = result
             embed.add_field(name="Nachrichten", value=f"{counter} Nachrichten", inline=True)
             embed.add_field(name="Level", value=f"🆙 Level {level}", inline=True)
+
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="aur", description="Zeigt den Höchstwert gleichzeitiger aktiver User im Server")
+    async def aur(self, ctx: Context[commands.Bot]) -> None:
+        if not ctx.guild:
+            await ctx.send("Dieser Befehl kann nur in einem Server benutzt werden.", ephemeral=True)
+            return
+
+        guild_id = str(ctx.guild.id)
+        max_active = db.get_max_active(guild_id)
+
+        if max_active == 0:
+            await ctx.send("📊 Es wurden bisher keine aktiven User gezählt.")
+            return
+
+        # Timestamp mit anzeigen (falls gespeichert)
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT timestamp FROM max_active WHERE guild_id=?", (guild_id,))
+        row = cursor.fetchone()
+        conn.close()
+
+        timestamp = row[0] if row else None
+        date_str = datetime.fromisoformat(timestamp).strftime("%d.%m.%Y %H:%M:%S") if timestamp else "Unbekannt"
+
+        embed = discord.Embed(
+            title=f"📈 Aktiver Nutzer-Rekord für {ctx.guild.name}",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="👥 Höchstwert", value=f"{max_active} gleichzeitige Nutzer", inline=False)
+        embed.add_field(name="📅 Zeitpunkt", value=date_str, inline=False)
 
         await ctx.send(embed=embed)
 

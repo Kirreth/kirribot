@@ -69,6 +69,14 @@ def setup_database() -> None:
         );
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS max_active (
+            guild_id TEXT PRIMARY KEY,
+            max_count INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
     conn.commit()
     conn.close()
 
@@ -260,3 +268,33 @@ def get_top_messages(guild_id: str, days: int = 30, limit: int = 3) -> List[Tupl
     rows = cursor.fetchall()
     conn.close()
     return [(str(row[0]), int(row[1])) for row in rows]
+
+def get_max_active(guild_id: str) -> int:
+    """
+    Gibt den gespeicherten Höchstwert für aktive User in einem Server zurück.
+    Falls noch kein Eintrag existiert, wird 0 zurückgegeben.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT max_count FROM max_active WHERE guild_id=?", (guild_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else 0
+
+
+def set_max_active(guild_id: str, count: int) -> None:
+    """
+    Setzt oder aktualisiert den Höchstwert für aktive User in einem Server.
+    Speichert gleichzeitig den aktuellen Zeitpunkt.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO max_active (guild_id, max_count, timestamp)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(guild_id) DO UPDATE SET
+            max_count=excluded.max_count,
+            timestamp=CURRENT_TIMESTAMP
+    """, (guild_id, count))
+    conn.commit()
+    conn.close()
