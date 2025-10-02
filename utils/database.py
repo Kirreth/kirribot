@@ -76,6 +76,15 @@ def setup_database() -> None:
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS command_usage (
+            command_name TEXT,
+            guild_id TEXT,
+            uses INTEGER DEFAULT 0,
+            PRIMARY KEY (command_name, guild_id)
+        );
+    """)
+
 
     conn.commit()
     conn.close()
@@ -298,3 +307,29 @@ def set_max_active(guild_id: str, count: int) -> None:
     """, (guild_id, count))
     conn.commit()
     conn.close()
+
+def log_command_usage(command_name: str, guild_id: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO command_usage (command_name, guild_id, uses)
+        VALUES (?, ?, 1)
+        ON CONFLICT(command_name, guild_id) 
+        DO UPDATE SET uses = uses + 1;
+    """, (command_name, guild_id))
+    conn.commit()
+    conn.close()
+
+def get_top_commands(guild_id: str, limit: int = 5):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT command_name, uses
+        FROM command_usage
+        WHERE guild_id=?
+        ORDER BY uses DESC
+        LIMIT ?
+    """, (guild_id, limit))
+    rows = cursor.fetchall()
+    conn.close()
+    return [(row[0], row[1]) for row in rows]
