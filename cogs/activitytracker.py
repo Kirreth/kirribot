@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands, tasks
+from discord.ext.commands import Context
 from utils import database as db
+from typing import Optional
 
 class ActivityTracker(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -36,6 +38,26 @@ class ActivityTracker(commands.Cog):
     ):
         db.log_command_usage(command.qualified_name, str(interaction.guild.id) if interaction.guild else "DM")
 
+    @commands.hybrid_command(name="topcommands", description="Zeigt die am häufigsten genutzten Befehle")
+    async def topcommands(self, ctx: Context[commands.Bot], limit: Optional[int] = 5) -> None:
+        guild_id = str(ctx.guild.id) if ctx.guild else "DM"
+        results = db.get_top_commands(guild_id, limit)
+        if not results:
+            await ctx.send("Keine Befehle wurden bisher genutzt.")
+            return
+        embed = discord.Embed(title="📊 Top Befehle", color=discord.Color.green())
+        for idx, (cmd, uses) in enumerate(results, start=1):
+            embed.add_field(name=f"{idx}. {cmd}", value=f"✅ {uses} Aufrufe", inline=False)
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="mr", description="Zeigt den Rekord der meisten Mitglieder")
+    async def mr(self, ctx: commands.Context):
+        guild_id = str(ctx.guild.id)
+        record = db.get_max_members(guild_id)
+        if record:
+            await ctx.send(f"👥 Rekord-Mitgliederzahl: **{record}**")
+        else:
+            await ctx.send("Es wurde noch kein Mitgliederrekord gespeichert.")
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(ActivityTracker(bot))
