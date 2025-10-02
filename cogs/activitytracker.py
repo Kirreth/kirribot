@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands, tasks
 from utils import database as db
-from datetime import datetime
 
 class ActivityTracker(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -24,6 +23,19 @@ class ActivityTracker(commands.Cog):
     @check_active_users.before_loop
     async def before_check(self):
         await self.bot.wait_until_ready()
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx: commands.Context):
+        db.log_command_usage(ctx.command.qualified_name, str(ctx.guild.id) if ctx.guild else "DM")
+
+    @commands.Cog.listener()
+    async def on_app_command_completion(
+        self,
+        interaction: discord.Interaction,
+        command: discord.app_commands.Command
+    ):
+        db.log_command_usage(command.qualified_name, str(interaction.guild.id) if interaction.guild else "DM")
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(ActivityTracker(bot))
