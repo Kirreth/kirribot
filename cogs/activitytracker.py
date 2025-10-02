@@ -6,12 +6,12 @@ from datetime import datetime
 class ActivityTracker(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.check_active_users.start()  # startet Loop automatisch
+        self.check_active_users.start() 
 
     def cog_unload(self):
         self.check_active_users.cancel()
 
-    @tasks.loop(minutes=5)  # alle 5 Minuten prüfen
+    @tasks.loop(minutes=5)
     async def check_active_users(self):
         for guild in self.bot.guilds:
             active_members = [
@@ -19,7 +19,7 @@ class ActivityTracker(commands.Cog):
                 if not m.bot and m.status != discord.Status.offline
             ]
             count = len(active_members)
-            db.set_max_active(str(guild.id), count)  # prüft & speichert nur, wenn höher
+            db.set_max_active(str(guild.id), count) 
 
     @check_active_users.before_loop
     async def before_check(self):
