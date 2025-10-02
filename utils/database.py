@@ -265,7 +265,7 @@ def log_message(user_id: str, guild_id: str, timestamp: Optional[datetime] = Non
 def get_top_messages(guild_id: str, days: int = 30, limit: int = 3) -> List[Tuple[str, int]]:
     conn = get_connection()
     cursor = conn.cursor()
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("""
         SELECT user_id, COUNT(*) as total
         FROM messages
@@ -277,6 +277,7 @@ def get_top_messages(guild_id: str, days: int = 30, limit: int = 3) -> List[Tupl
     rows = cursor.fetchall()
     conn.close()
     return [(str(row[0]), int(row[1])) for row in rows]
+
 
 
 def get_max_active(guild_id: str) -> int:
