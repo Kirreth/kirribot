@@ -84,7 +84,13 @@ def setup_database() -> None:
             PRIMARY KEY (command_name, guild_id)
         );
     """)
-
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS max_members (
+            guild_id TEXT PRIMARY KEY,
+            count INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
 
     conn.commit()
     conn.close()
@@ -95,17 +101,11 @@ def berechne_level(counter: int) -> int:
 
 
 def berechne_level_und_rest(counter: int) -> tuple[int, int]:
-    """
-    Gibt aktuelles Level und die noch nötigen Nachrichten
-    bis zum nächsten Level zurück.
-    Beispiel: Level = floor(sqrt(counter))
-    """
     level = int(counter ** 0.5)
     next_level = level + 1
     needed_for_next = next_level ** 2
     rest = max(needed_for_next - counter, 0)
     return level, rest
-
 
 
 def add_warn(user_id: str, guild_id: str, reason: str) -> None:
@@ -278,11 +278,8 @@ def get_top_messages(guild_id: str, days: int = 30, limit: int = 3) -> List[Tupl
     conn.close()
     return [(str(row[0]), int(row[1])) for row in rows]
 
+
 def get_max_active(guild_id: str) -> int:
-    """
-    Gibt den gespeicherten Höchstwert für aktive User in einem Server zurück.
-    Falls noch kein Eintrag existiert, wird 0 zurückgegeben.
-    """
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT max_count FROM max_active WHERE guild_id=?", (guild_id,))
@@ -292,10 +289,6 @@ def get_max_active(guild_id: str) -> int:
 
 
 def set_max_active(guild_id: str, count: int) -> None:
-    """
-    Setzt oder aktualisiert den Höchstwert für aktive User in einem Server.
-    Speichert gleichzeitig den aktuellen Zeitpunkt.
-    """
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -308,6 +301,7 @@ def set_max_active(guild_id: str, count: int) -> None:
     conn.commit()
     conn.close()
 
+
 def log_command_usage(command_name: str, guild_id: str) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -319,6 +313,7 @@ def log_command_usage(command_name: str, guild_id: str) -> None:
     """, (command_name, guild_id))
     conn.commit()
     conn.close()
+
 
 def get_top_commands(guild_id: str, limit: int = 5):
     conn = get_connection()
@@ -333,3 +328,29 @@ def get_top_commands(guild_id: str, limit: int = 5):
     rows = cursor.fetchall()
     conn.close()
     return [(row[0], row[1]) for row in rows]
+
+
+def set_max_members(guild_id: str, count: int) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT count FROM max_members WHERE guild_id=?", (guild_id,))
+    result = cursor.fetchone()
+    if result is None or count > result[0]:
+        cursor.execute("""
+            INSERT INTO max_members (guild_id, count, timestamp)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(guild_id) DO UPDATE SET
+                count=excluded.count,
+                timestamp=CURRENT_TIMESTAMP
+        """, (guild_id, count))
+    conn.commit()
+    conn.close()
+
+
+def get_max_members(guild_id: str) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT count FROM max_members WHERE guild_id=?", (guild_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else 0
