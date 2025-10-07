@@ -26,7 +26,7 @@ class Moderation(commands.Cog):
                    if ctx.interaction else ctx.send(msg, delete_after=5))
             return
 
-        deleted = await ctx.channel.purge(limit=anzahl + 1)
+        deleted = await ctx.channel.purge(limit=anzahl)
         msg = f"🧹 Es wurden {len(deleted)} Nachrichten gelöscht."
         await (ctx.interaction.followup.send(msg, ephemeral=True)
                if ctx.interaction else ctx.send(msg, delete_after=5))

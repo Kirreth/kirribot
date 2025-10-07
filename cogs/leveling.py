@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from typing import Union
 from utils.database import connection as db
-from utils.database import leveling as db_leveling  # Hier liegen die Level-Funktionen
+from utils.database import leveling as db_leveling  # Level-Funktionen
 from utils.database import messages as db_messages
 
 
@@ -79,7 +79,7 @@ class Leveling(commands.Cog):
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT name, counter, level FROM user ORDER BY counter DESC LIMIT 10"
+            "SELECT id, counter, level FROM user ORDER BY counter DESC LIMIT 10"
         )
         results = cursor.fetchall()
         conn.close()
@@ -89,9 +89,18 @@ class Leveling(commands.Cog):
             return
 
         embed = discord.Embed(title="🏆 Top 10 User", color=discord.Color.gold())
-        for idx, (name, counter, level) in enumerate(results, start=1):
+        for idx, (uid, counter, level) in enumerate(results, start=1):
+            # Member oder User abrufen, um zu pingen
+            user = ctx.guild.get_member(int(uid)) if ctx.guild else None
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(int(uid))
+                except:
+                    user = None
+            mention = user.mention if user else f"Unbekannt ({uid})"
+
             embed.add_field(
-                name=f"{idx}. {name}",
+                name=f"{idx}. {mention}",
                 value=f"📨 {counter} Nachrichten | ⭐ Level {level}",
                 inline=False
             )
@@ -112,9 +121,15 @@ class Leveling(commands.Cog):
 
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
-            user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
-            username = user.mention if user else f"Unbekannt ({user_id})"
-            description += f"**#{index}** {username} – **{count} Nachrichten**\n"
+            user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(int(user_id))
+                except:
+                    user = None
+            mention = user.mention if user else f"Unbekannt ({user_id})"
+
+            description += f"**#{index}** {mention} – **{count} Nachrichten**\n"
 
         embed = discord.Embed(
             title="💬 Top 3 Monthly Flooder (Letzte 30 Tage)",
