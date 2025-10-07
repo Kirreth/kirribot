@@ -1,3 +1,4 @@
+# cogs/help.py
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -17,9 +18,10 @@ class Help(commands.Cog):
         category: Optional[str] = None
     ) -> None:
         """
-        /help           -> nur Kategorien
-        /help user      -> Befehle aus info + leveling
-        /help staff     -> Befehle aus moderation
+        /help           -> zeigt nur Kategorien
+        /help user      -> Befehle aus Info & Leveling
+        /help staff     -> Befehle aus Moderation
+        /help roles     -> Befehle aus Rollen-Management
         """
         category = category.lower() if category else None
         embed = discord.Embed(color=discord.Color.green())
@@ -28,8 +30,9 @@ class Help(commands.Cog):
             embed.title = "Hilfe – Kategorien"
             embed.description = (
                 "Verwende `/help <kategorie>` für Details.\n\n"
-                "**user** – Befehle aus info & leveling\n"
-                "**staff** – Befehle aus moderation"
+                "**user** – Befehle aus Info & Leveling\n"
+                "**staff** – Befehle aus Moderation\n"
+                "**roles** – Befehle für Rollenverwaltung"
             )
 
         elif category == "user":
@@ -37,7 +40,7 @@ class Help(commands.Cog):
             for cmd in self.bot.commands:
                 if cmd.cog_name in {"Info", "Leveling"}:
                     embed.add_field(
-                        name=cmd.name,
+                        name=f"/{cmd.name}",
                         value=cmd.help or "Keine Beschreibung",
                         inline=False
                     )
@@ -47,7 +50,7 @@ class Help(commands.Cog):
             for cmd in self.bot.commands:
                 if cmd.cog_name == "Moderation":
                     embed.add_field(
-                        name=cmd.name,
+                        name=f"/{cmd.name}",
                         value=cmd.help or "Keine Beschreibung",
                         inline=False
                     )
@@ -57,17 +60,20 @@ class Help(commands.Cog):
             for cmd in self.bot.commands:
                 if cmd.cog_name == "Roles":
                     embed.add_field(
-                        name=cmd.name,
+                        name=f"/{cmd.name}",
                         value=cmd.help or "Keine Beschreibung",
                         inline=False
                     )
 
-
         else:
             embed.title = "Unbekannte Kategorie"
-            embed.description = "Verfügbare Kategorien: **user**, **staff**"
+            embed.description = "Verfügbare Kategorien: **user**, **staff**, **roles**"
 
-        await ctx.reply(embed=embed)
+        # Antwort senden
+        if ctx.interaction:
+            await ctx.reply(embed=embed, ephemeral=True)
+        else:
+            await ctx.send(embed=embed)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Help(bot))

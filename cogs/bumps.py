@@ -1,8 +1,9 @@
+# cogs/bumps.py
 import discord
 from discord.ext import commands
 from datetime import datetime
-from utils import database as db
-from typing import Optional, Union
+from utils.database import bumps as db_bumps
+from typing import Union
 
 DISBOARD_ID: int = 302050872383242240
 
@@ -23,7 +24,7 @@ class Bumps(commands.Cog):
 
             user_id: str = str(bumper.id)
             guild_id: str = str(message.guild.id) if message.guild else "0"
-            db.log_bump(user_id, guild_id, datetime.utcnow())
+            db_bumps.log_bump(user_id, guild_id, datetime.utcnow())
             print(f"✅ Bump von {bumper} gespeichert")
 
     @commands.hybrid_command(
@@ -32,7 +33,7 @@ class Bumps(commands.Cog):
     )
     async def topb(self, ctx: commands.Context) -> None:
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        top_users = db.get_bump_top(guild_id, days=None, limit=3)
+        top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
 
         if not top_users:
             await ctx.send("📊 Es gibt noch keine Bumps in diesem Server.")
@@ -40,7 +41,14 @@ class Bumps(commands.Cog):
 
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
-            user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+            # Member aus Cache oder fetchen
+            user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(int(user_id))
+                except discord.NotFound:
+                    user = None
+
             username = user.mention if user else f"Unbekannt ({user_id})"
             description += f"**#{index}** {username} – **{count} Bumps**\n"
 
@@ -57,7 +65,7 @@ class Bumps(commands.Cog):
     )
     async def topmb(self, ctx: commands.Context) -> None:
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        top_users = db.get_bump_top(guild_id, days=30, limit=3)
+        top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
 
         if not top_users:
             await ctx.send("📊 Es gibt noch keine Bumps in den letzten 30 Tagen.")
@@ -65,7 +73,13 @@ class Bumps(commands.Cog):
 
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
-            user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+            user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(int(user_id))
+                except discord.NotFound:
+                    user = None
+
             username = user.mention if user else f"Unbekannt ({user_id})"
             description += f"**#{index}** {username} – **{count} Bumps**\n"
 
@@ -75,6 +89,7 @@ class Bumps(commands.Cog):
             color=discord.Color.blue()
         )
         await ctx.send(embed=embed)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Bumps(bot))

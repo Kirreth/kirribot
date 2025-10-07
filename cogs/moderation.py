@@ -1,14 +1,17 @@
+# cogs/moderation.py
 import discord
 from discord.ext import commands
 from datetime import timedelta
 from utils.database import moderation as db_mod
 
-
 class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="clear", description="Löscht Nachrichten im Channel")
+    @commands.hybrid_command(
+        name="clear",
+        description="Löscht Nachrichten im Channel"
+    )
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx: commands.Context, anzahl: int) -> None:
         if ctx.interaction:
@@ -46,7 +49,10 @@ class Moderation(commands.Cog):
         else:
             await ctx.send(msg, delete_after=5)
 
-    @commands.hybrid_command(name="mute", description="Setzt einen Benutzer auf Timeout")
+    @commands.hybrid_command(
+        name="mute",
+        description="Setzt einen Benutzer auf Timeout"
+    )
     @commands.has_permissions(moderate_members=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, minuten: int, *, reason: str) -> None:
         guild = ctx.guild
@@ -68,7 +74,10 @@ class Moderation(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Muten: {e}", ephemeral=True)
 
-    @commands.hybrid_command(name="warn", description="Verwarnt einen Benutzer")
+    @commands.hybrid_command(
+        name="warn",
+        description="Verwarnt einen Benutzer"
+    )
     @commands.has_permissions(moderate_members=True)
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
         guild = ctx.guild
@@ -84,9 +93,11 @@ class Moderation(commands.Cog):
         warns = db_mod.get_warns(str(member.id), str(guild.id), within_hours=24)
 
         await ctx.send(
-            f"⚠️ {member.mention} wurde verwarnt.\nGrund: {reason}\n👉 Warnungen in 24h: **{len(warns)}**"
+            f"⚠️ {member.mention} wurde verwarnt.\nGrund: {reason}\n"
+            f"👉 Warnungen in 24h: **{len(warns)}**"
         )
 
+        # Automatischer Timeout nach 2 Warnungen
         if len(warns) >= 2:
             try:
                 until = discord.utils.utcnow() + timedelta(hours=24)
@@ -98,7 +109,10 @@ class Moderation(commands.Cog):
             except discord.HTTPException as e:
                 await ctx.send(f"⚠️ Fehler beim automatischen Timeout: {e}", ephemeral=True)
 
-    @commands.hybrid_command(name="ban", description="Bannt einen Benutzer")
+    @commands.hybrid_command(
+        name="ban",
+        description="Bannt einen Benutzer"
+    )
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
         guild = ctx.guild
@@ -118,7 +132,6 @@ class Moderation(commands.Cog):
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu bannen.", ephemeral=True)
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Bannen: {e}", ephemeral=True)
-
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Moderation(bot))

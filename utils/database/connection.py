@@ -1,17 +1,13 @@
-# utils/database/connection.py
 from pathlib import Path
 import sqlite3
 
-# Absoluter Pfad relativ zu dieser Datei
 DB_PATH = Path(__file__).parent.parent / "data" / "activity.db"
 
 def get_connection():
-    """Öffnet eine Verbindung zur SQLite-Datenbank und erstellt den Ordner, falls nötig."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     return sqlite3.connect(DB_PATH)
 
 def setup_database():
-    """Erstellt alle Tabellen mit PRIMARY KEY/UNIQUE Constraints."""
     conn = get_connection()
     cur = conn.cursor()
 
@@ -31,7 +27,7 @@ def setup_database():
         )
     """)
 
-    # Tabelle für Befehle (PRIMARY KEY auf guild_id + command)
+    # Tabelle für Befehle
     cur.execute("""
         CREATE TABLE IF NOT EXISTS commands (
             guild_id TEXT,
@@ -41,13 +37,14 @@ def setup_database():
         )
     """)
 
-    # Tabelle für Nachrichten (PRIMARY KEY auf guild_id + user_id + channel_id + timestamp)
+    # Tabelle für Nachrichten
     cur.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             guild_id TEXT,
             user_id TEXT,
             channel_id TEXT,
-            timestamp INTEGER
+            timestamp INTEGER,
+            PRIMARY KEY (guild_id, user_id, channel_id, timestamp)
         )
     """)
 
@@ -61,6 +58,42 @@ def setup_database():
         )
     """)
 
+    # Tabelle für Bumps
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS bumps (
+            guild_id TEXT,
+            user_id TEXT,
+            timestamp TEXT,
+            PRIMARY KEY (guild_id, user_id, timestamp)
+        )
+    """)
+
+    # Tabelle für Moderation: Warns / Timeouts / Bans
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS warns (
+            guild_id TEXT,
+            user_id TEXT,
+            reason TEXT,
+            timestamp TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS timeouts (
+            guild_id TEXT,
+            user_id TEXT,
+            duration_minutes INTEGER,
+            reason TEXT,
+            timestamp TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS bans (
+            guild_id TEXT,
+            user_id TEXT,
+            reason TEXT,
+            timestamp TEXT
+        )
+    """)
 
     conn.commit()
     conn.close()
