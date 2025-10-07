@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from utils import database as db
+from utils.database import setup_database
 from typing import List, Optional
 
 load_dotenv()
@@ -16,7 +16,8 @@ bot: commands.Bot = commands.Bot(
     help_command=None
 )
 
-db.setup_database()
+setup_database()
+
 
 @bot.event
 async def on_ready() -> None:
