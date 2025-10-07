@@ -2,7 +2,10 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 from typing import Union
-from utils import database as db
+from utils.database import connection as db
+from utils.database import leveling as db_leveling  # Hier liegen die Level-Funktionen
+from utils.database import messages as db_messages
+
 
 class Leveling(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -23,14 +26,14 @@ class Leveling(commands.Cog):
 
         if result is None:
             counter = 1
-            level = db.berechne_level(counter)
+            level = db_leveling.berechne_level(counter)
             cursor.execute(
                 "INSERT INTO user (name, id, counter, level) VALUES (?, ?, ?, ?)",
                 (uname, uid, counter, level)
             )
         else:
             counter = result[0] + 1
-            level = db.berechne_level(counter)
+            level = db_leveling.berechne_level(counter)
             cursor.execute(
                 "UPDATE user SET counter = ?, level = ? WHERE id = ?",
                 (counter, level, uid)
@@ -48,10 +51,6 @@ class Leveling(commands.Cog):
         ctx: Context[commands.Bot],
         user: Union[discord.User, discord.Member]
     ) -> None:
-        """
-        Zeigt die Gesamtzahl der Nachrichten, das aktuelle Level
-        und wie viele Nachrichten bis zum nächsten Level fehlen.
-        """
         uid: str = str(user.id)
         conn = db.get_connection()
         cursor = conn.cursor()
@@ -64,7 +63,7 @@ class Leveling(commands.Cog):
             return
 
         counter = result[0]
-        level, rest = db.berechne_level_und_rest(counter)
+        level, rest = db_leveling.berechne_level_und_rest(counter)
 
         await ctx.send(
             f"{user.mention} hat **{counter} Nachrichten** geschrieben "
@@ -105,7 +104,7 @@ class Leveling(commands.Cog):
     )
     async def topmf(self, ctx: commands.Context) -> None:
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        top_users = db.get_top_messages(guild_id, days=30, limit=3)
+        top_users = db_messages.get_top_messages(guild_id, days=30, limit=3)
 
         if not top_users:
             await ctx.send("📊 Es gibt noch keine Nachrichten in den letzten 30 Tagen.")

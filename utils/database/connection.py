@@ -6,11 +6,12 @@ import sqlite3
 DB_PATH = Path(__file__).parent.parent / "data" / "activity.db"
 
 def get_connection():
-    # Vor dem Öffnen sicherstellen, dass der Ordner existiert
+    """Öffnet eine Verbindung zur SQLite-Datenbank und erstellt den Ordner, falls nötig."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     return sqlite3.connect(DB_PATH)
 
 def setup_database():
+    """Erstellt alle Tabellen mit PRIMARY KEY/UNIQUE Constraints."""
     conn = get_connection()
     cur = conn.cursor()
 
@@ -30,7 +31,7 @@ def setup_database():
         )
     """)
 
-    # Tabelle für Befehle
+    # Tabelle für Befehle (PRIMARY KEY auf guild_id + command)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS commands (
             guild_id TEXT,
@@ -40,7 +41,7 @@ def setup_database():
         )
     """)
 
-    # Tabelle für Nachrichten
+    # Tabelle für Nachrichten (PRIMARY KEY auf guild_id + user_id + channel_id + timestamp)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             guild_id TEXT,
@@ -49,6 +50,17 @@ def setup_database():
             timestamp INTEGER
         )
     """)
+
+    # Tabelle für User-Leveling / Counter
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            counter INTEGER,
+            level INTEGER
+        )
+    """)
+
 
     conn.commit()
     conn.close()
