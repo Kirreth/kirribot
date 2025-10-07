@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 from datetime import timedelta
-from utils import database as db
+from utils.database import moderation as db_mod
+
 
 class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -60,7 +61,7 @@ class Moderation(commands.Cog):
         try:
             until = discord.utils.utcnow() + timedelta(minutes=minuten)
             await member.timeout(until, reason=reason)
-            db.add_timeout(str(member.id), str(guild.id), minuten, reason)
+            db_mod.add_timeout(str(member.id), str(guild.id), minuten, reason)
             await ctx.send(f"🔇 {member.mention} wurde für {minuten} Minuten gemutet.\nGrund: {reason}")
         except discord.Forbidden:
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu muten.", ephemeral=True)
@@ -79,8 +80,8 @@ class Moderation(commands.Cog):
             await ctx.send("❌ Du kannst keine Moderatoren/Admins verwarnen.", ephemeral=True)
             return
 
-        db.add_warn(str(member.id), str(guild.id), reason)
-        warns = db.get_warns(str(member.id), str(guild.id), within_hours=24)
+        db_mod.add_warn(str(member.id), str(guild.id), reason)
+        warns = db_mod.get_warns(str(member.id), str(guild.id), within_hours=24)
 
         await ctx.send(
             f"⚠️ {member.mention} wurde verwarnt.\nGrund: {reason}\n👉 Warnungen in 24h: **{len(warns)}**"
@@ -90,7 +91,7 @@ class Moderation(commands.Cog):
             try:
                 until = discord.utils.utcnow() + timedelta(hours=24)
                 await member.timeout(until, reason="Automatischer Timeout nach 2 Warnungen")
-                db.add_timeout(str(member.id), str(guild.id), 1440, "Automatischer Timeout nach 2 Warnungen")
+                db_mod.add_timeout(str(member.id), str(guild.id), 1440, "Automatischer Timeout nach 2 Warnungen")
                 await ctx.send(f"🔇 {member.mention} wurde automatisch für 24 Stunden gemutet.")
             except discord.Forbidden:
                 await ctx.send("❌ Keine Berechtigung für automatischen Timeout.", ephemeral=True)
@@ -111,12 +112,13 @@ class Moderation(commands.Cog):
 
         try:
             await member.ban(reason=reason)
-            db.add_ban(str(member.id), str(guild.id), reason)
+            db_mod.add_ban(str(member.id), str(guild.id), reason)
             await ctx.send(f"🔨 {member.mention} wurde gebannt.\nGrund: {reason}")
         except discord.Forbidden:
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu bannen.", ephemeral=True)
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Bannen: {e}", ephemeral=True)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Moderation(bot))
