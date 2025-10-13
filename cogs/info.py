@@ -37,7 +37,7 @@ class Info(commands.Cog):
         # Leveling-Daten
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter, level FROM user WHERE id = ?", (str(user.id),))
+        cursor.execute("SELECT counter, level FROM user WHERE id = %s", (str(user.id),))
         result = cursor.fetchone()
         conn.close()
 
