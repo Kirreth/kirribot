@@ -32,7 +32,8 @@ async def on_ready() -> None:
         "cogs.help",
         "cogs.roles",
         "cogs.activitytracker",
-        "cogs.log"
+        "cogs.log",
+        "cogs.joinleft"
     ]
 
     for cog in cogs:
