@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands
+import os
+
+WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", 0))
 
 class WelcomeLeave(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -11,11 +14,15 @@ class WelcomeLeave(commands.Cog):
         # Alle Einladungen pro Guild beim Start speichern
         for guild in self.bot.guilds:
             self.invites[guild.id] = await guild.invites()
+        print("✅ WelcomeLeave Cog bereit!")
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         guild = member.guild
-        channel = discord.utils.get(guild.text_channels, name="welcome")  # Channelname anpassen
+        channel = guild.get_channel(WELCOME_CHANNEL_ID)
+
+        if not channel:
+            return  # Kein Channel gesetzt oder falsche ID
 
         # Neue Einladungen abrufen und vergleichen
         new_invites = await guild.invites()
@@ -28,18 +35,36 @@ class WelcomeLeave(commands.Cog):
 
         self.invites[guild.id] = new_invites  # Update invites
 
-        if channel:
-            msg = f"👋 {member.mention} ist dem Server beigetreten!"
-            if used_invite:
-                msg += f" Über Einladung von {used_invite.inviter.mention} ({used_invite.code})."
-            await channel.send(msg)
+        embed = discord.Embed(
+            title="👋 Neuer Server-Mitglied",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="User", value=member.mention, inline=True)
+        if used_invite:
+            embed.add_field(
+                name="Eingeladen von",
+                value=f"{used_invite.inviter.mention} ({used_invite.code})",
+                inline=True
+            )
+        embed.set_footer(text=f"ID: {member.id}")
+
+        await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         guild = member.guild
-        channel = discord.utils.get(guild.text_channels, name="welcome")  # Gleiches Channel
-        if channel:
-            await channel.send(f"👋 {member.name} hat den Server verlassen.")
+        channel = guild.get_channel(WELCOME_CHANNEL_ID)
+
+        if not channel:
+            return
+
+        embed = discord.Embed(
+            title="👋 Mitglied hat den Server verlassen",
+            description=f"{member.name} ({member.id})",
+            color=discord.Color.red()
+        )
+        await channel.send(embed=embed)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(WelcomeLeave(bot))
