@@ -69,35 +69,58 @@ def berechne_fortschritt(counter: int, level: int):
 # ------------------------------------------------------------
 
 async def create_rank_card(member: discord.User, counter: int, level: int, rank: int, progress_percent: float, xp_left: int) -> io.BytesIO:
-    """Erstellt das Rank-Bild als PNG."""
+    """Erstellt das Rank-Bild mit farbigem, halbtransparentem Overlay je nach Level."""
     width, height = 800, 200
-    img = Image.new("RGB", (width, height), "#000000")
-    draw = ImageDraw.Draw(img)
+    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
 
-    # Hintergrundbild (png und jpg erlaubt)
+    # Hintergrundbild laden
     try:
         images_dir = get_base_path("images")
         all_files = [f for f in os.listdir(images_dir) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
         if all_files:
             bg_file = random.choice(all_files)
             bg_path = os.path.join(images_dir, bg_file)
-            bg_img = Image.open(bg_path).resize((width, height)).convert("RGB")
-            img.paste(bg_img, (0, 0))
+            bg_img = Image.open(bg_path).resize((width, height)).convert("RGBA")
+            img = Image.alpha_composite(img, bg_img)
+        else:
+            fallback = Image.new("RGBA", (width, height), (10, 10, 10, 255))
+            img = Image.alpha_composite(img, fallback)
     except Exception as e:
         print(f"⚠️ Hintergrund konnte nicht geladen werden: {e}")
+        fallback = Image.new("RGBA", (width, height), (10, 10, 10, 255))
+        img = Image.alpha_composite(img, fallback)
 
-    # Avatar laden
+    # 🎨 Overlay-Farbe abhängig vom Level
+    if level <= 5:
+        overlay_color = (0, 0, 0, 100)          # Dunkel / neutral
+    elif level <= 10:
+        overlay_color = (0, 80, 180, 120)       # Blau
+    elif level <= 20:
+        overlay_color = (120, 0, 150, 120)      # Lila
+    else:
+        overlay_color = (255, 215, 0, 130)      # Gold
+
+    overlay = Image.new("RGBA", (width, height), overlay_color)
+    img = Image.alpha_composite(img, overlay)
+
+    # Avatar einfügen (rund)
     try:
         avatar_size = (150, 150)
         asset = member.display_avatar.with_format("png").with_size(256)
         data = io.BytesIO(await asset.read())
-        avatar_img = Image.open(data).resize(avatar_size).convert("RGB")
-        img.paste(avatar_img, (25, 25))
+        avatar_img = Image.open(data).resize(avatar_size).convert("RGBA")
+
+        mask = Image.new("L", avatar_size, 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.ellipse((0, 0, avatar_size[0], avatar_size[1]), fill=255)
+        img.paste(avatar_img, (25, 25), mask)
     except Exception as e:
         print(f"⚠️ Avatar konnte nicht geladen werden: {e}")
 
-    # Text: Level | Rank | XP
+    # Text + Fortschrittsbalken
+    draw = ImageDraw.Draw(img)
     fill_color = "#FFFFFF"
+
     draw.text((200, 30), f"Level: {level}", fill=fill_color, font=font_main)
     draw.text((400, 30), f"Rank: {rank}", fill=fill_color, font=font_main)
     draw.text((600, 30), f"XP: {counter}", fill=fill_color, font=font_main)
@@ -106,20 +129,24 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     bar_x, bar_y = 200, 120
     bar_width = 550
     bar_height = 25
-    draw.rectangle([bar_x, bar_y, bar_x + bar_width, bar_y + bar_height], fill="#333333")
-    draw.rectangle([bar_x, bar_y, bar_x + int(bar_width * progress_percent), bar_y + bar_height], fill="#ffffff")
 
-    # Optional: Balken-Markierungen
+    draw.rectangle([bar_x, bar_y, bar_x + bar_width, bar_y + bar_height], fill=(51, 51, 51, 255))
+    draw.rectangle([bar_x, bar_y, bar_x + int(bar_width * progress_percent), bar_y + bar_height], fill=(255, 255, 255, 255))
+
     for i in range(0, bar_width, 15):
-        draw.line([(bar_x + i, bar_y), (bar_x + i, bar_y + bar_height)], fill="#111111", width=1)
+        draw.line([(bar_x + i, bar_y), (bar_x + i, bar_y + bar_height)], fill=(17, 17, 17, 255), width=1)
 
-    # Fortschrittstext
     #draw.text((bar_x, bar_y + 35), f"Noch {xp_left} Nachrichten bis Level {level + 1}", fill=fill_color, font=font_small)
 
+    # Ausgabe vorbereiten
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
     return buf
+
+
+
+
 
 # ------------------------------------------------------------
 # Cog-Klasse für das Levelsystem
