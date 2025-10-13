@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
-from typing import Union
+from typing import Union, Optional
 from utils.database import connection as db
 from utils.database import leveling as db_leveling  # Level-Funktionen
 from utils.database import messages as db_messages
@@ -13,62 +13,89 @@ class Leveling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        if message.author.bot:
+        if message.author.bot or not message.guild:
             return
 
         uid: str = str(message.author.id)
         uname: str = message.author.name
+        guild_id: str = str(message.guild.id)
+        channel_id: str = str(message.channel.id)
 
+        # Nachricht loggen
+        db_messages.log_message(guild_id, uid, channel_id)
+
+        # Counter und Level updaten
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter FROM user WHERE id = ?", (uid,))
+        cursor.execute("SELECT counter FROM user WHERE id = %s", (uid,))
         result = cursor.fetchone()
 
         if result is None:
             counter = 1
             level = db_leveling.berechne_level(counter)
             cursor.execute(
-                "INSERT INTO user (name, id, counter, level) VALUES (?, ?, ?, ?)",
-                (uname, uid, counter, level)
+                "INSERT INTO user (id, name, counter, level) VALUES (%s, %s, %s, %s)",
+                (uid, uname, counter, level)
             )
         else:
             counter = result[0] + 1
             level = db_leveling.berechne_level(counter)
             cursor.execute(
-                "UPDATE user SET counter = ?, level = ? WHERE id = ?",
+                "UPDATE user SET counter = %s, level = %s WHERE id = %s",
                 (counter, level, uid)
             )
 
         conn.commit()
+        cursor.close()
         conn.close()
 
     @commands.hybrid_command(
-        name="hau",
-        description="Zeigt den Nachrichten-Counter eines Users"
+        name="rank",
+        description="Zeigt den Nachrichten-Counter, Level und den nächsten User, den man einholen könnte"
     )
-    async def hau(
+    async def rank(
         self,
         ctx: Context[commands.Bot],
-        user: Union[discord.User, discord.Member]
+        user: Optional[Union[discord.User, discord.Member]] = None
     ) -> None:
+        user = user or ctx.author
         uid: str = str(user.id)
+
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter FROM user WHERE id = ?", (uid,))
-        result = cursor.fetchone()
-        conn.close()
 
-        if result is None:
+        # Counter abrufen
+        cursor.execute("SELECT counter FROM user WHERE id = %s", (uid,))
+        result = cursor.fetchone()
+        if not result:
             await ctx.send(f"{user.mention} hat noch keine Nachrichten geschrieben.")
+            cursor.close()
+            conn.close()
             return
 
         counter = result[0]
         level, rest = db_leveling.berechne_level_und_rest(counter)
 
+        # Nächsten User finden
+        cursor.execute(
+            "SELECT name, counter FROM user WHERE counter > %s ORDER BY counter ASC LIMIT 1",
+            (counter,)
+        )
+        next_user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if next_user:
+            next_name, next_counter = next_user
+            next_info = f"\n{user.name} ist hinter dem User {next_name} mit {next_counter} Nachrichten."
+        else:
+            next_info = f"\n{user.name} ist aktuell der aktivste User! 🎉"
+
         await ctx.send(
-            f"{user.mention} hat **{counter} Nachrichten** geschrieben "
-            f"und ist Level **{level}**.\n"
-            f"Es fehlen **{rest} Nachrichten** bis zum nächsten Level."
+            f"{user.mention} - Level {level}\n"
+            f"Nachrichten: {counter}\n"
+            f"Nachrichten bis zum nächsten Level: {rest}"
+            f"{next_info}"
         )
 
     @commands.hybrid_command(
@@ -82,6 +109,7 @@ class Leveling(commands.Cog):
             "SELECT id, counter, level FROM user ORDER BY counter DESC LIMIT 10"
         )
         results = cursor.fetchall()
+        cursor.close()
         conn.close()
 
         if not results:
@@ -90,14 +118,13 @@ class Leveling(commands.Cog):
 
         embed = discord.Embed(title="🏆 Top 10 User", color=discord.Color.gold())
         for idx, (uid, counter, level) in enumerate(results, start=1):
-            # Member oder User abrufen, um zu pingen
-            user = ctx.guild.get_member(int(uid)) if ctx.guild else None
-            if not user:
+            user_obj = ctx.guild.get_member(int(uid)) if ctx.guild else None
+            if not user_obj:
                 try:
-                    user = await self.bot.fetch_user(int(uid))
+                    user_obj = await self.bot.fetch_user(int(uid))
                 except:
-                    user = None
-            mention = user.mention if user else f"Unbekannt ({uid})"
+                    user_obj = None
+            mention = user_obj.mention if user_obj else f"Unbekannt ({uid})"
 
             embed.add_field(
                 name=f"{idx}. {mention}",
@@ -108,31 +135,38 @@ class Leveling(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(
-        name="topmf",
-        description="Zeigt die Top 3 Flooder (meiste Nachrichten in den letzten 30 Tagen)"
+        name="topf",
+        description="Zeigt die aktivsten User in den letzten X Tagen (optional, Standard: 30)"
     )
-    async def topmf(self, ctx: commands.Context) -> None:
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        top_users = db_messages.get_top_messages(guild_id, days=30, limit=3)
+    async def topf(
+        self,
+        ctx: commands.Context,
+        days: Optional[int] = 30
+    ) -> None:
+        if days <= 0:
+            await ctx.send("Die Anzahl der Tage muss größer als 0 sein.")
+            return
+
+        guild_id: str = str(ctx.guild.id)
+        top_users = db_messages.get_top_messages(guild_id, days=days, limit=5)
 
         if not top_users:
-            await ctx.send("📊 Es gibt noch keine Nachrichten in den letzten 30 Tagen.")
+            await ctx.send(f"📊 Es gibt noch keine Nachrichten in den letzten {days} Tagen.")
             return
 
         description = ""
-        for index, (user_id, count) in enumerate(top_users, start=1):
-            user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
-            if not user:
+        for idx, (user_id, count) in enumerate(top_users, start=1):
+            user_obj = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            if not user_obj:
                 try:
-                    user = await self.bot.fetch_user(int(user_id))
+                    user_obj = await self.bot.fetch_user(int(user_id))
                 except:
-                    user = None
-            mention = user.mention if user else f"Unbekannt ({user_id})"
-
-            description += f"**#{index}** {mention} – **{count} Nachrichten**\n"
+                    user_obj = None
+            mention = user_obj.mention if user_obj else f"Unbekannt ({user_id})"
+            description += f"**#{idx}** {mention} – **{count} Nachrichten**\n"
 
         embed = discord.Embed(
-            title="💬 Top 3 Monthly Flooder (Letzte 30 Tage)",
+            title=f"💬 Top Flooder der letzten {days} Tage",
             description=description,
             color=discord.Color.purple()
         )

@@ -1,99 +1,121 @@
-from pathlib import Path
-import sqlite3
+# utils/database/connection.py
+import mysql.connector
+from mysql.connector import Error
+from dotenv import load_dotenv
+import os
 
-DB_PATH = Path(__file__).parent.parent / "data" / "activity.db"
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASS = os.getenv("DB_PASS", "")
+DB_NAME = os.getenv("DB_NAME", "activity_db")
+
 
 def get_connection():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    return sqlite3.connect(DB_PATH)
+    """Gibt eine MySQL/MariaDB-Verbindung zurück"""
+    return mysql.connector.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASS,
+        database=DB_NAME,
+        auth_plugin='mysql_native_password'  # manchmal nötig für MariaDB
+    )
+
 
 def setup_database():
+    """Erstellt alle Tabellen, falls sie nicht existieren"""
     conn = get_connection()
-    cur = conn.cursor()
+    cursor = conn.cursor()
 
-    # Tabelle für aktive Nutzer
-    cur.execute("""
+    # aktive Nutzer
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS active_users (
-            guild_id TEXT PRIMARY KEY,
-            max_active INTEGER
+            guild_id VARCHAR(20) PRIMARY KEY,
+            max_active INT NOT NULL
         )
     """)
 
-    # Tabelle für Mitgliederzahlen
-    cur.execute("""
+    # Mitgliederzahlen
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS members (
-            guild_id TEXT PRIMARY KEY,
-            max_members INTEGER
+            guild_id VARCHAR(20) PRIMARY KEY,
+            max_members INT NOT NULL
         )
     """)
 
-    # Tabelle für Befehle
-    cur.execute("""
+    # Befehle
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS commands (
-            guild_id TEXT,
-            command TEXT,
-            uses INTEGER,
+            guild_id VARCHAR(20),
+            command VARCHAR(50),
+            uses INT NOT NULL DEFAULT 0,
             PRIMARY KEY (guild_id, command)
         )
     """)
 
-    # Tabelle für Nachrichten
-    cur.execute("""
+    # Nachrichten
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
-            guild_id TEXT,
-            user_id TEXT,
-            channel_id TEXT,
-            timestamp INTEGER,
+            guild_id VARCHAR(20),
+            user_id VARCHAR(20),
+            channel_id VARCHAR(20),
+            timestamp BIGINT NOT NULL,
             PRIMARY KEY (guild_id, user_id, channel_id, timestamp)
         )
     """)
 
-    # Tabelle für User-Leveling / Counter
-    cur.execute("""
+    # User-Leveling / Counter
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
-            id TEXT PRIMARY KEY,
-            name TEXT,
-            counter INTEGER,
-            level INTEGER
+            id VARCHAR(20) PRIMARY KEY,
+            name VARCHAR(50),
+            counter INT NOT NULL DEFAULT 0,
+            level INT NOT NULL DEFAULT 0
         )
     """)
 
-    # Tabelle für Bumps
-    cur.execute("""
+    # Bumps
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS bumps (
-            guild_id TEXT,
-            user_id TEXT,
-            timestamp TEXT,
+            guild_id VARCHAR(20),
+            user_id VARCHAR(20),
+            timestamp BIGINT NOT NULL,
             PRIMARY KEY (guild_id, user_id, timestamp)
         )
     """)
 
-    # Tabelle für Moderation: Warns / Timeouts / Bans
-    cur.execute("""
+    # Moderation: Warns
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
-            guild_id TEXT,
-            user_id TEXT,
-            reason TEXT,
-            timestamp TEXT
+            guild_id VARCHAR(20),
+            user_id VARCHAR(20),
+            reason VARCHAR(255),
+            timestamp BIGINT NOT NULL
         )
     """)
-    cur.execute("""
+
+    # Moderation: Timeouts
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
-            guild_id TEXT,
-            user_id TEXT,
-            duration_minutes INTEGER,
-            reason TEXT,
-            timestamp TEXT
+            guild_id VARCHAR(20),
+            user_id VARCHAR(20),
+            duration_minutes INT,
+            reason VARCHAR(255),
+            timestamp BIGINT NOT NULL
         )
     """)
-    cur.execute("""
+
+    # Moderation: Bans
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
-            guild_id TEXT,
-            user_id TEXT,
-            reason TEXT,
-            timestamp TEXT
+            guild_id VARCHAR(20),
+            user_id VARCHAR(20),
+            reason VARCHAR(255),
+            timestamp BIGINT NOT NULL
         )
     """)
 
     conn.commit()
+    cursor.close()
     conn.close()

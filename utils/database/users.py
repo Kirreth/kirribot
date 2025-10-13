@@ -2,31 +2,34 @@
 from .connection import get_connection
 
 def set_max_active(guild_id: str, count: int):
-    """Setzt die maximale Anzahl aktiver Nutzer pro Guild."""
-    with get_connection() as conn:
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO active_users (guild_id, max_active)
-            VALUES (?, ?)
-            ON CONFLICT(guild_id)
-            DO UPDATE SET max_active = MAX(max_active, excluded.max_active)
-        """, (guild_id, count))
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO active_users (guild_id, max_active)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE max_active = GREATEST(max_active, VALUES(max_active))
+    """, (guild_id, count))
+    conn.commit()
+    cur.close()
+    conn.close()
 
 def set_max_members(guild_id: str, count: int):
-    """Setzt die maximale Anzahl Mitglieder pro Guild."""
-    with get_connection() as conn:
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO members (guild_id, max_members)
-            VALUES (?, ?)
-            ON CONFLICT(guild_id)
-            DO UPDATE SET max_members = MAX(max_members, excluded.max_members)
-        """, (guild_id, count))
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO members (guild_id, max_members)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE max_members = GREATEST(max_members, VALUES(max_members))
+    """, (guild_id, count))
+    conn.commit()
+    cur.close()
+    conn.close()
 
 def get_max_members(guild_id: str):
-    """Liefert die maximale Mitgliederanzahl einer Guild zurück, falls vorhanden."""
-    with get_connection() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT max_members FROM members WHERE guild_id = ?", (guild_id,))
-        result = cur.fetchone()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT max_members FROM members WHERE guild_id = %s", (guild_id,))
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
     return result[0] if result else None
