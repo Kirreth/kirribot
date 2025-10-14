@@ -28,8 +28,14 @@ class Bumps(commands.Cog):
 
             user_id: str = str(bumper.id)
             guild_id: str = str(message.guild.id) if message.guild else "0"
+            
+            # 1. Logge den einzelnen Bump-Eintrag (für Zeitstempel/Monatsstatistik)
             db_bumps.log_bump(user_id, guild_id, datetime.utcnow())
-            print(f"✅ Bump von {bumper} gespeichert")
+            
+            # 2. NEU: Aktualisiere die Gesamtanzahl in der Zählertabelle
+            db_bumps.increment_total_bumps(user_id, guild_id) 
+            
+            print(f"✅ Bump von {bumper} gespeichert und Gesamtanzahl aktualisiert")
 
 # ------------------------------------------------------------
 # Top Bumper
@@ -40,6 +46,7 @@ class Bumps(commands.Cog):
         description="Zeigt die Top 3 mit den meisten Bumps insgesamt"
     )
     async def topb(self, ctx: commands.Context) -> None:
+        # get_bump_top(..., days=None) wird nun die Zählertabelle in db_bumps verwenden
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
 
@@ -76,6 +83,7 @@ class Bumps(commands.Cog):
         description="Zeigt die Top 3 mit den meisten Bumps in den letzten 30 Tagen"
     )
     async def topmb(self, ctx: commands.Context) -> None:
+        # get_bump_top(..., days=30) verwendet weiterhin die Log-Tabelle
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
 
