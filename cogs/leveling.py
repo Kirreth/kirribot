@@ -73,9 +73,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     width, height = 800, 200
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
 
-# ------------------------------------------------------------
-# Hintergrundbild laden
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Hintergrundbild laden
+    # ------------------------------------------------------------
     try:
         images_dir = get_base_path("images")
         all_files = [f for f in os.listdir(images_dir) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
@@ -92,9 +92,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
         fallback = Image.new("RGBA", (width, height), (10, 10, 10, 255))
         img = Image.alpha_composite(img, fallback)
 
- # ------------------------------------------------------------
-# Overlay nach Level
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Overlay nach Level
+    # ------------------------------------------------------------
     if level <= 5:
         overlay_color = (0, 0, 0, 100)          # Dunkel / neutral
     elif level <= 10:
@@ -107,9 +107,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     overlay = Image.new("RGBA", (width, height), overlay_color)
     img = Image.alpha_composite(img, overlay)
 
-# ------------------------------------------------------------
-# Avatar rund einfügen
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Avatar rund einfügen
+    # ------------------------------------------------------------
     try:
         avatar_size = (150, 150)
         asset = member.display_avatar.with_format("png").with_size(256)
@@ -123,9 +123,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     except Exception as e:
         print(f"⚠️ Avatar konnte nicht geladen werden: {e}")
 
-# ------------------------------------------------------------
-# Text und Fortschritstsbalken
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Text und Fortschrittsbalken
+    # ------------------------------------------------------------
     draw = ImageDraw.Draw(img)
     fill_color = "#FFFFFF"
 
@@ -133,9 +133,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     draw.text((400, 30), f"Rank: {rank}", fill=fill_color, font=font_main)
     draw.text((600, 30), f"XP: {counter}", fill=fill_color, font=font_main)
 
-# ------------------------------------------------------------
-# Fortschrittsbalken
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Fortschrittsbalken
+    # ------------------------------------------------------------
     bar_x, bar_y = 200, 120
     bar_width = 550
     bar_height = 25
@@ -146,19 +146,13 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     for i in range(0, bar_width, 15):
         draw.line([(bar_x + i, bar_y), (bar_x + i, bar_y + bar_height)], fill=(17, 17, 17, 255), width=1)
 
-    #draw.text((bar_x, bar_y + 35), f"Noch {xp_left} Nachrichten bis Level {level + 1}", fill=fill_color, font=font_small)
-
-# ------------------------------------------------------------
-# Ausgabe vorbereiten
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Ausgabe vorbereiten
+    # ------------------------------------------------------------
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
     return buf
-
-
-
-
 
 # ------------------------------------------------------------
 # Cog-Klasse für das Levelsystem
@@ -182,28 +176,46 @@ class Leveling(commands.Cog):
 
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter FROM user WHERE id=%s", (uid,))
+        cursor.execute("SELECT counter, level FROM user WHERE id=%s", (uid,))
         result = cursor.fetchone()
 
-        counter = 1 if result is None else result[0] + 1
-        level = berechne_level(counter)
+        old_level = 0
+        if result is None:
+            counter = 1
+        else:
+            counter = result[0] + 1
+            old_level = result[1]
 
+        new_level = berechne_level(counter)
+
+        # Datenbank aktualisieren
         if result is None:
             cursor.execute(
                 "INSERT INTO user (id, name, counter, level) VALUES (%s, %s, %s, %s)",
-                (uid, uname, counter, level),
+                (uid, uname, counter, new_level),
             )
         else:
             cursor.execute(
                 "UPDATE user SET counter=%s, level=%s WHERE id=%s",
-                (counter, level, uid),
+                (counter, new_level, uid),
             )
 
         conn.commit()
         cursor.close()
         conn.close()
 
-    @commands.hybrid_command(name="rank", description="Zeigt das Profil des Users im Matrix-Style")
+        # 🎉 Wenn ein neues Level erreicht wurde, reagiere auf die Nachricht
+        if new_level > old_level:
+            try:
+                await message.add_reaction("➕")  # kannst du später ändern z. B. zu "🎉" oder "🆙"
+            except Exception as e:
+                print(f"⚠️ Konnte Reaktion nicht hinzufügen: {e}")
+
+# ------------------------------------------------------------
+# Rank Befehl
+# ------------------------------------------------------------
+
+    @commands.hybrid_command(name="rank", description="Zeigt das Level-Profil eines Users an")
     async def rank(self, ctx: Context[commands.Bot], user: Optional[Union[discord.User, discord.Member]] = None):
         """Zeigt das Level-Profil eines Users."""
         user = user or ctx.author
@@ -227,7 +239,9 @@ class Leveling(commands.Cog):
         level = berechne_level(counter)
         progress_percent, xp_rest = berechne_fortschritt(counter, level)
 
-        # Rang berechnen
+# ------------------------------------------------------------
+#  Rang berechnen
+# ------------------------------------------------------------
         cursor.execute("SELECT COUNT(*) + 1 FROM user WHERE counter > %s", (counter,))
         rank_res = cursor.fetchone()
         rank = rank_res[0] if rank_res else 1
