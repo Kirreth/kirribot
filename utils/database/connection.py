@@ -156,6 +156,17 @@ def setup_database():
         )
     """)
 
+# ------------------------------------------------------------
+# Geburtstags-Channel
+# ------------------------------------------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS birthday_settings (
+            guild_id VARCHAR(50) PRIMARY KEY,
+            channel_id VARCHAR(50) NOT NULL
+        )
+    """)
+
+
     conn.commit()
     cursor.close()
     conn.close()
