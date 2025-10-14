@@ -73,7 +73,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     width, height = 800, 200
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
 
-    # Hintergrundbild laden
+# ------------------------------------------------------------
+# Hintergrundbild laden
+# ------------------------------------------------------------
     try:
         images_dir = get_base_path("images")
         all_files = [f for f in os.listdir(images_dir) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
@@ -90,7 +92,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
         fallback = Image.new("RGBA", (width, height), (10, 10, 10, 255))
         img = Image.alpha_composite(img, fallback)
 
-    # 🎨 Overlay-Farbe abhängig vom Level
+ # ------------------------------------------------------------
+# Overlay nach Level
+# ------------------------------------------------------------
     if level <= 5:
         overlay_color = (0, 0, 0, 100)          # Dunkel / neutral
     elif level <= 10:
@@ -103,7 +107,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     overlay = Image.new("RGBA", (width, height), overlay_color)
     img = Image.alpha_composite(img, overlay)
 
-    # Avatar einfügen (rund)
+# ------------------------------------------------------------
+# Avatar rund einfügen
+# ------------------------------------------------------------
     try:
         avatar_size = (150, 150)
         asset = member.display_avatar.with_format("png").with_size(256)
@@ -117,7 +123,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     except Exception as e:
         print(f"⚠️ Avatar konnte nicht geladen werden: {e}")
 
-    # Text + Fortschrittsbalken
+# ------------------------------------------------------------
+# Text und Fortschritstsbalken
+# ------------------------------------------------------------
     draw = ImageDraw.Draw(img)
     fill_color = "#FFFFFF"
 
@@ -125,7 +133,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     draw.text((400, 30), f"Rank: {rank}", fill=fill_color, font=font_main)
     draw.text((600, 30), f"XP: {counter}", fill=fill_color, font=font_main)
 
-    # Fortschrittsbalken
+# ------------------------------------------------------------
+# Fortschrittsbalken
+# ------------------------------------------------------------
     bar_x, bar_y = 200, 120
     bar_width = 550
     bar_height = 25
@@ -138,7 +148,9 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
 
     #draw.text((bar_x, bar_y + 35), f"Noch {xp_left} Nachrichten bis Level {level + 1}", fill=fill_color, font=font_small)
 
-    # Ausgabe vorbereiten
+# ------------------------------------------------------------
+# Ausgabe vorbereiten
+# ------------------------------------------------------------
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)

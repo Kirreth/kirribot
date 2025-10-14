@@ -1,6 +1,10 @@
 # utils/database/leveling.py
 import math
 
+# ------------------------------------------------------------
+# Levelsystem Funktionen
+# ------------------------------------------------------------
+
 def berechne_level(counter: int) -> int:
     """
     Berechnet das Level anhand der Gesamtzahl der Nachrichten.

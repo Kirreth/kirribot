@@ -1,6 +1,9 @@
 # utils/database/moderation.py
 from .connection import get_connection
 import time
+# ------------------------------------------------------------
+# User-Warns hinzufügen
+# ------------------------------------------------------------
 
 def add_warn(user_id: str, guild_id: str, reason: str):
     conn = get_connection()
@@ -12,6 +15,10 @@ def add_warn(user_id: str, guild_id: str, reason: str):
     conn.commit()
     cur.close()
     conn.close()
+
+# ------------------------------------------------------------
+# User-Warns abrufen
+# ------------------------------------------------------------
 
 def get_warns(user_id: str, guild_id: str, within_hours: int = 24):
     cutoff = int(time.time()) - within_hours * 3600
@@ -26,6 +33,10 @@ def get_warns(user_id: str, guild_id: str, within_hours: int = 24):
     conn.close()
     return results
 
+# ------------------------------------------------------------
+# User-Timeouts hinzufügen
+# ------------------------------------------------------------
+
 def add_timeout(user_id: str, guild_id: str, minutes: int, reason: str):
     conn = get_connection()
     cur = conn.cursor()
@@ -36,6 +47,10 @@ def add_timeout(user_id: str, guild_id: str, minutes: int, reason: str):
     conn.commit()
     cur.close()
     conn.close()
+
+# ------------------------------------------------------------
+# User Bann hinzufügen
+# ------------------------------------------------------------
 
 def add_ban(user_id: str, guild_id: str, reason: str):
     conn = get_connection()

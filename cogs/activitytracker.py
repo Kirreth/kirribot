@@ -44,6 +44,10 @@ class ActivityTracker(commands.Cog):
         if interaction.channel:
             db_messages.log_channel_activity(str(interaction.channel.id), guild_id)
 
+# ------------------------------------------------------------
+# Topcommands
+# ------------------------------------------------------------
+
     @commands.hybrid_command(name="topcommands", description="Zeigt die am häufigsten genutzten Befehle")
     async def topcommands(self, ctx: Context[commands.Bot], limit: Optional[int] = 5) -> None:
         guild_id = str(ctx.guild.id) if ctx.guild else "DM"
@@ -55,6 +59,10 @@ class ActivityTracker(commands.Cog):
         for idx, (cmd, uses) in enumerate(results, start=1):
             embed.add_field(name=f"{idx}. {cmd}", value=f"✅ {uses} Aufrufe", inline=False)
         await ctx.send(embed=embed)
+
+# ------------------------------------------------------------
+# Userrekord
+# ------------------------------------------------------------
 
     @commands.hybrid_command(name="mr", description="Zeigt den Rekord der meisten Mitglieder")
     async def mr(self, ctx: Context[commands.Bot]):

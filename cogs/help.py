@@ -8,6 +8,10 @@ class Help(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+# ------------------------------------------------------------
+# Help Befehle
+# ------------------------------------------------------------
+
     @commands.hybrid_command(
         name="help",
         description="Zeigt alle Kategorien oder die Befehle einer Kategorie an."

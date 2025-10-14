@@ -8,6 +8,10 @@ class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
+# ------------------------------------------------------------
+# Clear Befehl
+# ------------------------------------------------------------
+
     @commands.hybrid_command(name="clear", description="Löscht Nachrichten im Channel")
     @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx: commands.Context, anzahl: int) -> None:
@@ -46,6 +50,10 @@ class Moderation(commands.Cog):
         else:
             await ctx.send(msg, delete_after=5)
 
+# ------------------------------------------------------------
+# User muten
+# ------------------------------------------------------------
+
     @commands.hybrid_command(name="mute", description="Setzt einen Benutzer auf Timeout")
     @commands.has_permissions(moderate_members=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, minuten: int, *, reason: str) -> None:
@@ -67,6 +75,10 @@ class Moderation(commands.Cog):
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu muten.", ephemeral=True)
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Muten: {e}", ephemeral=True)
+
+# ------------------------------------------------------------
+# User verwarnen
+# ------------------------------------------------------------
 
     @commands.hybrid_command(name="warn", description="Verwarnt einen Benutzer")
     @commands.has_permissions(moderate_members=True)
@@ -98,6 +110,10 @@ class Moderation(commands.Cog):
             except discord.HTTPException as e:
                 await ctx.send(f"⚠️ Fehler beim automatischen Timeout: {e}", ephemeral=True)
 
+# ------------------------------------------------------------
+# Verwarnungen des Users anzeigen
+# ------------------------------------------------------------
+
         @commands.hybrid_command(name="warns", description="Zeigt die Warnungen eines Benutzers an")
         @commands.has_permissions(moderate_members=True)
         async def warns(self, ctx: commands.Context, member: discord.Member) -> None:
@@ -123,6 +139,10 @@ class Moderation(commands.Cog):
             )
             await ctx.send(embed=embed)
 
+# ------------------------------------------------------------
+# Verwarnungen des Users löschen
+# ------------------------------------------------------------
+
         @commands.hybrid_command(name="clearwarns", description="Löscht alle Warnungen eines Benutzers")
         @commands.has_permissions(moderate_members=True)
         async def clearwarns(self, ctx: commands.Context, member: discord.Member) -> None:
@@ -133,6 +153,10 @@ class Moderation(commands.Cog):
 
             db_mod.clear_warns(str(member.id), str(guild.id))
             await ctx.send(f"🧹 Alle Warnungen für {member.mention} wurden gelöscht.")
+
+# ------------------------------------------------------------
+# User bannen
+# ------------------------------------------------------------
 
     @commands.hybrid_command(name="ban", description="Bannt einen Benutzer")
     @commands.has_permissions(ban_members=True)
@@ -154,6 +178,10 @@ class Moderation(commands.Cog):
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu bannen.", ephemeral=True)
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Bannen: {e}", ephemeral=True)
+
+# ------------------------------------------------------------
+# User entbannen
+# ------------------------------------------------------------
 
     @commands.hybrid_command(name="unban", description="Entbannt einen Benutzer")
     @commands.has_permissions(ban_members=True) 

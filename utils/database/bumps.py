@@ -3,6 +3,10 @@ from .connection import get_connection
 from datetime import datetime
 from typing import Optional, List, Tuple
 
+# ------------------------------------------------------------
+# Bumps speichern
+# ------------------------------------------------------------
+
 def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
     conn = get_connection()
     cur = conn.cursor()
@@ -12,6 +16,10 @@ def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
     conn.commit()
     cur.close()
     conn.close()
+
+# ------------------------------------------------------------
+# Top Bumper abrufen
+# ------------------------------------------------------------
 
 def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> List[Tuple[str, int]]:
     conn = get_connection()

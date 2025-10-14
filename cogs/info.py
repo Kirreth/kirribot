@@ -10,6 +10,10 @@ class Info(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
+# ------------------------------------------------------------
+# Info über User
+# ------------------------------------------------------------
+
     @commands.hybrid_command(
         name="userinfo",
         description="Zeigt Infos über einen Benutzer"
@@ -26,7 +30,10 @@ class Info(commands.Cog):
         if user.joined_at:
             embed.add_field(name="Beigetreten", value=user.joined_at.strftime("%d.%m.%Y %H:%M:%S"), inline=False)
 
-        # Rollen
+# ------------------------------------------------------------
+# Rollen des Users
+# ------------------------------------------------------------
+
         roles: list[str] = []
         if ctx.guild:
             default_role = getattr(ctx.guild, "default_role", None)
@@ -34,7 +41,10 @@ class Info(commands.Cog):
 
         embed.add_field(name="Rollen", value=", ".join(roles) if roles else "Keine Rollen", inline=False)
 
-        # Leveling-Daten
+# ------------------------------------------------------------
+# Level des Users
+# ------------------------------------------------------------
+
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT counter, level FROM user WHERE id = %s", (str(user.id),))
@@ -47,6 +57,10 @@ class Info(commands.Cog):
             embed.add_field(name="Level", value=f"🆙 Level {level}", inline=True)
 
         await ctx.send(embed=embed)
+
+# ------------------------------------------------------------
+# Rekord gleichzeitig aktive User
+# ------------------------------------------------------------
 
     @commands.hybrid_command(
         name="aur",
@@ -64,7 +78,6 @@ class Info(commands.Cog):
             await ctx.send("📊 Es wurden bisher keine aktiven User gezählt.")
             return
 
-        # Timestamp (falls gespeichert)
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT timestamp FROM max_active WHERE guild_id=?", (guild_id,))

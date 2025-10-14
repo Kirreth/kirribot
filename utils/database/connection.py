@@ -28,7 +28,10 @@ def setup_database():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # aktive Nutzer
+# ------------------------------------------------------------
+# Aktive User
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS active_users (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -36,7 +39,10 @@ def setup_database():
         )
     """)
 
-    # Mitgliederzahlen
+# ------------------------------------------------------------
+# Mitgliederrekord
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS members (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -44,7 +50,11 @@ def setup_database():
         )
     """)
 
-    # Befehle
+
+# ------------------------------------------------------------
+# Commands loggen
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS commands (
             guild_id VARCHAR(20),
@@ -54,7 +64,10 @@ def setup_database():
         )
     """)
 
-    # Nachrichten
+# ------------------------------------------------------------
+# Nachrichten loggen
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             guild_id VARCHAR(20),
@@ -65,7 +78,10 @@ def setup_database():
         )
     """)
 
-    # User-Leveling / Counter
+# ------------------------------------------------------------
+# Levelsystem
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
             id VARCHAR(20) PRIMARY KEY,
@@ -75,7 +91,10 @@ def setup_database():
         )
     """)
 
-    # Bumps
+# ------------------------------------------------------------
+# Bumper loggen
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bumps (
             guild_id VARCHAR(20),
@@ -85,7 +104,10 @@ def setup_database():
         )
     """)
 
-    # Moderation: Warns
+# ------------------------------------------------------------
+# Moderation: Warns
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
             guild_id VARCHAR(20),
@@ -95,7 +117,10 @@ def setup_database():
         )
     """)
 
-    # Moderation: Timeouts
+# ------------------------------------------------------------
+# Moderation: Timeouts
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
             guild_id VARCHAR(20),
@@ -106,7 +131,10 @@ def setup_database():
         )
     """)
 
-    # Moderation: Bans
+# ------------------------------------------------------------
+# Moderation: Bans
+# ------------------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
             guild_id VARCHAR(20),

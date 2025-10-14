@@ -1,6 +1,10 @@
 # utils/database/users.py
 from .connection import get_connection
 
+# ------------------------------------------------------------
+# Maximale aktive Nutzer setzen
+# ------------------------------------------------------------
+
 def set_max_active(guild_id: str, count: int):
     conn = get_connection()
     cur = conn.cursor()
@@ -13,6 +17,10 @@ def set_max_active(guild_id: str, count: int):
     cur.close()
     conn.close()
 
+# ------------------------------------------------------------
+# Maximale Nutzer setzen
+# ------------------------------------------------------------
+
 def set_max_members(guild_id: str, count: int):
     conn = get_connection()
     cur = conn.cursor()
@@ -24,6 +32,10 @@ def set_max_members(guild_id: str, count: int):
     conn.commit()
     cur.close()
     conn.close()
+
+# ------------------------------------------------------------
+# Maximale aktive Nutzer abrufen
+# ------------------------------------------------------------
 
 def get_max_members(guild_id: str):
     conn = get_connection()

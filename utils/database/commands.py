@@ -1,6 +1,10 @@
 # utils/database/commands.py
 from .connection import get_connection
 
+# ------------------------------------------------------------
+# Commands loggen
+# ------------------------------------------------------------
+
 def log_command_usage(command: str, guild_id: str):
     conn = get_connection()
     cur = conn.cursor()
@@ -12,6 +16,10 @@ def log_command_usage(command: str, guild_id: str):
     conn.commit()
     cur.close()
     conn.close()
+
+# ------------------------------------------------------------
+# Top Commands abrufen
+# ------------------------------------------------------------
 
 def get_top_commands(guild_id: str, limit: int):
     conn = get_connection()

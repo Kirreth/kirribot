@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from dotenv import load_dotenv
 
-# Lädt die .env Datei
+
 load_dotenv()
 
 class MessageLogger(commands.Cog):
@@ -14,12 +14,14 @@ class MessageLogger(commands.Cog):
         self.log_channel_id = int(os.getenv("LOG_CHANNEL_ID", 0))
 
     def get_log_channel(self, guild: discord.Guild):
-        """Hilfsfunktion, um den Log-Channel zu holen"""
         return guild.get_channel(self.log_channel_id)
+
+# ------------------------------------------------------------
+# Bearbeitete Nachrichten prüfen
+# ------------------------------------------------------------
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        """Wird ausgelöst, wenn eine Nachricht bearbeitet wurde"""
         if before.author.bot:
             return  # Bots ignorieren
 
@@ -42,9 +44,12 @@ class MessageLogger(commands.Cog):
 
         await log_channel.send(embed=embed)
 
+# ------------------------------------------------------------
+# Gelöschte Nachrichten prüfen
+# ------------------------------------------------------------
+
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
-        """Wird ausgelöst, wenn eine Nachricht gelöscht wurde"""
         if message.author.bot:
             return
 

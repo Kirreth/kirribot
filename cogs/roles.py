@@ -6,10 +6,13 @@ from utils import database as db
 from typing import Optional
 
 class Roles(commands.Cog):
-    """Cog für Rollenverwaltung, aktuell nur Bumper-Rolle."""
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+
+# ------------------------------------------------------------
+# Bumper Rolle setzen
+# ------------------------------------------------------------
 
     @commands.hybrid_command(
         name="setbumber", 
@@ -26,6 +29,10 @@ class Roles(commands.Cog):
             await ctx.send(f"✅ Die Bumper-Rolle wurde auf {role.mention} gesetzt.")
         else:
             await ctx.send("✅ Die Bumper-Rolle wurde entfernt.")
+
+# ------------------------------------------------------------
+# Bumper Rolle entfernen
+# ------------------------------------------------------------
 
     @commands.hybrid_command(
         name="delbumber", 

@@ -2,6 +2,10 @@
 from .connection import get_connection
 import time
 
+# ------------------------------------------------------------
+# Channel loggen
+# ------------------------------------------------------------
+
 def log_channel_activity(channel_id: str, guild_id: str, user_id: str = "system"):
     timestamp = int(time.time())
     conn = get_connection()
@@ -14,6 +18,10 @@ def log_channel_activity(channel_id: str, guild_id: str, user_id: str = "system"
     cur.close()
     conn.close()
 
+# ------------------------------------------------------------
+# Nachrichten loggen
+# ------------------------------------------------------------
+
 def log_message(guild_id: str, user_id: str, channel_id: str):
     timestamp = int(time.time())
     conn = get_connection()
@@ -25,6 +33,10 @@ def log_message(guild_id: str, user_id: str, channel_id: str):
     conn.commit()
     cur.close()
     conn.close()
+
+# ------------------------------------------------------------
+# Top Channels
+# ------------------------------------------------------------
 
 def get_top_channels(guild_id: str, days: int = 30, limit: int = 5):
     cutoff = int(time.time()) - (days * 86400)

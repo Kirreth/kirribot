@@ -11,6 +11,10 @@ class Bumps(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+# ------------------------------------------------------------
+# Bump registrieren
+# ------------------------------------------------------------
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
         if message.author.id != DISBOARD_ID:
@@ -26,6 +30,10 @@ class Bumps(commands.Cog):
             guild_id: str = str(message.guild.id) if message.guild else "0"
             db_bumps.log_bump(user_id, guild_id, datetime.utcnow())
             print(f"✅ Bump von {bumper} gespeichert")
+
+# ------------------------------------------------------------
+# Top Bumper
+# ------------------------------------------------------------
 
     @commands.hybrid_command(
         name="topb",
@@ -58,6 +66,10 @@ class Bumps(commands.Cog):
             color=discord.Color.gold()
         )
         await ctx.send(embed=embed)
+
+# ------------------------------------------------------------
+# Top monatliche Bumper
+# ------------------------------------------------------------
 
     @commands.hybrid_command(
         name="topmb",

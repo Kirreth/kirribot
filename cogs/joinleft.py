@@ -7,11 +7,14 @@ WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", 0))
 class WelcomeLeave(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.invites = {}  # Stores invites per guild
+        self.invites = {}
+
+# ------------------------------------------------------------
+# Member Join/Leave mit Invite-Tracking
+# ------------------------------------------------------------
 
     @commands.Cog.listener()
     async def on_ready(self):
-        # Alle Einladungen pro Guild beim Start speichern
         for guild in self.bot.guilds:
             self.invites[guild.id] = await guild.invites()
         print("✅ WelcomeLeave Cog bereit!")
@@ -24,7 +27,10 @@ class WelcomeLeave(commands.Cog):
         if not channel:
             return  # Kein Channel gesetzt oder falsche ID
 
-        # Neue Einladungen abrufen und vergleichen
+# ------------------------------------------------------------
+# Neue Einladungen prüfen
+# ------------------------------------------------------------
+
         new_invites = await guild.invites()
         used_invite = None
         for invite in new_invites:
@@ -33,7 +39,7 @@ class WelcomeLeave(commands.Cog):
                     used_invite = invite
                     break
 
-        self.invites[guild.id] = new_invites  # Update invites
+        self.invites[guild.id] = new_invites 
 
         embed = discord.Embed(
             title="👋 Neuer Server-Mitglied",
@@ -49,6 +55,10 @@ class WelcomeLeave(commands.Cog):
         embed.set_footer(text=f"ID: {member.id}")
 
         await channel.send(embed=embed)
+
+# ------------------------------------------------------------
+# Server verlassen loggen
+# ------------------------------------------------------------
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
