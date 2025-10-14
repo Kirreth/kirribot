@@ -144,6 +144,18 @@ def setup_database():
         )
     """)
 
+# ------------------------------------------------------------
+# Geburtstage
+# ------------------------------------------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOt EXISTS birthdays (
+            user_id VARCHAR(50) PRIMARY KEY,
+            guild_id VARCHAR(50),
+            birthday DATE NOT NULL,
+            last_congratulated DATE
+        )
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
