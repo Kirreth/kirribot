@@ -167,6 +167,14 @@ def setup_database():
     """)
 
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS max_active (
+            guild_id BIGINT PRIMARY KEY,
+            timestamp DATETIME
+        )
+    """)
+
+
     conn.commit()
     cursor.close()
     conn.close()

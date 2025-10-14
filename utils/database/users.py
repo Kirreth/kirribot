@@ -37,11 +37,11 @@ def set_max_members(guild_id: str, count: int):
 # Maximale aktive Nutzer abrufen
 # ------------------------------------------------------------
 
-def get_max_members(guild_id: str):
+def get_max_active(guild_id: str):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT max_members FROM members WHERE guild_id = %s", (guild_id,))
     result = cur.fetchone()
     cur.close()
     conn.close()
-    return result[0] if result else None
+    return result[0] if result else "0"

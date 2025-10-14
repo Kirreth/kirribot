@@ -80,7 +80,7 @@ class Info(commands.Cog):
 
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT timestamp FROM max_active WHERE guild_id=?", (guild_id,))
+        cursor.execute("SELECT timestamp FROM max_active WHERE guild_id=%s", (guild_id,))
         row = cursor.fetchone()
         conn.close()
 
