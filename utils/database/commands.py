@@ -34,3 +34,5 @@ def get_top_commands(guild_id: str, limit: int):
     cur.close()
     conn.close()
     return results
+
+
