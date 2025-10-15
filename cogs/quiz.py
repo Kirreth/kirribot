@@ -98,7 +98,7 @@ class Quiz(commands.Cog):
         )
 
     # ------------------------------------------------------------
-    # /quiz – Starte das IT-Quiz (Unverändert, war bereits Hybrid)
+    # /quiz – Starte das IT-Quiz
     # ------------------------------------------------------------
     @commands.hybrid_command(name="quiz", description="Starte ein IT-Quiz mit 10 Fragen!")
     async def start_quiz(self, ctx: commands.Context):
