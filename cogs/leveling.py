@@ -218,6 +218,7 @@ class Leveling(commands.Cog):
     @commands.hybrid_command(name="rank", description="Zeigt das Level-Profil eines Users an")
     async def rank(self, ctx: Context[commands.Bot], user: Optional[Union[discord.User, discord.Member]] = None):
         """Zeigt das Level-Profil eines Users."""
+        await ctx.defer()
         user = user or ctx.author
         uid = str(user.id)
 
