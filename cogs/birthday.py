@@ -28,7 +28,7 @@ class Birthday(commands.Cog):
             return
 
         db_birthday.set_birthday(str(ctx.author.id), str(ctx.guild.id), parsed_date)
-        await ctx.send(f"🎂 Dein Geburtstag wurde gespeichert: **{parsed_date.strftime('%d.%m.%Y')}**")
+        await ctx.send(f"🎂 Dein Geburtstag wurde gespeichert: **{parsed_date.strftime('%d.%m.%Y')}**", ephemeral=True)
 
     # ------------------------------------------------------------
     # Command: Channel für Geburtstage setzen
@@ -41,7 +41,7 @@ class Birthday(commands.Cog):
             channel = ctx.channel
 
         db_birthday.set_birthday_channel(str(ctx.guild.id), str(channel.id))
-        await ctx.send(f"✅ Geburtstagsnachrichten werden nun in {channel.mention} gepostet.")
+        await ctx.send(f"✅ Geburtstagsnachrichten werden nun in {channel.mention} gepostet.", ephemeral=True)
 
     # ------------------------------------------------------------
     # Hintergrund-Task: Geburtstage prüfen
