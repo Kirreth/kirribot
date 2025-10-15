@@ -127,7 +127,7 @@ class Quiz(commands.Cog):
         result_text = f"Du hast **{score}/10** Fragen richtig beantwortet!"
 
         if score >= 8:
-            role_name = "Code-Champion"
+            role_name = "Coder"
             role = discord.utils.get(ctx.guild.roles, name=role_name)
 
             if not role:
