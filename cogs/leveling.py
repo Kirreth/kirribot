@@ -197,7 +197,7 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     return buf
 
 # ------------------------------------------------------------
-# Cog-Klasse für das Levelsystem (Unverändert)
+# Cog-Klasse für das Levelsystem 
 # ------------------------------------------------------------
 
 class Leveling(commands.Cog):
@@ -250,7 +250,7 @@ class Leveling(commands.Cog):
                 print(f"⚠️ Konnte Reaktion nicht hinzufügen: {e}")
 
 # ------------------------------------------------------------
-# Rank Befehl (Unverändert)
+# Rank Befehl
 # ------------------------------------------------------------
 
     @commands.hybrid_command(name="rank", description="Zeigt das Level-Profil eines Users an")
@@ -279,7 +279,7 @@ class Leveling(commands.Cog):
         progress_percent, xp_current_in_level, xp_needed_for_level_up = berechne_fortschritt(counter, level)
 
 # ------------------------------------------------------------
-#  Rang berechnen (Unverändert)
+#  Rang berechnen 
 # ------------------------------------------------------------
         cursor.execute("SELECT COUNT(*) + 1 FROM user WHERE counter > %s", (counter,))
         rank_res = cursor.fetchone()
@@ -292,7 +292,7 @@ class Leveling(commands.Cog):
         await ctx.send(file=discord.File(image_stream, filename=f"rank_card_{user.name}.png"))
 
 # ------------------------------------------------------------
-# Cog Setup (Unverändert)
+# Cog Setup 
 # ------------------------------------------------------------
 
 async def setup(bot: commands.Bot):
