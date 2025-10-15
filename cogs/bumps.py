@@ -15,7 +15,7 @@ class Bumps(commands.Cog):
         self.bot = bot
 
 # ------------------------------------------------------------
-# Bump registrieren (Unverändert)
+# Bump registrieren
 # ------------------------------------------------------------
 
     @commands.Cog.listener()
@@ -53,7 +53,7 @@ class Bumps(commands.Cog):
             print(f"✅ Bump von {bumper} gespeichert und Cooldown-Zeit aktualisiert")
 
 # ------------------------------------------------------------
-# Nächster Bump Befehl (/nextbump) - IST bereits ein Hybrid Command
+# Nächster Bump Befehl (/nextbump)
 # ------------------------------------------------------------
 
     @commands.hybrid_command(
@@ -122,7 +122,6 @@ class Bumps(commands.Cog):
     )
     async def topb(self, ctx: commands.Context) -> None:
         await ctx.defer()
-        # Code unverändert...
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
 
@@ -159,7 +158,6 @@ class Bumps(commands.Cog):
     )
     async def topmb(self, ctx: commands.Context) -> None:
         await ctx.defer()
-        # Code unverändert...
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
 
