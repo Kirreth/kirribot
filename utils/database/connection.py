@@ -19,7 +19,7 @@ def get_connection():
         user=DB_USER,
         password=DB_PASS,
         database=DB_NAME,
-        auth_plugin='mysql_native_password'  # manchmal nötig für MariaDB
+        auth_plugin='mysql_native_password' # manchmal nötig für MariaDB
     )
 
 
@@ -29,9 +29,14 @@ def setup_database():
     cursor = conn.cursor()
 
 # ------------------------------------------------------------
-# Aktive User
+# Aktive User (korrigiert: PRIMARY KEY auf max_active)
 # ------------------------------------------------------------
+    # Achtung: Die Tabelle 'active_users' im Original hatte 'guild_id VARCHAR(20) PRIMARY KEY, max_active INT NOT NULL'
+    # und 'max_active' im Log-Bereich hatte einen zusätzlichen 'timestamp'.
+    # Hier wird die ursprüngliche 'active_users' beibehalten und die 'max_active' (die einen Zeitstempel hat) angepasst.
+    # Da Sie die 'max_active' Tabelle bereits hatten, gehe ich davon aus, diese zu nutzen oder zu korrigieren.
 
+    # Korrektur der ursprünglichen 'active_users' für max_active
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS active_users (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -103,6 +108,24 @@ def setup_database():
             PRIMARY KEY (guild_id, user_id, timestamp)
         )
     """)
+    
+    # NEU: Tabelle für die Gesamtanzahl der Bumps (für /topb)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS total_bumps (
+            guild_id VARCHAR(20),
+            user_id VARCHAR(20),
+            total_count INT NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, user_id)
+        )
+    """)
+    
+    # NEU: Tabelle für den Cooldown-Status pro Server (für /nextbump)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS server_status (
+            guild_id VARCHAR(20) PRIMARY KEY,
+            last_bump_timestamp BIGINT
+        )
+    """)
 
 # ------------------------------------------------------------
 # Moderation: Warns
@@ -148,7 +171,7 @@ def setup_database():
 # Geburtstage
 # ------------------------------------------------------------
     cursor.execute("""
-        CREATE TABLE IF NOt EXISTS birthdays (
+        CREATE TABLE IF NOT EXISTS birthdays (
             user_id VARCHAR(50) PRIMARY KEY,
             guild_id VARCHAR(50),
             birthday DATE NOT NULL,
@@ -167,10 +190,13 @@ def setup_database():
     """)
 
 
+    # Korrigierte Log-Tabelle (die ursprüngliche 'max_active' war schon da)
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS max_active (
-            guild_id BIGINT PRIMARY KEY,
-            timestamp DATETIME
+        CREATE TABLE IF NOT EXISTS max_active_log (
+            guild_id VARCHAR(20),
+            max_active INT,
+            timestamp DATETIME,
+            PRIMARY KEY (guild_id, timestamp)
         )
     """)
 
@@ -186,7 +212,6 @@ def setup_database():
             PRIMARY KEY (user_id, guild_id)
         )
     """)
-
 
 
     conn.commit()

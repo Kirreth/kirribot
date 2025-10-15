@@ -1,15 +1,17 @@
 # utils/database/bumps.py
 from .connection import get_connection
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Tuple
 
 # ------------------------------------------------------------
-# Bumps speichern
+# Bumps speichern (Unverändert)
 # ------------------------------------------------------------
 
 def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
     conn = get_connection()
     cur = conn.cursor()
+    # Wichtig: Speichern Sie den Timestamp immer in UTC (wie in cogs/bumps.py)
+    # Python's datetime.timestamp() ist standardmäßig POSIX-Timestamp
     cur.execute("""
         INSERT INTO bumps (guild_id, user_id, timestamp) VALUES (%s, %s, %s)
     """, (guild_id, user_id, int(timestamp.timestamp())))
@@ -18,7 +20,7 @@ def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
     conn.close()
 
 # ------------------------------------------------------------
-# Gesamtanzahl der Bumps inkrementieren
+# Gesamtanzahl der Bumps inkrementieren (Unverändert)
 # ------------------------------------------------------------
 
 def increment_total_bumps(user_id: str, guild_id: str) -> None:
@@ -37,7 +39,53 @@ def increment_total_bumps(user_id: str, guild_id: str) -> None:
     conn.close()
 
 # ------------------------------------------------------------
-# Top Bumper abrufen
+# Cooldown-Funktionen (NEU)
+# ------------------------------------------------------------
+
+def set_last_bump_time(guild_id: str, timestamp: datetime) -> None:
+    """Speichert den UTC-Zeitstempel des letzten Bumps für den Cooldown-Check."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Der Zeitstempel wird als POSIX Timestamp gespeichert (int)
+    ts = int(timestamp.timestamp())
+    
+    # UPSERT-Logik für den Server-Status
+    cur.execute("""
+        INSERT INTO server_status (guild_id, last_bump_timestamp)
+        VALUES (%s, %s)
+        ON CONFLICT (guild_id) 
+        DO UPDATE SET last_bump_timestamp = EXCLUDED.last_bump_timestamp
+    """, (guild_id, ts))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_last_bump_time(guild_id: str) -> Optional[datetime]:
+    """Ruft den UTC-Zeitstempel des letzten Bumps ab."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT last_bump_timestamp FROM server_status WHERE guild_id = %s
+    """, (guild_id,))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if result is None:
+        return None
+        
+    # Konvertiere den POSIX Timestamp zurück in ein UTC datetime-Objekt
+    timestamp_int = result[0]
+    # Verwenden Sie timezone.utc, um explizit die Zeitzone zu setzen
+    return datetime.fromtimestamp(timestamp_int, tz=timezone.utc)
+
+# ------------------------------------------------------------
+# Top Bumper abrufen (Unverändert)
 # ------------------------------------------------------------
 
 def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> List[Tuple[str, int]]:

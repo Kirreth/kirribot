@@ -106,11 +106,22 @@ class Quiz(commands.Cog):
             return
 
         selected_questions = random.sample(questions, k=min(10, len(questions)))
+        total_questions = len(selected_questions) # NEU: Gesamtanzahl der Fragen
         score = 0
 
-        for q in selected_questions:
+        # NEU: Mit enumerate den aktuellen Index abfragen
+        for index, q in enumerate(selected_questions):
+            current_question_number = index + 1 # Die aktuelle Frage (1-basiert)
+            
             view = QuizView(q["options"], q["answer"])
-            embed = discord.Embed(title="🧠 IT-Quiz", description=q["question"], color=discord.Color.blurple())
+            
+            # NEU: Frage-Zähler im Titel anzeigen
+            embed = discord.Embed(
+                title=f"🧠 IT-Quiz ({current_question_number}/{total_questions})", 
+                description=q["question"], 
+                color=discord.Color.blurple()
+            )
+            
             msg = await ctx.send(embed=embed, view=view, ephemeral=True)
             await view.wait()
 
@@ -122,9 +133,9 @@ class Quiz(commands.Cog):
         db_quiz.save_quiz_result(str(ctx.author.id), str(ctx.guild.id), score)
 
         # ------------------------------------------------------------
-        # Auswertung & Belohnung
+        # Auswertung & Belohnung (Unverändert)
         # ------------------------------------------------------------
-        result_text = f"Du hast **{score}/10** Fragen richtig beantwortet!"
+        result_text = f"Du hast **{score}/{total_questions}** Fragen richtig beantwortet!" # total_questions verwenden
 
         if score >= 8:
             role_name = "Coder"
@@ -150,7 +161,7 @@ class Quiz(commands.Cog):
 
 
 # ------------------------------------------------------------
-# View & Button für das Quiz
+# View & Button für das Quiz (Unverändert)
 # ------------------------------------------------------------
 class QuizView(View):
     def __init__(self, options, correct_answer):
@@ -180,7 +191,7 @@ class QuizButton(Button):
 
 
 # ------------------------------------------------------------
-# Cog Setup
+# Cog Setup (Unverändert)
 # ------------------------------------------------------------
 async def setup(bot: commands.Bot):
     await bot.add_cog(Quiz(bot))
