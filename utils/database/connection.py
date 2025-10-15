@@ -174,6 +174,20 @@ def setup_database():
         )
     """)
 
+# ------------------------------------------------------------
+# IT-Quiz Ergebnisse
+# ------------------------------------------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_results (
+            user_id VARCHAR(50),
+            guild_id VARCHAR(50),
+            score INT NOT NULL,
+            date_played DATE NOT NULL,
+            PRIMARY KEY (user_id, guild_id)
+        )
+    """)
+
+
 
     conn.commit()
     cursor.close()

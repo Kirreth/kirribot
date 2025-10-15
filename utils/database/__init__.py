@@ -5,3 +5,4 @@ from .messages import *
 from .leveling import *
 from .bumps import *
 from .moderation import *
+from .birthday import *
