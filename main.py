@@ -37,6 +37,9 @@ async def on_ready() -> None:
         "cogs.quiz"
     ]
 
+    # ------------------------------------------------------------
+    # Cogs laden
+    # ------------------------------------------------------------
     for cog in cogs:
         try:
             await bot.load_extension(cog)
@@ -44,7 +47,14 @@ async def on_ready() -> None:
         except Exception as e:
             print(f"❌ Fehler beim Laden von {cog}: {e}")
 
-    await bot.tree.sync()
+    # ------------------------------------------------------------
+    # Slash-/Hybrid-Commands synchronisieren
+    # ------------------------------------------------------------
+    synced = await bot.tree.sync()
+    print(f"🔄 {len(synced)} Befehle erfolgreich synchronisiert.")
+
+    print("✅ Alle Cogs geladen und Commands synchronisiert.")
+
 
 if TOKEN:
     bot.run(TOKEN)
