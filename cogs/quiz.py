@@ -91,7 +91,7 @@ class Quiz(commands.Cog):
 
         result_text = f"Du hast **{score}/10** Fragen richtig beantwortet!"
         if score >= 8:
-            role = discord.utils.get(ctx.guild.roles, name="Code-Champion")
+            role = discord.utils.get(ctx.guild.roles, name="Coder")
             if not role:
                 role = await ctx.guild.create_role(name="Code-Champion", color=discord.Color.gold())
             await ctx.author.add_roles(role)
