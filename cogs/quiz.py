@@ -1,191 +1,211 @@
-# cogs/bumps.py
+import os
+import json
+import random
 import discord
 from discord.ext import commands
-from datetime import datetime, timedelta, timezone
-from utils.database import bumps as db_bumps
-from typing import Union, Optional
+from discord.ui import View, Button
+from discord import app_commands
+from utils.database import quiz as db_quiz
 
-# Disboard's User ID
-DISBOARD_ID: int = 302050872383242240
-# Disboard Cooldown (2 Stunden)
-BUMP_COOLDOWN: timedelta = timedelta(hours=2)
 
-class Bumps(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+# ------------------------------------------------------------
+# Pfad zur JSON-Datei
+# ------------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+QUIZ_FILE = os.path.join(BASE_DIR, "data", "quiz_questions.json")
+
+
+# ------------------------------------------------------------
+# Hilfsfunktionen für JSON (Unverändert)
+# ------------------------------------------------------------
+def ensure_quiz_file():
+    """Stellt sicher, dass der data-Ordner und die quiz_questions.json existieren."""
+    data_dir = os.path.join(BASE_DIR, "data")
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    if not os.path.exists(QUIZ_FILE):
+        with open(QUIZ_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f, indent=4, ensure_ascii=False)
+
+
+def load_questions():
+    """Lädt alle Fragen aus der JSON-Datei."""
+    ensure_quiz_file()
+    with open(QUIZ_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_questions(questions):
+    """Speichert Fragen in die JSON-Datei."""
+    ensure_quiz_file()
+    with open(QUIZ_FILE, "w", encoding="utf-8") as f:
+        json.dump(questions, f, indent=4, ensure_ascii=False)
+
+
+# ------------------------------------------------------------
+# Haupt-Cog
+# ------------------------------------------------------------
+class Quiz(commands.Cog):
+    """IT/Programmier-Quiz"""
+
+    def __init__(self, bot):
         self.bot = bot
 
-# ------------------------------------------------------------
-# Bump registrieren (Unverändert)
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # /quizadd – Neue Frage hinzufügen (Admin-only)
+    # ------------------------------------------------------------
+    @commands.hybrid_command(name="quizadd", description="Füge eine neue Quizfrage hinzu (nur Admins).")
+    @app_commands.describe(
+        question="Die Quizfrage",
+        answer1="Antwort 1",
+        answer2="Antwort 2",
+        answer3="Antwort 3",
+        answer4="Antwort 4",
+        correct="Nummer der richtigen Antwort (1–4)"
+    )
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
-        if message.author.id != DISBOARD_ID or not message.guild:
+    @app_commands.checks.has_permissions(administrator=True) 
+    async def quizadd(
+        self,
+        ctx: commands.Context, 
+        question: str,
+        answer1: str,
+        answer2: str,
+        answer3: str,
+        answer4: str,
+        correct: int
+    ):
+        if ctx.interaction:
+            await ctx.defer(ephemeral=True)
+            
+        if correct not in [1, 2, 3, 4]:
+            await ctx.send("❌ Die richtige Antwort muss 1–4 sein.", ephemeral=True) 
             return
 
-        # Prüfe auf Erfolgsmeldung (Sprachunabhängig)
-        is_success_message: bool = ("Bump done" in message.content or "Bump erfolgreich" in message.content)
+        questions = load_questions()
+        new_question = {
+            "question": question,
+            "options": [answer1, answer2, answer3, answer4],
+            "answer": [answer1, answer2, answer3, answer4][correct - 1]
+        }
+
+        questions.append(new_question)
+        save_questions(questions)
+
+        await ctx.send(
+            f"✅ Neue Frage hinzugefügt:\n**{question}**\n**Richtige Antwort:** {new_question['answer']}",
+            ephemeral=True
+        )
+
+    # ------------------------------------------------------------
+    # /quiz – Starte das IT-Quiz (Unverändert, war bereits Hybrid)
+    # ------------------------------------------------------------
+    @commands.hybrid_command(name="quiz", description="Starte ein IT-Quiz mit 10 Fragen!")
+    async def start_quiz(self, ctx: commands.Context):
+        await ctx.defer(ephemeral=True)
+
+        questions = load_questions()
+        if not questions:
+            await ctx.send("❌ Es sind noch keine Fragen im Quiz vorhanden.", ephemeral=True)
+            return
+
+        selected_questions = random.sample(questions, k=min(10, len(questions)))
+        total_questions = len(selected_questions) 
+        score = 0
+
         
-        if is_success_message:
-            bumper: Optional[Union[discord.User, discord.Member]]
+        for index, q in enumerate(selected_questions):
+            current_question_number = index + 1 
             
-            # Bei Slash Commands (Discord Bot-Interaktion)
-            if message.interaction and message.interaction.user:
-                bumper = message.interaction.user
-            # Fallback (weniger zuverlässig)
-            elif message.mentions: 
-                bumper = message.mentions[0] if message.mentions[0].id != DISBOARD_ID else None
-            else:
-                return 
-
-            if not bumper:
-                return
-
-            user_id: str = str(bumper.id)
-            guild_id: str = str(message.guild.id)
-            current_time: datetime = datetime.utcnow() # UTC-Zeit verwenden
-
-            # Datenbank-Aktionen: Loggen, Zähler erhöhen, Cooldown-Zeit speichern
-            db_bumps.log_bump(user_id, guild_id, current_time)
-            db_bumps.increment_total_bumps(user_id, guild_id)
-            db_bumps.set_last_bump_time(guild_id, current_time) 
+            view = QuizView(q["options"], q["answer"])
             
-            print(f"✅ Bump von {bumper} gespeichert und Cooldown-Zeit aktualisiert")
-
-# ------------------------------------------------------------
-# Nächster Bump Befehl (/nextbump) - IST bereits ein Hybrid Command
-# ------------------------------------------------------------
-
-    @commands.hybrid_command(
-        name="nextbump",
-        description="Zeigt an, wann der nächste Disboard Bump möglich ist."
-    )
-    async def nextbump(self, ctx: commands.Context) -> None:
-        await ctx.defer()
-        
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        
-        # Ruft den letzten Bump-Zeitstempel (datetime.datetime, UTC) ab oder None
-        last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id)
-        
-        embed: discord.Embed
-        
-        if last_bump_time is None:
             embed = discord.Embed(
-                title="⏳ Nächster Bump",
-                description="Der Server wurde noch nicht gebumpt. **Du kannst sofort bumpen!**",
-                color=discord.Color.green()
+                title=f"🧠 IT-Quiz ({current_question_number}/{total_questions})", 
+                description=q["question"], 
+                color=discord.Color.blurple()
             )
+            
+            msg = await ctx.send(embed=embed, view=view, ephemeral=True)
+            await view.wait()
+
+            if view.chosen == q["answer"]:
+                score += 1
+
+            await msg.edit(view=None)
+
+        db_quiz.save_quiz_result(str(ctx.author.id), str(ctx.guild.id) if ctx.guild else "0", score)
+
+
+        # ------------------------------------------------------------
+        # Auswertung & Belohnung (Mit korrigierter Fragenanzahl)
+        # ------------------------------------------------------------
+        result_text = f"Du hast **{score}/{total_questions}** Fragen richtig beantwortet!" # total_questions verwenden
+
+        if score >= 8:
+            role_name = "Coder"
+            role = discord.utils.get(ctx.guild.roles, name=role_name)
+
+            if not role:
+                role = await ctx.guild.create_role(name=role_name, color=discord.Color.gold())
+
+            try:
+                await ctx.author.add_roles(role)
+                result_text += f"\n🏆 Glückwunsch! Du hast die Rolle {role.mention} erhalten!"
+            except discord.Forbidden:
+                result_text += "\n⚠️ Ich konnte die Rolle nicht vergeben (fehlende Berechtigung)."
+
+        await ctx.send(
+            embed=discord.Embed(
+                title="📊 Quiz beendet!",
+                description=result_text,
+                color=discord.Color.green()
+            ),
+            ephemeral=True
+        )
+
+
+# ------------------------------------------------------------
+# View & Button für das Quiz
+# ------------------------------------------------------------
+class QuizView(View):
+    def __init__(self, options, correct_answer):
+        super().__init__(timeout=30)
+        self.correct_answer = correct_answer
+        self.chosen = None
+        for opt in options:
+            self.add_item(QuizButton(label=opt, correct_answer=correct_answer))
+
+    async def on_timeout(self):
+        self.stop()
+
+
+class QuizButton(Button):
+    def __init__(self, label, correct_answer):
+        super().__init__(label=label, style=discord.ButtonStyle.secondary)
+        self.correct_answer = correct_answer
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.view.chosen is not None:
+             await interaction.response.defer()
+             return
+
+        if self.label == self.correct_answer:
+            self.style = discord.ButtonStyle.success
         else:
-            # Stelle sicher, dass last_bump_time als UTC behandelt wird
-            if last_bump_time.tzinfo is None:
-                last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
+            self.style = discord.ButtonStyle.danger
             
-            next_bump_time: datetime = last_bump_time + BUMP_COOLDOWN
-            now_utc: datetime = datetime.utcnow().replace(tzinfo=timezone.utc)
-            
-            if now_utc >= next_bump_time:
-                embed = discord.Embed(
-                    title="✅ Nächster Bump",
-                    description="**Der Cooldown ist abgelaufen!** Du kannst jetzt sofort `/bump` nutzen.",
-                    color=discord.Color.green()
-                )
-            else:
-                time_remaining: timedelta = next_bump_time - now_utc
+        self.view.chosen = self.label
+        
+        for item in self.view.children:
+            if isinstance(item, Button):
+                item.disabled = True
                 
-                # Formatierung der verbleibenden Zeit
-                total_seconds = int(time_remaining.total_seconds())
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                
-                time_str: str = f"{hours} Stunden und {minutes} Minuten"
-                
-                # Discord Timestamp
-                timestamp_str: str = f"<t:{int(next_bump_time.timestamp())}:R>"
-                
-                embed = discord.Embed(
-                    title="⏳ Nächster Bump",
-                    description=f"Der nächste Bump ist in **{time_str}** möglich.\n\n"
-                                f"Das ist {timestamp_str}.",
-                    color=discord.Color.orange()
-                )
-                
-        await ctx.send(embed=embed)
+        await interaction.response.edit_message(view=self.view)
+        self.view.stop()
+
 
 # ------------------------------------------------------------
-# Top Bumper (Hybrid Command)
+# Cog Setup 
 # ------------------------------------------------------------
-
-    @commands.hybrid_command(
-        name="topb",
-        description="Zeigt die Top 3 mit den meisten Bumps insgesamt"
-    )
-    async def topb(self, ctx: commands.Context) -> None:
-        await ctx.defer()
-        # Code unverändert...
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
-
-        if not top_users:
-            await ctx.send("📊 Es gibt noch keine Bumps in diesem Server.")
-            return
-
-        description = ""
-        for index, (user_id, count) in enumerate(top_users, start=1):
-            user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
-            if not user:
-                try:
-                    user = await self.bot.fetch_user(int(user_id))
-                except discord.NotFound:
-                    user = None
-
-            username = user.mention if user else f"Unbekannt ({user_id})"
-            description += f"**#{index}** {username} – **{count} Bumps**\n"
-
-        embed = discord.Embed(
-            title="🏆 Top 3 Bumper (Gesamt)",
-            description=description,
-            color=discord.Color.gold()
-        )
-        await ctx.send(embed=embed)
-
-# ------------------------------------------------------------
-# Top monatliche Bumper (Hybrid Command)
-# ------------------------------------------------------------
-
-    @commands.hybrid_command(
-        name="topmb",
-        description="Zeigt die Top 3 mit den meisten Bumps in den letzten 30 Tagen"
-    )
-    async def topmb(self, ctx: commands.Context) -> None:
-        await ctx.defer()
-        # Code unverändert...
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-        top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
-
-        if not top_users:
-            await ctx.send("📊 Es gibt noch keine Bumps in den letzten 30 Tagen.")
-            return
-
-        description = ""
-        for index, (user_id, count) in enumerate(top_users, start=1):
-            user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
-            if not user:
-                try:
-                    user = await self.bot.fetch_user(int(user_id))
-                except discord.NotFound:
-                    user = None
-
-            username = user.mention if user else f"Unbekannt ({user_id})"
-            description += f"**#{index}** {username} – **{count} Bumps**\n"
-
-        embed = discord.Embed(
-            title="⏳ Top 3 Bumper (Letzte 30 Tage)",
-            description=description,
-            color=discord.Color.blue()
-        )
-        await ctx.send(embed=embed)
-
-
-async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Bumps(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Quiz(bot))

@@ -15,7 +15,7 @@ class Bumps(commands.Cog):
         self.bot = bot
 
 # ------------------------------------------------------------
-# Bump registrieren (Wird erweitert, um letzte Zeit zu speichern)
+# Bump registrieren (Unverändert)
 # ------------------------------------------------------------
 
     @commands.Cog.listener()
@@ -32,12 +32,11 @@ class Bumps(commands.Cog):
             # Bei Slash Commands (Discord Bot-Interaktion)
             if message.interaction and message.interaction.user:
                 bumper = message.interaction.user
-            # Wenn es eine Legacy-Befehlsantwort war oder aus irgendeinem Grund kein Interaction-Objekt
+            # Fallback (weniger zuverlässig)
             elif message.mentions: 
-                # Das ist unzuverlässig, aber ein Fallback, falls der Bot jemanden taggt.
                 bumper = message.mentions[0] if message.mentions[0].id != DISBOARD_ID else None
             else:
-                return # Kann den Bumper nicht identifizieren
+                return 
 
             if not bumper:
                 return
@@ -46,19 +45,15 @@ class Bumps(commands.Cog):
             guild_id: str = str(message.guild.id)
             current_time: datetime = datetime.utcnow() # UTC-Zeit verwenden
 
-            # 1. Logge den einzelnen Bump-Eintrag (für Zeitstempel/Monatsstatistik)
+            # Datenbank-Aktionen: Loggen, Zähler erhöhen, Cooldown-Zeit speichern
             db_bumps.log_bump(user_id, guild_id, current_time)
-            
-            # 2. Aktualisiere die Gesamtanzahl in der Zählertabelle
             db_bumps.increment_total_bumps(user_id, guild_id)
-            
-            # 3. NEU: Speichere den Zeitpunkt des letzten Bumps für den Cooldown-Check
             db_bumps.set_last_bump_time(guild_id, current_time) 
             
             print(f"✅ Bump von {bumper} gespeichert und Cooldown-Zeit aktualisiert")
 
 # ------------------------------------------------------------
-# Nächster Bump Befehl (/nextbump)
+# Nächster Bump Befehl (/nextbump) - IST bereits ein Hybrid Command
 # ------------------------------------------------------------
 
     @commands.hybrid_command(
@@ -70,7 +65,7 @@ class Bumps(commands.Cog):
         
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         
-        # Annahme: Diese Funktion gibt den letzten Bump-Zeitstempel (datetime.datetime, UTC) zurück oder None
+        # Ruft den letzten Bump-Zeitstempel (datetime.datetime, UTC) ab oder None
         last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id)
         
         embed: discord.Embed
@@ -89,7 +84,6 @@ class Bumps(commands.Cog):
             next_bump_time: datetime = last_bump_time + BUMP_COOLDOWN
             now_utc: datetime = datetime.utcnow().replace(tzinfo=timezone.utc)
             
-            # Prüfe, ob die Cooldown-Zeit abgelaufen ist
             if now_utc >= next_bump_time:
                 embed = discord.Embed(
                     title="✅ Nächster Bump",
@@ -97,7 +91,6 @@ class Bumps(commands.Cog):
                     color=discord.Color.green()
                 )
             else:
-                # Berechne die verbleibende Zeit
                 time_remaining: timedelta = next_bump_time - now_utc
                 
                 # Formatierung der verbleibenden Zeit
@@ -107,7 +100,7 @@ class Bumps(commands.Cog):
                 
                 time_str: str = f"{hours} Stunden und {minutes} Minuten"
                 
-                # Discord Timestamp für bessere Benutzerfreundlichkeit (lokale Zeit des Benutzers)
+                # Discord Timestamp
                 timestamp_str: str = f"<t:{int(next_bump_time.timestamp())}:R>"
                 
                 embed = discord.Embed(
@@ -120,7 +113,7 @@ class Bumps(commands.Cog):
         await ctx.send(embed=embed)
 
 # ------------------------------------------------------------
-# Top Bumper (Unverändert)
+# Top Bumper (Hybrid Command)
 # ------------------------------------------------------------
 
     @commands.hybrid_command(
@@ -128,6 +121,7 @@ class Bumps(commands.Cog):
         description="Zeigt die Top 3 mit den meisten Bumps insgesamt"
     )
     async def topb(self, ctx: commands.Context) -> None:
+        await ctx.defer()
         # Code unverändert...
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
@@ -156,7 +150,7 @@ class Bumps(commands.Cog):
         await ctx.send(embed=embed)
 
 # ------------------------------------------------------------
-# Top monatliche Bumper (Unverändert)
+# Top monatliche Bumper (Hybrid Command)
 # ------------------------------------------------------------
 
     @commands.hybrid_command(
@@ -164,6 +158,7 @@ class Bumps(commands.Cog):
         description="Zeigt die Top 3 mit den meisten Bumps in den letzten 30 Tagen"
     )
     async def topmb(self, ctx: commands.Context) -> None:
+        await ctx.defer()
         # Code unverändert...
         guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
         top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
