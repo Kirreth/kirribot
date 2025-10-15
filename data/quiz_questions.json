@@ -1,62 +1,62 @@
 [
     {
         "question": "Was bedeutet die Abkürzung 'CPU'?",
-        "options": ["Central Processing Unit", "Computer Process Utility", "Central Program Unit", "Control Processing Utility"],
+        "options": ["Control Processing Utility", "Central Processing Unit", "Computer Process Utility", "Central Program Unit"],
         "answer": "Central Processing Unit"
     },
     {
         "question": "Was ist das Hauptziel eines Compilers?",
-        "options": ["Quellcode in Maschinencode umwandeln", "Daten speichern", "Programme debuggen", "Webseiten rendern"],
+        "options": ["Daten speichern", "Quellcode in Maschinencode umwandeln", "Programme debuggen", "Webseiten rendern"],
         "answer": "Quellcode in Maschinencode umwandeln"
     },
     {
         "question": "Welche Sprache wird hauptsächlich für Webseiten verwendet?",
-        "options": ["Python", "JavaScript", "C#", "Swift"],
+        "options": ["C#", "Python", "JavaScript", "Swift"],
         "answer": "JavaScript"
     },
     {
         "question": "Was bedeutet 'HTML'?",
-        "options": ["Hyper Text Markup Language", "High Text Machine Language", "Hyperlink and Text Management Language", "Home Tool Markup Logic"],
+        "options": ["Hyperlink and Text Management Language", "Home Tool Markup Logic", "Hyper Text Markup Language", "High Text Machine Language"],
         "answer": "Hyper Text Markup Language"
     },
     {
         "question": "Wofür wird CSS verwendet?",
-        "options": ["Zum Stylen von Webseiten", "Zum Speichern von Daten", "Zum Schreiben von Servercode", "Zum Kompilieren von Programmen"],
+        "options": ["Zum Schreiben von Servercode", "Zum Speichern von Daten", "Zum Kompilieren von Programmen", "Zum Stylen von Webseiten"],
         "answer": "Zum Stylen von Webseiten"
     },
     {
         "question": "Welche Sprache wird für maschinelles Lernen am häufigsten genutzt?",
-        "options": ["Python", "PHP", "Java", "C++"],
+        "options": ["Java", "Python", "PHP", "C++"],
         "answer": "Python"
     },
     {
         "question": "Was ist ein Framework?",
-        "options": ["Eine Sammlung von Bibliotheken und Tools", "Ein Editor", "Ein Betriebssystem", "Ein Compiler"],
+        "options": ["Ein Editor", "Ein Compiler", "Eine Sammlung von Bibliotheken und Tools", "Ein Betriebssystem"],
         "answer": "Eine Sammlung von Bibliotheken und Tools"
     },
     {
         "question": "Was bedeutet 'API'?",
-        "options": ["Application Programming Interface", "Automated Processing Instruction", "Application Performance Integration", "Advanced Programming Interface"],
+        "options": ["Application Performance Integration", "Automated Processing Instruction", "Application Programming Interface", "Advanced Programming Interface"],
         "answer": "Application Programming Interface"
     },
     {
         "question": "Welche dieser Datenbanken ist NoSQL?",
-        "options": ["MongoDB", "MySQL", "PostgreSQL", "SQLite"],
+        "options": ["SQLite", "MySQL", "PostgreSQL", "MongoDB"],
         "answer": "MongoDB"
     },
     {
         "question": "Was ist ein Algorithmus?",
-        "options": ["Eine Schritt-für-Schritt-Anleitung zur Problemlösung", "Ein Datentyp", "Ein Code-Editor", "Ein Computerprogramm"],
+        "options": ["Ein Datentyp", "Ein Code-Editor", "Eine Schritt-für-Schritt-Anleitung zur Problemlösung", "Ein Computerprogramm"],
         "answer": "Eine Schritt-für-Schritt-Anleitung zur Problemlösung"
     },
     {
         "question": "Was ist der Zweck eines Betriebssystems?",
-        "options": ["Verwaltung von Hardware und Software", "Programmieren von Webseiten", "Erstellen von Datenbanken", "Ausführen von Skripten"],
+        "options": ["Erstellen von Datenbanken", "Verwaltung von Hardware und Software", "Programmieren von Webseiten", "Ausführen von Skripten"],
         "answer": "Verwaltung von Hardware und Software"
     },
     {
         "question": "Welche dieser ist keine Programmiersprache?",
-        "options": ["Python", "HTML", "C++", "Java"],
+        "options": ["C++", "Java", "HTML", "Python"],
         "answer": "HTML"
     },
     {
@@ -66,32 +66,32 @@
     },
     {
         "question": "Was bedeutet 'Open Source'?",
-        "options": ["Software mit offenem Quellcode", "Software für Unternehmen", "Kostenlose Software", "Software nur für Windows"],
+        "options": ["Software nur für Windows", "Kostenlose Software", "Software mit offenem Quellcode", "Software für Unternehmen"],
         "answer": "Software mit offenem Quellcode"
     },
     {
         "question": "Welche Sprache wird für Android-Entwicklung verwendet?",
-        "options": ["Kotlin", "Swift", "C#", "PHP"],
+        "options": ["Swift", "C#", "Kotlin", "PHP"],
         "answer": "Kotlin"
     },
     {
         "question": "Was ist eine IP-Adresse?",
-        "options": ["Eine eindeutige Adresse im Netzwerk", "Eine MAC-Adresse", "Ein Domainname", "Ein Serverpasswort"],
+        "options": ["Ein Domainname", "Eine MAC-Adresse", "Eine eindeutige Adresse im Netzwerk", "Ein Serverpasswort"],
         "answer": "Eine eindeutige Adresse im Netzwerk"
     },
     {
         "question": "Was macht ein Router?",
-        "options": ["Leitet Datenpakete im Netzwerk weiter", "Speichert Dateien", "Kompiliert Programme", "Zeichnet Grafiken"],
+        "options": ["Kompiliert Programme", "Leitet Datenpakete im Netzwerk weiter", "Speichert Dateien", "Zeichnet Grafiken"],
         "answer": "Leitet Datenpakete im Netzwerk weiter"
     },
     {
         "question": "Was ist ein Byte?",
-        "options": ["8 Bits", "2 Bits", "16 Bits", "1 Bit"],
+        "options": ["1 Bit", "16 Bits", "2 Bits", "8 Bits"],
         "answer": "8 Bits"
     },
     {
         "question": "Welche Datei-Endung steht typischerweise für Python-Dateien?",
-        "options": [".py", ".java", ".html", ".c"],
+        "options": [".java", ".html", ".py", ".c"],
         "answer": ".py"
     },
     {
@@ -101,157 +101,157 @@
     },
     {
         "question": "Was ist Cloud Computing?",
-        "options": ["Rechnen über das Internet", "Datenkompression", "Hardwareproduktion", "Webdesign"],
+        "options": ["Datenkompression", "Webdesign", "Rechnen über das Internet", "Hardwareproduktion"],
         "answer": "Rechnen über das Internet"
     },
     {
         "question": "Welche Sprache ist typisiert?",
-        "options": ["TypeScript", "JavaScript", "Python", "PHP"],
+        "options": ["PHP", "TypeScript", "Python", "JavaScript"],
         "answer": "TypeScript"
     },
     {
         "question": "Was bedeutet 'HTTP'?",
-        "options": ["HyperText Transfer Protocol", "High Transfer Text Program", "Hyperlink Tool Transport Package", "Hyper Text Technical Process"],
+        "options": ["Hyper Text Technical Process", "High Transfer Text Program", "HyperText Transfer Protocol", "Hyperlink Tool Transport Package"],
         "answer": "HyperText Transfer Protocol"
     },
     {
         "question": "Was ist ein Bug?",
-        "options": ["Ein Fehler im Code", "Ein Feature", "Ein Modul", "Ein Update"],
+        "options": ["Ein Feature", "Ein Modul", "Ein Fehler im Code", "Ein Update"],
         "answer": "Ein Fehler im Code"
     },
     {
         "question": "Welche dieser Technologien gehört zum Frontend?",
-        "options": ["React", "Django", "Flask", "FastAPI"],
+        "options": ["Flask", "React", "Django", "FastAPI"],
         "answer": "React"
     },
     {
         "question": "Was ist JSON?",
-        "options": ["Ein Datenformat", "Ein Webserver", "Ein Framework", "Ein Compiler"],
+        "options": ["Ein Compiler", "Ein Webserver", "Ein Datenformat", "Ein Framework"],
         "answer": "Ein Datenformat"
     },
     {
         "question": "Was bedeutet SQL?",
-        "options": ["Structured Query Language", "Simple Query Logic", "System Question Language", "Syntax Query Layout"],
+        "options": ["System Question Language", "Syntax Query Layout", "Simple Query Logic", "Structured Query Language"],
         "answer": "Structured Query Language"
     },
     {
         "question": "Was ist eine IDE?",
-        "options": ["Integrated Development Environment", "Internet Data Exchange", "Internal Debug Editor", "Intelligent Design Engine"],
+        "options": ["Internet Data Exchange", "Intelligent Design Engine", "Internal Debug Editor", "Integrated Development Environment"],
         "answer": "Integrated Development Environment"
     },
     {
         "question": "Was macht ein DNS-Server?",
-        "options": ["Übersetzt Domainnamen in IP-Adressen", "Speichert Webseiten", "Hostet Bilder", "Schützt vor Viren"],
+        "options": ["Hostet Bilder", "Übersetzt Domainnamen in IP-Adressen", "Speichert Webseiten", "Schützt vor Viren"],
         "answer": "Übersetzt Domainnamen in IP-Adressen"
     },
     {
         "question": "Was ist ein Betriebssystem-Kernel?",
-        "options": ["Der zentrale Teil des Betriebssystems", "Ein Programm zum Zeichnen", "Ein Hardwaretreiber", "Ein Benutzerinterface"],
+        "options": ["Ein Hardwaretreiber", "Der zentrale Teil des Betriebssystems", "Ein Programm zum Zeichnen", "Ein Benutzerinterface"],
         "answer": "Der zentrale Teil des Betriebssystems"
     },
     {
         "question": "Was ist ein Array?",
-        "options": ["Eine Sammlung von Werten", "Ein einzelner Wert", "Ein Funktionsname", "Ein Datentyp für Texte"],
+        "options": ["Ein einzelner Wert", "Eine Sammlung von Werten", "Ein Funktionsname", "Ein Datentyp für Texte"],
         "answer": "Eine Sammlung von Werten"
     },
     {
         "question": "Was ist ein Netzwerkprotokoll?",
-        "options": ["Eine Regel für die Datenübertragung", "Ein Sicherheitszertifikat", "Ein Datentyp", "Ein Framework"],
+        "options": ["Ein Sicherheitszertifikat", "Eine Regel für die Datenübertragung", "Ein Datentyp", "Ein Framework"],
         "answer": "Eine Regel für die Datenübertragung"
     },
     {
         "question": "Welche Sprache nutzt das .NET-Framework hauptsächlich?",
-        "options": ["C#", "Python", "Java", "Ruby"],
+        "options": ["Ruby", "Java", "C#", "Python"],
         "answer": "C#"
     },
     {
         "question": "Was ist eine Variable?",
-        "options": ["Ein Speicherplatz für Daten", "Ein Compiler", "Ein Programm", "Ein Datentyp"],
+        "options": ["Ein Compiler", "Ein Programm", "Ein Speicherplatz für Daten", "Ein Datentyp"],
         "answer": "Ein Speicherplatz für Daten"
     },
     {
         "question": "Was ist eine Schleife?",
-        "options": ["Ein Konstrukt zur Wiederholung von Code", "Eine Datenbankabfrage", "Ein Codefehler", "Ein Framework"],
+        "options": ["Eine Datenbankabfrage", "Ein Konstrukt zur Wiederholung von Code", "Ein Codefehler", "Ein Framework"],
         "answer": "Ein Konstrukt zur Wiederholung von Code"
     },
     {
         "question": "Was ist ein Datentyp?",
-        "options": ["Eine Klassifizierung von Daten", "Ein Server", "Ein Ordner", "Ein Compiler"],
+        "options": ["Ein Compiler", "Eine Klassifizierung von Daten", "Ein Server", "Ein Ordner"],
         "answer": "Eine Klassifizierung von Daten"
     },
     {
         "question": "Was ist ein Terminal?",
-        "options": ["Eine textbasierte Schnittstelle zum System", "Ein Webbrowser", "Ein Editor", "Ein API-Endpunkt"],
+        "options": ["Ein API-Endpunkt", "Ein Webbrowser", "Eine textbasierte Schnittstelle zum System", "Ein Editor"],
         "answer": "Eine textbasierte Schnittstelle zum System"
     },
     {
         "question": "Was ist ein Boolean?",
-        "options": ["Ein Datentyp mit Wahr/Falsch-Werten", "Ein Textformat", "Ein Zahlentyp", "Ein Array"],
+        "options": ["Ein Zahlentyp", "Ein Datentyp mit Wahr/Falsch-Werten", "Ein Textformat", "Ein Array"],
         "answer": "Ein Datentyp mit Wahr/Falsch-Werten"
     },
     {
         "question": "Was bedeutet 'while' in Programmiersprachen?",
-        "options": ["Eine Schleifenbedingung", "Eine Funktion", "Ein Kommentar", "Ein Modul"],
+        "options": ["Ein Kommentar", "Eine Schleifenbedingung", "Eine Funktion", "Ein Modul"],
         "answer": "Eine Schleifenbedingung"
     },
     {
         "question": "Was ist ein Funktionsparameter?",
-        "options": ["Ein Wert, der an eine Funktion übergeben wird", "Ein Klassenname", "Ein Kommentar", "Ein Modul"],
+        "options": ["Ein Klassenname", "Ein Modul", "Ein Wert, der an eine Funktion übergeben wird", "Ein Kommentar"],
         "answer": "Ein Wert, der an eine Funktion übergeben wird"
     },
     {
         "question": "Was ist ein Class-Constructor?",
-        "options": ["Eine Methode, die beim Erstellen eines Objekts aufgerufen wird", "Ein Compiler", "Ein Modul", "Ein Datentyp"],
+        "options": ["Ein Compiler", "Eine Methode, die beim Erstellen eines Objekts aufgerufen wird", "Ein Modul", "Ein Datentyp"],
         "answer": "Eine Methode, die beim Erstellen eines Objekts aufgerufen wird"
     },
     {
         "question": "Was ist eine Datenbankabfrage?",
-        "options": ["Ein Befehl, um Daten zu lesen oder zu ändern", "Ein API-Aufruf", "Ein Programmfehler", "Ein Framework"],
+        "options": ["Ein Programmfehler", "Ein Befehl, um Daten zu lesen oder zu ändern", "Ein API-Aufruf", "Ein Framework"],
         "answer": "Ein Befehl, um Daten zu lesen oder zu ändern"
     },
     {
         "question": "Was ist ein Stack?",
-        "options": ["Eine Datenstruktur nach LIFO-Prinzip", "Ein Netzwerkgerät", "Ein Framework", "Ein Servertyp"],
+        "options": ["Ein Servertyp", "Eine Datenstruktur nach LIFO-Prinzip", "Ein Netzwerkgerät", "Ein Framework"],
         "answer": "Eine Datenstruktur nach LIFO-Prinzip"
     },
     {
         "question": "Was ist ein Repository?",
-        "options": ["Ein Speicherort für Code", "Ein Programm", "Ein Server", "Ein Datentyp"],
+        "options": ["Ein Datentyp", "Ein Speicherort für Code", "Ein Programm", "Ein Server"],
         "answer": "Ein Speicherort für Code"
     },
     {
         "question": "Welche Programmiersprache ist kompilierend?",
-        "options": ["C++", "Python", "JavaScript", "PHP"],
+        "options": ["JavaScript", "Python", "C++", "PHP"],
         "answer": "C++"
     },
     {
         "question": "Was ist eine Exception?",
-        "options": ["Ein Fehler während der Programmausführung", "Ein Modul", "Ein Kommentar", "Ein API-Endpunkt"],
+        "options": ["Ein Modul", "Ein Kommentar", "Ein Fehler während der Programmausführung", "Ein API-Endpunkt"],
         "answer": "Ein Fehler während der Programmausführung"
     },
     {
         "question": "Was ist ein JSON-Objekt?",
-        "options": ["Eine Sammlung von Schlüssel-Wert-Paaren", "Ein HTML-Element", "Ein Datentyp", "Ein Compiler"],
+        "options": ["Ein HTML-Element", "Eine Sammlung von Schlüssel-Wert-Paaren", "Ein Datentyp", "Ein Compiler"],
         "answer": "Eine Sammlung von Schlüssel-Wert-Paaren"
     },
     {
         "question": "Welche Sprache ist für iOS-Entwicklung gedacht?",
-        "options": ["Swift", "Kotlin", "C#", "Python"],
+        "options": ["Kotlin", "C#", "Python", "Swift"],
         "answer": "Swift"
     },
     {
         "question": "Was ist ein Backend?",
-        "options": ["Der serverseitige Teil einer Anwendung", "Die Benutzeroberfläche", "Ein CSS-Framework", "Ein Browser"],
+        "options": ["Die Benutzeroberfläche", "Der serverseitige Teil einer Anwendung", "Ein CSS-Framework", "Ein Browser"],
         "answer": "Der serverseitige Teil einer Anwendung"
     },
     {
         "question": "Was bedeutet 'CLI'?",
-        "options": ["Command Line Interface", "Code Logic Integration", "Central Logic Interface", "Client Line Interpreter"],
+        "options": ["Code Logic Integration", "Client Line Interpreter", "Command Line Interface", "Central Logic Interface"],
         "answer": "Command Line Interface"
     },
     {
         "question": "Was ist ein Frontend?",
-        "options": ["Die sichtbare Benutzeroberfläche einer Anwendung", "Ein Serverprozess", "Eine Datenbank", "Ein Framework für APIs"],
+        "options": ["Ein Serverprozess", "Eine Datenbank", "Die sichtbare Benutzeroberfläche einer Anwendung", "Ein Framework für APIs"],
         "answer": "Die sichtbare Benutzeroberfläche einer Anwendung"
     }
 ]
