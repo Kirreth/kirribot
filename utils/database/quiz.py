@@ -22,4 +22,4 @@ def get_last_score(user_id: str, guild_id: str):
     result = cursor.fetchone()
     cursor.close()
     conn.close()
-    return result
+    return result 
