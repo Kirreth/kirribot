@@ -48,6 +48,8 @@ def save_questions(questions):
 class Quiz(commands.Cog):
     """IT/Programmier-Quiz"""
 
+    __cog_name__ = "Quiz"
+
     def __init__(self, bot):
         self.bot = bot
 

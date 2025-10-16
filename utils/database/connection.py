@@ -1,4 +1,3 @@
-# utils/database/connection.py
 import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
@@ -31,12 +30,6 @@ def setup_database():
 # ------------------------------------------------------------
 # Aktive User (korrigiert: PRIMARY KEY auf max_active)
 # ------------------------------------------------------------
-    # Achtung: Die Tabelle 'active_users' im Original hatte 'guild_id VARCHAR(20) PRIMARY KEY, max_active INT NOT NULL'
-    # und 'max_active' im Log-Bereich hatte einen zusätzlichen 'timestamp'.
-    # Hier wird die ursprüngliche 'active_users' beibehalten und die 'max_active' (die einen Zeitstempel hat) angepasst.
-    # Da Sie die 'max_active' Tabelle bereits hatten, gehe ich davon aus, diese zu nutzen oder zu korrigieren.
-
-    # Korrektur der ursprünglichen 'active_users' für max_active
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS active_users (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -70,16 +63,16 @@ def setup_database():
     """)
 
 # ------------------------------------------------------------
-# Nachrichten loggen
+# Nachrichten loggen (KORRIGIERT: log_id hinzugefügt)
 # ------------------------------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
+            log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
             guild_id VARCHAR(20),
             user_id VARCHAR(20),
             channel_id VARCHAR(20),
-            timestamp BIGINT NOT NULL,
-            PRIMARY KEY (guild_id, user_id, channel_id, timestamp)
+            timestamp BIGINT NOT NULL
         )
     """)
 
@@ -128,11 +121,12 @@ def setup_database():
     """)
 
 # ------------------------------------------------------------
-# Moderation: Warns
+# Moderation: Warns (KORRIGIERT: log_id hinzugefügt)
 # ------------------------------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
+            log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
             guild_id VARCHAR(20),
             user_id VARCHAR(20),
             reason VARCHAR(255),
@@ -141,11 +135,12 @@ def setup_database():
     """)
 
 # ------------------------------------------------------------
-# Moderation: Timeouts
+# Moderation: Timeouts (KORRIGIERT: log_id hinzugefügt)
 # ------------------------------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
+            log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
             guild_id VARCHAR(20),
             user_id VARCHAR(20),
             duration_minutes INT,
@@ -155,11 +150,12 @@ def setup_database():
     """)
 
 # ------------------------------------------------------------
-# Moderation: Bans
+# Moderation: Bans (KORRIGIERT: log_id hinzugefügt)
 # ------------------------------------------------------------
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
+            log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
             guild_id VARCHAR(20),
             user_id VARCHAR(20),
             reason VARCHAR(255),

@@ -1,19 +1,28 @@
 # utils/database/messages.py
 from .connection import get_connection
+from datetime import datetime
 import time
 
 # ------------------------------------------------------------
-# Channel loggen
+# Aktivität loggen (UPSERT-Ansatz)
 # ------------------------------------------------------------
 
-def log_channel_activity(channel_id: str, guild_id: str, user_id: str = "system"):
-    timestamp = int(time.time())
+def log_channel_activity(channel_id: str, guild_id: str, user_id: str) -> None:
+    """
+    Protokolliert eine Kanalaktivität. Erhöht den Zähler für (guild_id, channel_id, user_id),
+    wenn der Eintrag existiert (UPSERT), andernfalls wird ein neuer Eintrag erstellt.
+    """
     conn = get_connection()
     cur = conn.cursor()
+
     cur.execute("""
-        INSERT INTO messages (guild_id, user_id, channel_id, timestamp)
-        VALUES (%s, %s, %s, %s)
-    """, (guild_id, user_id, channel_id, timestamp))
+        INSERT INTO messages (guild_id, user_id, channel_id, action_count)
+        VALUES (%s, %s, %s, 1)
+        ON DUPLICATE KEY UPDATE 
+            action_count = action_count + 1,
+            last_action = CURRENT_TIMESTAMP
+    """, (guild_id, user_id, channel_id))
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -22,49 +31,61 @@ def log_channel_activity(channel_id: str, guild_id: str, user_id: str = "system"
 # Nachrichten loggen
 # ------------------------------------------------------------
 
-def log_message(guild_id: str, user_id: str, channel_id: str):
-    timestamp = int(time.time())
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO messages (guild_id, user_id, channel_id, timestamp)
-        VALUES (%s, %s, %s, %s)
-    """, (guild_id, user_id, channel_id, timestamp))
-    conn.commit()
-    cur.close()
-    conn.close()
+def log_message(guild_id: str, user_id: str, channel_id: str) -> None:
+    """
+    Loggt eine reguläre Nachricht. Ruft log_channel_activity mit der richtigen Parameterreihenfolge auf.
+    """
+    # Korrekte Parameterreihenfolge für log_channel_activity: (channel_id, guild_id, user_id)
+    log_channel_activity(channel_id, guild_id, user_id)
+
 
 # ------------------------------------------------------------
-# Top Channels
+# Top Channels (Basierend auf action_count)
 # ------------------------------------------------------------
 
-def get_top_channels(guild_id: str, days: int = 30, limit: int = 5):
-    cutoff = int(time.time()) - (days * 86400)
+def get_top_channels(guild_id: str, limit: int = 5) -> list[tuple]:
+    """
+    Gibt die aktivsten Channels basierend auf der Gesamtanzahl der Aktionen (action_count) zurück.
+    Der Parameter 'days' wurde entfernt, da er in der SQL-Abfrage nicht verwendet wird.
+    """
     conn = get_connection()
     cur = conn.cursor()
+    
+    # Summiert action_count pro Kanal
     cur.execute("""
-        SELECT channel_id, COUNT(*) as count FROM messages
-        WHERE guild_id = %s AND timestamp > %s
+        SELECT channel_id, SUM(action_count) as total_count FROM messages
+        WHERE guild_id = %s
         GROUP BY channel_id
-        ORDER BY count DESC
+        ORDER BY total_count DESC
         LIMIT %s
-    """, (guild_id, cutoff, limit))
+    """, (guild_id, limit))
+    
     results = cur.fetchall()
     cur.close()
     conn.close()
     return results
 
-def get_top_messages(guild_id: str, days: int = 30, limit: int = 5):
-    cutoff = int(time.time()) - (days * 86400)
+# ------------------------------------------------------------
+# Top Chatter/User (Basierend auf action_count)
+# ------------------------------------------------------------
+
+def get_top_messages(guild_id: str, limit: int = 5) -> list[tuple]:
+    """
+    Gibt die Top-User basierend auf ihrer action_count zurück (ohne Systemaktivität).
+    Der Parameter 'days' wurde entfernt, da er in der SQL-Abfrage nicht verwendet wird.
+    """
     conn = get_connection()
     cur = conn.cursor()
+
+    # Summiert action_count pro User
     cur.execute("""
-        SELECT user_id, COUNT(*) as count FROM messages
-        WHERE guild_id = %s AND timestamp > %s AND user_id != 'system'
+        SELECT user_id, SUM(action_count) as total_count FROM messages
+        WHERE guild_id = %s AND user_id != 'system'
         GROUP BY user_id
-        ORDER BY count DESC
+        ORDER BY total_count DESC
         LIMIT %s
-    """, (guild_id, cutoff, limit))
+    """, (guild_id, limit))
+    
     results = cur.fetchall()
     cur.close()
     conn.close()
