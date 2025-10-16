@@ -209,3 +209,8 @@ __marimo__/
 # venv
 venv/
 .v
+
+# Docker
+docker-compose.yml
+Dockerfile
+requirements.txt
