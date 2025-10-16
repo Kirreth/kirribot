@@ -8,12 +8,19 @@ class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-# ------------------------------------------------------------
-# Clear Befehl
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Cog-weit: Nur Moderatoren/Admins dürfen Commands ausführen
+    # ------------------------------------------------------------
+    async def cog_check(self, ctx: commands.Context):
+        if not ctx.guild:
+            return False
+        perms = ctx.author.guild_permissions
+        return perms.administrator or perms.manage_guild or perms.moderate_members
 
+    # ------------------------------------------------------------
+    # Clear Befehl
+    # ------------------------------------------------------------
     @commands.hybrid_command(name="clear", description="Löscht Nachrichten im Channel")
-    @commands.has_permissions(manage_messages=True)
     async def clear(self, ctx: commands.Context, anzahl: int) -> None:
         if ctx.interaction:
             await ctx.interaction.response.defer(ephemeral=True)
@@ -37,11 +44,7 @@ class Moderation(commands.Cog):
 
     @clear.error
     async def clear_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
-        if isinstance(error, commands.MissingPermissions):
-            msg = "🚫 Du hast keine Berechtigung, Nachrichten zu löschen."
-        else:
-            msg = "⚠️ Es ist ein Fehler beim Ausführen von `clear` aufgetreten."
-
+        msg = "🚫 Du hast keine Berechtigung oder es ist ein Fehler aufgetreten."
         if ctx.interaction:
             if not ctx.interaction.response.is_done():
                 await ctx.interaction.response.send_message(msg, ephemeral=True)
@@ -50,18 +53,12 @@ class Moderation(commands.Cog):
         else:
             await ctx.send(msg, delete_after=5)
 
-# ------------------------------------------------------------
-# User muten
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # User muten
+    # ------------------------------------------------------------
     @commands.hybrid_command(name="mute", description="Setzt einen Benutzer auf Timeout")
-    @commands.has_permissions(moderate_members=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, minuten: int, *, reason: str) -> None:
         guild = ctx.guild
-        if not guild:
-            await ctx.send("❌ Fehler: Kein Guild-Context.", ephemeral=True)
-            return
-
         if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
             await ctx.send("❌ Du kannst keine Moderatoren/Admins muten.", ephemeral=True)
             return
@@ -76,24 +73,17 @@ class Moderation(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Muten: {e}", ephemeral=True)
 
-# ------------------------------------------------------------
-# User verwarnen
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # User verwarnen
+    # ------------------------------------------------------------
     @commands.hybrid_command(name="warn", description="Verwarnt einen Benutzer")
-    @commands.has_permissions(moderate_members=True)
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
-        guild = ctx.guild
-        if not guild:
-            await ctx.send("❌ Fehler: Kein Guild-Context.", ephemeral=True)
-            return
-
         if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
             await ctx.send("❌ Du kannst keine Moderatoren/Admins verwarnen.", ephemeral=True)
             return
 
-        db_mod.add_warn(str(member.id), str(guild.id), reason)
-        warns = db_mod.get_warns(str(member.id), str(guild.id), within_hours=24)
+        db_mod.add_warn(str(member.id), str(ctx.guild.id), reason)
+        warns = db_mod.get_warns(str(member.id), str(ctx.guild.id), within_hours=24)
 
         await ctx.send(
             f"⚠️ {member.mention} wurde verwarnt.\nGrund: {reason}\n👉 Warnungen in 24h: **{len(warns)}**"
@@ -103,103 +93,77 @@ class Moderation(commands.Cog):
             try:
                 until = discord.utils.utcnow() + timedelta(hours=24)
                 await member.timeout(until, reason="Automatischer Timeout nach 2 Warnungen")
-                db_mod.add_timeout(str(member.id), str(guild.id), 1440, "Automatischer Timeout nach 2 Warnungen")
+                db_mod.add_timeout(str(member.id), str(ctx.guild.id), 1440, "Automatischer Timeout nach 2 Warnungen")
                 await ctx.send(f"🔇 {member.mention} wurde automatisch für 24 Stunden gemutet.")
             except discord.Forbidden:
                 await ctx.send("❌ Keine Berechtigung für automatischen Timeout.", ephemeral=True)
             except discord.HTTPException as e:
                 await ctx.send(f"⚠️ Fehler beim automatischen Timeout: {e}", ephemeral=True)
 
-# ------------------------------------------------------------
-# Verwarnungen des Users anzeigen
-# ------------------------------------------------------------
-
-        @commands.hybrid_command(name="warns", description="Zeigt die Warnungen eines Benutzers an")
-        @commands.has_permissions(moderate_members=True)
-        async def warns(self, ctx: commands.Context, member: discord.Member) -> None:
-            guild = ctx.guild
-            if not guild:
-                await ctx.send("❌ Fehler: Kein Guild-Context.", ephemeral=True)
-                return
-
-            warns = db_mod.get_warns(str(member.id), str(guild.id), within_hours=24)
-            if not warns:
-                await ctx.send(f"✅ {member.mention} hat keine Warnungen in den letzten 24 Stunden.")
-                return
-
-            description = ""
-            for idx, (timestamp, reason) in enumerate(warns, start=1):
-                time_str = timestamp.strftime("%Y-%m-%d %H:%M")
-                description += f"**{idx}.** {time_str} - {reason}\n"
-
-            embed = discord.Embed(
-                title=f"⚠️ Warnungen für {member}",
-                description=description,
-                color=discord.Color.orange()
-            )
-            await ctx.send(embed=embed)
-
-# ------------------------------------------------------------
-# Verwarnungen des Users löschen
-# ------------------------------------------------------------
-
-        @commands.hybrid_command(name="clearwarns", description="Löscht alle Warnungen eines Benutzers")
-        @commands.has_permissions(moderate_members=True)
-        async def clearwarns(self, ctx: commands.Context, member: discord.Member) -> None:
-            guild = ctx.guild
-            if not guild:
-                await ctx.send("❌ Fehler: Kein Guild-Context.", ephemeral=True)
-                return
-
-            db_mod.clear_warns(str(member.id), str(guild.id))
-            await ctx.send(f"🧹 Alle Warnungen für {member.mention} wurden gelöscht.")
-
-# ------------------------------------------------------------
-# User bannen
-# ------------------------------------------------------------
-
-    @commands.hybrid_command(name="ban", description="Bannt einen Benutzer")
-    @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
-        guild = ctx.guild
-        if not guild:
-            await ctx.send("❌ Fehler: Kein Guild-Context.", ephemeral=True)
+    # ------------------------------------------------------------
+    # Verwarnungen des Users anzeigen
+    # ------------------------------------------------------------
+    @commands.hybrid_command(name="warns", description="Zeigt die Warnungen eines Benutzers an")
+    async def warns(self, ctx: commands.Context, member: discord.Member) -> None:
+        warns = db_mod.get_warns(str(member.id), str(ctx.guild.id), within_hours=24)
+        if not warns:
+            await ctx.send(f"✅ {member.mention} hat keine Warnungen in den letzten 24 Stunden.")
             return
 
+        description = ""
+        for idx, (timestamp, reason) in enumerate(warns, start=1):
+            time_str = timestamp.strftime("%Y-%m-%d %H:%M")
+            description += f"**{idx}.** {time_str} - {reason}\n"
+
+        embed = discord.Embed(
+            title=f"⚠️ Warnungen für {member}",
+            description=description,
+            color=discord.Color.orange()
+        )
+        await ctx.send(embed=embed)
+
+    # ------------------------------------------------------------
+    # Verwarnungen des Users löschen
+    # ------------------------------------------------------------
+    @commands.hybrid_command(name="clearwarns", description="Löscht alle Warnungen eines Benutzers")
+    async def clearwarns(self, ctx: commands.Context, member: discord.Member) -> None:
+        db_mod.clear_warns(str(member.id), str(ctx.guild.id))
+        await ctx.send(f"🧹 Alle Warnungen für {member.mention} wurden gelöscht.")
+
+    # ------------------------------------------------------------
+    # User bannen
+    # ------------------------------------------------------------
+    @commands.hybrid_command(name="ban", description="Bannt einen Benutzer")
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
         if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
             await ctx.send("❌ Du kannst keine Moderatoren/Admins bannen.", ephemeral=True)
             return
 
         try:
             await member.ban(reason=reason)
-            db_mod.add_ban(str(member.id), str(guild.id), reason)
+            db_mod.add_ban(str(member.id), str(ctx.guild.id), reason)
             await ctx.send(f"🔨 {member.mention} wurde gebannt.\nGrund: {reason}")
         except discord.Forbidden:
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu bannen.", ephemeral=True)
         except discord.HTTPException as e:
             await ctx.send(f"⚠️ Fehler beim Bannen: {e}", ephemeral=True)
 
-# ------------------------------------------------------------
-# User entbannen
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # User entbannen
+    # ------------------------------------------------------------
     @commands.hybrid_command(name="unban", description="Entbannt einen Benutzer")
-    @commands.has_permissions(ban_members=True) 
     async def unban(self, ctx: commands.Context, user: discord.User) -> None:
-        guild = ctx.guild
-        if not guild:
-            await ctx.send("❌ Fehler: Kein Guild-Context.", ephemeral=True)
-            return
-
         try:
-            await guild.unban(user)
+            await ctx.guild.unban(user)
             await ctx.send(f"✅ {user.mention} wurde entbannt.")
         except discord.Forbidden:
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu entbannen.", ephemeral=True)
         except discord.HTTPException as e:
-            await ctx.send(f"⚠️ Fehler beim Entbannen: {e}", ephemeral=True)    
-        
+            await ctx.send(f"⚠️ Fehler beim Entbannen: {e}", ephemeral=True)
 
 
+# ------------------------------------------------------------
+# Setup Cog
+# ------------------------------------------------------------
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Moderation(bot))
