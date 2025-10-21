@@ -64,6 +64,23 @@ def add_timeout(user_id: str, guild_id: str, minutes: int, reason: str):
     cur.close()
     conn.close()
 
+#-------------
+# User-Timeouts abrufen
+#-------------
+def get_timeouts(user_id: str, guild_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    # Ruft alle Timeouts ab, da Timeouts in der Regel nicht ablaufen, bevor sie aus der DB gelöscht werden (falls implementiert)
+    cur.execute("""
+    SELECT timestamp, duration_minutes, reason FROM timeouts
+    WHERE user_id = %s AND guild_id = %s
+    """, (user_id, guild_id))
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results
+
 # ------------------------------------------------------------
 # User Bann hinzufügen
 # ------------------------------------------------------------
@@ -78,3 +95,20 @@ def add_ban(user_id: str, guild_id: str, reason: str):
     conn.commit()
     cur.close()
     conn.close()
+
+#-------------
+# User Bann abrufen
+#-------------
+def get_bans(user_id: str, guild_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    # Ruft alle Bans ab
+    cur.execute("""
+    SELECT timestamp, reason FROM bans
+    WHERE user_id = %s AND guild_id = %s
+    """, (user_id, guild_id))
+
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return results

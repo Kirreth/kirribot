@@ -2,16 +2,19 @@
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
-from utils.database import users as db_users, commands as db_commands, messages as db_messages
+# Stellen Sie sicher, dass Sie db_users korrekt importieren
+from utils.database import users as db_users, commands as db_commands, messages as db_messages 
 from typing import Optional
 
 class ActivityTracker(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.check_active_users.start() 
+        self.check_total_members.start() 
 
     def cog_unload(self):
         self.check_active_users.cancel()
+        self.check_total_members.cancel()
 
     # ------------------------------------------------------------
     # Aktive User Check (Alle 5 Minuten)
@@ -25,13 +28,31 @@ class ActivityTracker(commands.Cog):
             ]
             count = len(active_members)
             
-            # --- NEUE DEBUG-AUSGABE: Prüft, welcher Wert an die DB gesendet wird ---
+            # --- DEBUG-AUSGABE: Prüft, welcher Wert an die DB gesendet wird ---
             print(f"DEBUG: Active count for {guild.name} ({guild.id}): {count}")
             # ---------------------------------------------------------------------
 
+            # Speichert den Rekord der AKTIVEN Nutzer (in 'active_users' Tabelle)
             db_users.set_max_active(str(guild.id), count) 
 
+    @tasks.loop(minutes=5.0)
+    async def check_total_members(self):
+        """Überprüft und speichert den Rekord der Gesamtmitgliederanzahl."""
+        for guild in self.bot.guilds:
+            if guild.unavailable:
+                continue
+            
+            # Gesamtmitgliederzahl (inkl. Bots)
+            total_count = guild.member_count 
+            
+            # Speichert den Rekord der GESAMTMITGLIEDER (in 'members' Tabelle)
+            db_users.set_max_members(str(guild.id), total_count)
+            # Optionaler Debug-Print
+            # print(f"DEBUG: Total member count for {guild.name}: {total_count}")
+
+
     @check_active_users.before_loop
+    @check_total_members.before_loop
     async def before_check(self):
         await self.bot.wait_until_ready()
 
@@ -93,9 +114,12 @@ class ActivityTracker(commands.Cog):
 
 
 # ------------------------------------------------------------
-# Hybrid Commands (topcommands, mr, topc)
+# Hybrid Commands (topcommands, mr, mrr, topc)
 # ------------------------------------------------------------
 
+#-------------
+# Am häufigsten genutzte Commands
+#-------------
     @commands.hybrid_command(name="topcommands", description="Zeigt die am häufigsten genutzten Befehle")
     async def topcommands(self, ctx: Context[commands.Bot], limit: Optional[int] = 5) -> None:
         if not ctx.guild:
@@ -115,21 +139,45 @@ class ActivityTracker(commands.Cog):
             
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="mr", description="Zeigt den Rekord der meisten Mitglieder")
+#-------------
+# Mitgliederrekord (Aktive Nutzer)
+#-------------
+    @commands.hybrid_command(name="mr", description="Zeigt den Rekord der aktivsten Mitglieder")
     async def mr(self, ctx: Context[commands.Bot]):
         if not ctx.guild:
              await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
              return
              
         guild_id = str(ctx.guild.id)
-        record = db_users.get_max_members(guild_id) # Retrieves the record
+        # Ruft den Rekord der AKTIVEN Mitglieder ab
+        record = db_users.get_max_active(guild_id) 
         
-        if record:
-            # Die Task zählt aktive Mitglieder, daher die Ausgabe anpassen
-            await ctx.send(f"👥 Rekord der aktiven Mitglieder: **{record}**")
+        if record and record != "0": # Prüfen auf gespeicherten Wert
+            # Die Task zählt aktive Mitglieder
+            await ctx.send(f"👥 Rekord der **aktiven** Mitglieder: **{record}**")
         else:
-            await ctx.send("Es wurde noch kein Mitgliederrekord gespeichert.")
+            await ctx.send("Es wurde noch kein Rekord der aktiven Mitglieder gespeichert.")
+            
+#-------------
+# Mitgliederrekord (Gesamtanzahl)
+#-------------
+    @commands.hybrid_command(name="mrr", description="Zeigt den Rekord der gesamten Mitgliederanzahl auf dem Server.")
+    async def mrr(self, ctx: commands.Context):
+        if not ctx.guild:
+             return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
+             
+        guild_id = str(ctx.guild.id)
+        # Ruft den Rekord der GESAMTEN Mitglieder ab
+        record = db_users.get_max_members(guild_id) 
+        
+        if record and record != "0": # Prüfen auf gespeicherten Wert
+             await ctx.send(f"📈 Rekord der **gesamten** Mitglieder: **{record}**")
+        else:
+             await ctx.send("Es wurde noch kein Rekord der gesamten Mitglieder gespeichert.")
 
+#-------------
+# Top 5 Channel (Aktivität)
+#-------------
     @commands.hybrid_command(name="topc", description="Zeigt die 5 aktivsten Channels des Servers")
     async def topc(self, ctx: Context[commands.Bot]):
         if not ctx.guild:

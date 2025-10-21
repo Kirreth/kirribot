@@ -58,45 +58,6 @@ class Info(commands.Cog):
 
         await ctx.send(embed=embed)
 
-# ------------------------------------------------------------
-# Rekord gleichzeitig aktive User
-# ------------------------------------------------------------
-
-    @commands.hybrid_command(
-        name="aur",
-        description="Zeigt den Höchstwert gleichzeitiger aktiver User im Server"
-    )
-    async def aur(self, ctx: Context[commands.Bot]) -> None:
-        if not ctx.guild:
-            await ctx.send("Dieser Befehl kann nur in einem Server benutzt werden.", ephemeral=True)
-            return
-
-        guild_id = str(ctx.guild.id)
-        max_active = db.get_max_active(guild_id)
-
-        if max_active == 0:
-            await ctx.send("📊 Es wurden bisher keine aktiven User gezählt.")
-            return
-
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT timestamp FROM max_active WHERE guild_id=%s", (guild_id,))
-        row = cursor.fetchone()
-        conn.close()
-
-        timestamp = row[0] if row else None
-        date_str = datetime.fromisoformat(timestamp).strftime("%d.%m.%Y %H:%M:%S") if timestamp else "Unbekannt"
-
-        embed = discord.Embed(
-            title=f"📈 Aktiver Nutzer-Rekord für {ctx.guild.name}",
-            color=discord.Color.green()
-        )
-        embed.add_field(name="👥 Höchstwert", value=f"{max_active} gleichzeitige Nutzer", inline=False)
-        embed.add_field(name="📅 Zeitpunkt", value=date_str, inline=False)
-
-        await ctx.send(embed=embed)
-
-
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Info(bot))
