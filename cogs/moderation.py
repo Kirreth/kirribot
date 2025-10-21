@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from datetime import timedelta
+from discord.ext.commands import Context
+from datetime import timedelta, datetime
 from utils.database import moderation as db_mod
 
 
@@ -112,7 +113,8 @@ class Moderation(commands.Cog):
 
         description = ""
         for idx, (timestamp, reason) in enumerate(warns, start=1):
-            time_str = timestamp.strftime("%Y-%m-%d %H:%M")
+            dt = datetime.fromtimestamp(timestamp)
+            time_str = dt.strftime("%Y-%m-%d %H:%M")
             description += f"**{idx}.** {time_str} - {reason}\n"
 
         embed = discord.Embed(
