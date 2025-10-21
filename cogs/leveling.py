@@ -300,6 +300,8 @@ class Leveling(commands.Cog):
 # ------------------------------------------------------------
 
 
+
+
     @commands.hybrid_command(name="top5", description="Zeigt die Top 5 User im Levelsystem an")
     async def top5(self, ctx: Context[commands.Bot]):
         """Zeigt die Top 5 Benutzer mit dem höchsten Level und XP an."""
@@ -310,7 +312,7 @@ class Leveling(commands.Cog):
 
         # Top 5 Benutzer anhand ihres Counters (XP)
         cursor.execute("""
-            SELECT name, counter, level 
+            SELECT id, counter, level 
             FROM user 
             ORDER BY counter DESC 
             LIMIT 5
@@ -331,9 +333,11 @@ class Leveling(commands.Cog):
         # 📊 Rangliste aufbauen
         description = ""
         medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
-        for i, (name, counter, level) in enumerate(results):
+        for i, (uid, counter, level) in enumerate(results):
+            member = ctx.guild.get_member(int(uid))
+            display_name = member.display_name if member else f"User {uid}"
             medal = medals[i] if i < len(medals) else f"#{i+1}"
-            description += f"{medal} **{name}** — Level {level} ({counter} XP)\n"
+            description += f"{medal} **{display_name}** — Level {level} ({counter} XP)\n"
 
         embed = discord.Embed(
             title="🏆 Top 5 Spieler im Levelsystem",
@@ -343,6 +347,7 @@ class Leveling(commands.Cog):
         embed.set_footer(text="Bleib aktiv, um aufzusteigen! 💪")
 
         await ctx.send(embed=embed)
+
 
 
 # ------------------------------------------------------------
