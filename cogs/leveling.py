@@ -245,7 +245,10 @@ class Leveling(commands.Cog):
 
         if new_level > old_level:
             try:
-                await message.add_reaction("➕")
+                emoji = discord.utils.get(message.guild.emojis, name="plusmedium")
+                if emoji is None:
+                    emoji = "➕"  # fallback
+                await message.add_reaction(emoji)
             except Exception as e:
                 print(f"⚠️ Konnte Reaktion nicht hinzufügen: {e}")
 
@@ -290,6 +293,11 @@ class Leveling(commands.Cog):
 
         image_stream = await create_rank_card(user, counter, level, rank, progress_percent, xp_current_in_level, xp_needed_for_level_up)
         await ctx.send(file=discord.File(image_stream, filename=f"rank_card_{user.name}.png"))
+
+
+# ------------------------------------------------------------
+# Top 5 Befehl
+# ------------------------------------------------------------
 
 
     @commands.hybrid_command(name="top5", description="Zeigt die Top 5 User im Levelsystem an")
