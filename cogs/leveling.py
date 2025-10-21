@@ -291,6 +291,52 @@ class Leveling(commands.Cog):
         image_stream = await create_rank_card(user, counter, level, rank, progress_percent, xp_current_in_level, xp_needed_for_level_up)
         await ctx.send(file=discord.File(image_stream, filename=f"rank_card_{user.name}.png"))
 
+
+    @commands.hybrid_command(name="top5", description="Zeigt die Top 5 User im Levelsystem an")
+    async def top5(self, ctx: Context[commands.Bot]):
+        """Zeigt die Top 5 Benutzer mit dem höchsten Level und XP an."""
+        await ctx.defer()
+
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # Top 5 Benutzer anhand ihres Counters (XP)
+        cursor.execute("""
+            SELECT name, counter, level 
+            FROM user 
+            ORDER BY counter DESC 
+            LIMIT 5
+        """)
+        results = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        if not results:
+            await ctx.send(embed=discord.Embed(
+                title="Noch keine Daten vorhanden 😢",
+                description="Es wurden noch keine Nachrichten gezählt.",
+                color=discord.Color.red()
+            ))
+            return
+
+        # 📊 Rangliste aufbauen
+        description = ""
+        medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
+        for i, (name, counter, level) in enumerate(results):
+            medal = medals[i] if i < len(medals) else f"#{i+1}"
+            description += f"{medal} **{name}** — Level {level} ({counter} XP)\n"
+
+        embed = discord.Embed(
+            title="🏆 Top 5 Spieler im Levelsystem",
+            description=description,
+            color=discord.Color.gold()
+        )
+        embed.set_footer(text="Bleib aktiv, um aufzusteigen! 💪")
+
+        await ctx.send(embed=embed)
+
+
 # ------------------------------------------------------------
 # Cog Setup 
 # ------------------------------------------------------------
