@@ -71,7 +71,8 @@ async def run_bot():
             "cogs.birthday",
             "cogs.quiz",
             "cogs.selfinfo",
-            "cogs.metafrage"
+            "cogs.metafrage",
+            "cogs.partyquiz"
         ]
 
         for cog in cogs:

@@ -1,0 +1,233 @@
+[
+  {
+    "question": "Wie viele Kontinente gibt es auf der Erde?",
+    "options": ["5", "6", "7", "8"],
+    "answer": "7"
+  },
+  {
+    "question": "Wer malte das Gemälde 'Die Mona Lisa'?",
+    "options": ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Claude Monet"],
+    "answer": "Leonardo da Vinci"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Frankreich?",
+    "options": ["Berlin", "Madrid", "Paris", "Rom"],
+    "answer": "Paris"
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'O'?",
+    "options": ["Gold", "Silber", "Sauerstoff", "Kohlenstoff"],
+    "answer": "Sauerstoff"
+  },
+  {
+    "question": "In welchem Jahr landete der erste Mensch auf dem Mond?",
+    "options": ["1965", "1969", "1971", "1975"],
+    "answer": "1969"
+  },
+  {
+    "question": "Welches Land ist das größte der Welt?",
+    "options": ["USA", "China", "Kanada", "Russland"],
+    "answer": "Russland"
+  },
+  {
+    "question": "Was ist die kleinste Einheit der Materie?",
+    "options": ["Atom", "Molekül", "Elektron", "Neutron"],
+    "answer": "Atom"
+  },
+  {
+    "question": "Welcher Planet ist der sonnennächste?",
+    "options": ["Venus", "Mars", "Merkur", "Erde"],
+    "answer": "Merkur"
+  },
+  {
+    "question": "Wer schrieb 'Die Verwandlung'?",
+    "options": ["Franz Kafka", "Hermann Hesse", "Thomas Mann", "Johann Wolfgang von Goethe"],
+    "answer": "Franz Kafka"
+  },
+  {
+    "question": "Welches Tier ist das größte lebende Landtier?",
+    "options": ["Afrikanischer Elefant", "Giraffe", "Nashorn", "Kondor"],
+    "answer": "Afrikanischer Elefant"
+  },
+  {
+    "question": "Wie viele Bundesländer hat Deutschland?",
+    "options": ["12", "13", "14", "16"],
+    "answer": "16"
+  },
+  {
+    "question": "Welches Land gewann die Fußball-Weltmeisterschaft 2018?",
+    "options": ["Brasilien", "Frankreich", "Deutschland", "Spanien"],
+    "answer": "Frankreich"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Australien?",
+    "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+    "answer": "Canberra"
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'Na'?",
+    "options": ["Natrium", "Neon", "Nickel", "Nobelium"],
+    "answer": "Natrium"
+  },
+  {
+    "question": "Wer malte 'Die Sternennacht'?",
+    "options": ["Vincent van Gogh", "Pablo Picasso", "Claude Monet", "Edvard Munch"],
+    "answer": "Vincent van Gogh"
+  },
+  {
+    "question": "In welchem Jahr begann der Zweite Weltkrieg?",
+    "options": ["1935", "1939", "1941", "1945"],
+    "answer": "1939"
+  },
+  {
+    "question": "Welches Land ist bekannt für die Pyramiden?",
+    "options": ["Griechenland", "Ägypten", "Mexiko", "Italien"],
+    "answer": "Ägypten"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Kanada?",
+    "options": ["Toronto", "Vancouver", "Ottawa", "Montreal"],
+    "answer": "Ottawa"
+  },
+  {
+    "question": "Welcher Planet wird als 'Roter Planet' bezeichnet?",
+    "options": ["Mars", "Venus", "Jupiter", "Saturn"],
+    "answer": "Mars"
+  },
+  {
+    "question": "Wer schrieb '1984'?",
+    "options": ["George Orwell", "Aldous Huxley", "Ray Bradbury", "Margaret Atwood"],
+    "answer": "George Orwell"
+  },
+  {
+    "question": "Welches Tier ist das schnellste Landtier?",
+    "options": ["Löwe", "Gepard", "Tiger", "Leopard"],
+    "answer": "Gepard"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Japan?",
+    "options": ["Osaka", "Kyoto", "Hiroshima", "Tokio"],
+    "answer": "Tokio"
+  },
+  {
+    "question": "Welches Land ist bekannt für die Tulpen?",
+    "options": ["Niederlande", "Frankreich", "Spanien", "Italien"],
+    "answer": "Niederlande"
+  },
+  {
+    "question": "Was ist die größte Insel der Welt?",
+    "options": ["Grönland", "Neuguinea", "Borneo", "Madagaskar"],
+    "answer": "Grönland"
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'Fe'?",
+    "options": ["Fluor", "Eisen", "Flerovium", "Francium"],
+    "answer": "Eisen"
+  },
+  {
+    "question": "Wer war der erste Präsident der USA?",
+    "options": ["Abraham Lincoln", "George Washington", "Thomas Jefferson", "John Adams"],
+    "answer": "George Washington"
+  },
+  {
+    "question": "Welches Land ist bekannt für Sushi?",
+    "options": ["China", "Japan", "Korea", "Thailand"],
+    "answer": "Japan"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Spanien?",
+    "options": ["Barcelona", "Madrid", "Sevilla", "Valencia"],
+    "answer": "Madrid"
+  },
+  {
+    "question": "Welches Tier ist das größte lebende Meerestier?",
+    "options": ["Blauwal", "Walhai", "Killerwal", "Riesenkrake"],
+    "answer": "Blauwal"
+  },
+  {
+    "question": "Wer malte 'Das letzte Abendmahl'?",
+    "options": ["Leonardo da Vinci", "Michelangelo", "Raphael", "Caravaggio"],
+    "answer": "Leonardo da Vinci"
+  },
+  {
+    "question": "In welchem Jahr fiel die Berliner Mauer?",
+    "options": ["1985", "1989", "1991", "1993"],
+    "answer": "1989"
+  },
+  {
+    "question": "Welches Land ist bekannt für die Fjorde?",
+    "options": ["Schweden", "Norwegen", "Finnland", "Island"],
+    "answer": "Norwegen"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Italien?",
+    "options": ["Rom", "Mailand", "Venedig", "Florenz"],
+    "answer": "Rom"
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'H'?",
+    "options": ["Helium", "Wasserstoff", "Holmium", "Hafnium"],
+    "answer": "Wasserstoff"
+  },
+  {
+    "question": "Wer schrieb 'Der Herr der Ringe'?",
+    "options": ["J.R.R. Tolkien", "C.S. Lewis", "George R.R. Martin", "J.K. Rowling"],
+    "answer": "J.R.R. Tolkien"
+  },
+  {
+    "question": "Welcher Planet ist der größte im Sonnensystem?",
+    "options": ["Jupiter", "Saturn", "Uranus", "Neptun"],
+    "answer": "Jupiter"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Brasilien?",
+    "options": ["Rio de Janeiro", "São Paulo", "Brasília", "Salvador"],
+    "answer": "Brasília"
+  },
+  {
+    "question": "Welches Land ist bekannt für die Kängurus?",
+    "options": ["Australien", "Neuseeland", "Südafrika", "Kanada"],
+    "answer": "Australien"
+  },
+  {
+    "question": "Was ist die größte Wüste der Welt?",
+    "options": ["Sahara", "Arabische Wüste", "Gobi", "Antarktis"],
+    "answer": "Antarktis"
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'Ag'?",
+    "options": ["Gold", "Silber", "Aluminium", "Argon"],
+    "answer": "Silber"
+  },
+  {
+    "question": "Wer war der erste Mensch im Weltraum?",
+    "options": ["Neil Armstrong", "Yuri Gagarin", "Buzz Aldrin", "Valentina Tereshkova"],
+    "answer": "Yuri Gagarin"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Schweden?",
+    "options": ["Stockholm", "Göteborg", "Malmö", "Uppsala"],
+    "answer": "Stockholm"
+  },
+  {
+    "question": "Welches Land ist bekannt für die Pyramiden von Teotihuacán?",
+    "options": ["Mexiko", "Ägypten", "China", "Indien"],
+    "answer": "Mexiko"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Russland?",
+    "options": ["Moskau", "Sankt Petersburg", "Kasan", "Wladiwostok"],
+    "answer": "Moskau"
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'Cu'?",
+    "options": ["Kupfer", "Kohlenstoff", "Calcium", "Chrom"],
+    "answer": "Kupfer"
+  },
+  {
+    "question": "Wer schrieb 'Der Kleine Prinz'?",
+    "options": ["Antoine de Saint-Exupéry", "Jules Verne", "Victor Hugo", "Albert Camus"],
+    "answer": "Antoine de Saint-Exupéry"
+}
+]
+ 
