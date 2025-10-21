@@ -11,6 +11,8 @@ def log_channel_activity(channel_id: str, guild_id: str, user_id: str) -> None:
     """
     Protokolliert eine Kanalaktivität. Erhöht den Zähler für (guild_id, channel_id, user_id),
     wenn der Eintrag existiert (UPSERT), andernfalls wird ein neuer Eintrag erstellt.
+    
+    ⚠️ Die Tabelle 'messages' muss die Spalte 'action_count' vom Typ INT besitzen.
     """
     conn = get_connection()
     cur = conn.cursor()
@@ -46,7 +48,6 @@ def log_message(guild_id: str, user_id: str, channel_id: str) -> None:
 def get_top_channels(guild_id: str, limit: int = 5) -> list[tuple]:
     """
     Gibt die aktivsten Channels basierend auf der Gesamtanzahl der Aktionen (action_count) zurück.
-    Der Parameter 'days' wurde entfernt, da er in der SQL-Abfrage nicht verwendet wird.
     """
     conn = get_connection()
     cur = conn.cursor()
@@ -72,7 +73,6 @@ def get_top_channels(guild_id: str, limit: int = 5) -> list[tuple]:
 def get_top_messages(guild_id: str, limit: int = 5) -> list[tuple]:
     """
     Gibt die Top-User basierend auf ihrer action_count zurück (ohne Systemaktivität).
-    Der Parameter 'days' wurde entfernt, da er in der SQL-Abfrage nicht verwendet wird.
     """
     conn = get_connection()
     cur = conn.cursor()

@@ -18,7 +18,7 @@ def get_connection():
         user=DB_USER,
         password=DB_PASS,
         database=DB_NAME,
-        auth_plugin='mysql_native_password' # manchmal nötig für MariaDB
+        auth_plugin='mysql_native_password'  # manchmal nötig für MariaDB
     )
 
 
@@ -27,9 +27,9 @@ def setup_database():
     conn = get_connection()
     cursor = conn.cursor()
 
-# ------------------------------------------------------------
-# Aktive User (korrigiert: PRIMARY KEY auf max_active)
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Aktive User
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS active_users (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -37,10 +37,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Mitgliederrekord
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Mitgliederrekord
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS members (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -48,11 +47,9 @@ def setup_database():
         )
     """)
 
-
-# ------------------------------------------------------------
-# Commands loggen
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Commands loggen
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS commands (
             guild_id VARCHAR(20),
@@ -62,24 +59,23 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Nachrichten loggen (KORRIGIERT: log_id hinzugefügt)
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Nachrichten loggen (messages) – jetzt mit action_count
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
             guild_id VARCHAR(20),
             user_id VARCHAR(20),
             channel_id VARCHAR(20),
-            timestamp BIGINT NOT NULL
+            action_count INT NOT NULL DEFAULT 0,
+            last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     """)
 
-# ------------------------------------------------------------
-# Levelsystem
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Levelsystem
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
             id VARCHAR(20) PRIMARY KEY,
@@ -89,10 +85,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Bumper loggen
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Bumper loggen
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bumps (
             guild_id VARCHAR(20),
@@ -101,8 +96,6 @@ def setup_database():
             PRIMARY KEY (guild_id, user_id, timestamp)
         )
     """)
-    
-    # NEU: Tabelle für die Gesamtanzahl der Bumps (für /topb)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS total_bumps (
             guild_id VARCHAR(20),
@@ -111,8 +104,6 @@ def setup_database():
             PRIMARY KEY (guild_id, user_id)
         )
     """)
-    
-    # NEU: Tabelle für den Cooldown-Status pro Server (für /nextbump)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS server_status (
             guild_id VARCHAR(20) PRIMARY KEY,
@@ -120,10 +111,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Moderation: Warns (KORRIGIERT: log_id hinzugefügt)
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Moderation: Warns
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -134,10 +124,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Moderation: Timeouts (KORRIGIERT: log_id hinzugefügt)
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Moderation: Timeouts
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -149,10 +138,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Moderation: Bans (KORRIGIERT: log_id hinzugefügt)
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Moderation: Bans
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -163,9 +151,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Geburtstage
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Geburtstage
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS birthdays (
             user_id VARCHAR(50) PRIMARY KEY,
@@ -175,9 +163,6 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# Geburtstags-Channel
-# ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS birthday_settings (
             guild_id VARCHAR(50) PRIMARY KEY,
@@ -185,8 +170,9 @@ def setup_database():
         )
     """)
 
-
-    # Korrigierte Log-Tabelle (die ursprüngliche 'max_active' war schon da)
+    # ------------------------------------------------------------
+    # Max Active Log
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS max_active_log (
             guild_id VARCHAR(20),
@@ -196,9 +182,9 @@ def setup_database():
         )
     """)
 
-# ------------------------------------------------------------
-# IT-Quiz Ergebnisse
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # IT-Quiz Ergebnisse
+    # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS quiz_results (
             user_id VARCHAR(50),
@@ -208,7 +194,6 @@ def setup_database():
             PRIMARY KEY (user_id, guild_id)
         )
     """)
-
 
     conn.commit()
     cursor.close()

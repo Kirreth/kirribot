@@ -7,11 +7,28 @@ from utils.database import setup_database
 from typing import List, Optional
 import time
 import mysql.connector
+import logging
 import watchgod
 
+# ------------------------------------------------------------
+# Logging konfigurieren
+# ------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
+
+# ------------------------------------------------------------
+# Env & Token laden
+# ------------------------------------------------------------
 load_dotenv()
 TOKEN: Optional[str] = os.getenv("TOKEN")
 
+# ------------------------------------------------------------
+# Discord Bot initialisieren
+# ------------------------------------------------------------
 intents: discord.Intents = discord.Intents.all()
 bot: commands.Bot = commands.Bot(
     command_prefix="!",
@@ -33,10 +50,10 @@ def wait_for_mysql(host: str, port: int, user: str, password: str, database: str
                 database=database
             )
             conn.close()
-            print(f"✅ MySQL ist erreichbar (Versuch {attempt})")
+            logger.info(f"✅ MySQL ist erreichbar (Versuch {attempt})")
             return
         except mysql.connector.Error:
-            print(f"⏳ MySQL nicht erreichbar, warte {delay}s... (Versuch {attempt})")
+            logger.warning(f"⏳ MySQL nicht erreichbar, warte {delay}s... (Versuch {attempt})")
             time.sleep(delay)
     raise RuntimeError("❌ MySQL konnte nach mehreren Versuchen nicht erreicht werden.")
 
@@ -57,7 +74,7 @@ setup_database()
 async def run_bot():
     @bot.event
     async def on_ready() -> None:
-        print(f"Bot ist online als {bot.user}")
+        logger.info(f"Bot ist online als {bot.user}")
 
         cogs: List[str] = [
             "cogs.leveling",
@@ -80,13 +97,13 @@ async def run_bot():
         for cog in cogs:
             try:
                 await bot.load_extension(cog)
-                print(f"✅ Cog geladen: {cog}")
+                logger.info(f"✅ Cog geladen: {cog}")
             except Exception as e:
-                print(f"❌ Fehler beim Laden von {cog}: {e}")
+                logger.error(f"❌ Fehler beim Laden von {cog}: {e}", exc_info=True)
 
         synced = await bot.tree.sync()
-        print(f"🔄 {len(synced)} Befehle erfolgreich synchronisiert.")
-        print("✅ Alle Cogs geladen und Commands synchronisiert.")
+        logger.info(f"🔄 {len(synced)} Befehle erfolgreich synchronisiert.")
+        logger.info("✅ Alle Cogs geladen und Commands synchronisiert.")
 
     if TOKEN:
         await bot.start(TOKEN)
@@ -94,7 +111,7 @@ async def run_bot():
         raise ValueError("❌ Kein TOKEN in .env gefunden")
 
 # ------------------------------------------------------------
-# Funktion für Watchgod (muss "picklable" sein)
+# Funktion für Watchgod (muss picklable sein)
 # ------------------------------------------------------------
 def start_bot_process():
     asyncio.run(run_bot())
@@ -106,8 +123,7 @@ if __name__ == "__main__":
     try:
         import watchgod
     except ImportError:
-        print("⚠️ Watchgod nicht installiert. Bitte pip install watchgod")
+        logger.warning("⚠️ Watchgod nicht installiert. Bitte pip install watchgod")
         asyncio.run(run_bot())
     else:
-        # Jetzt keine Lambda mehr, sondern richtige Funktion
         watchgod.run_process(".", start_bot_process)
