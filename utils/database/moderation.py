@@ -25,13 +25,29 @@ def get_warns(user_id: str, guild_id: str, within_hours: int = 24):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT reason, timestamp FROM warns
-        WHERE user_id = %s AND guild_id = %s AND timestamp > %s
+    SELECT timestamp, reason FROM warns
+    WHERE user_id = %s AND guild_id = %s AND timestamp > %s
     """, (user_id, guild_id, cutoff))
+
     results = cur.fetchall()
     cur.close()
     conn.close()
     return results
+
+
+# ------------------------------------------------------------
+# User-Warns löschen
+# ------------------------------------------------------------
+def clear_warns(user_id: str, guild_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        DELETE FROM warns WHERE user_id = %s AND guild_id = %s
+    """, (user_id, guild_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+
 
 # ------------------------------------------------------------
 # User-Timeouts hinzufügen
