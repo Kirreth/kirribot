@@ -16,42 +16,55 @@ class ActivityTracker(commands.Cog):
     # ------------------------------------------------------------
     # Aktive User Check (Alle 5 Minuten)
     # ------------------------------------------------------------
-
     @tasks.loop(minutes=5)
     async def check_active_users(self):
         for guild in self.bot.guilds:
-            # Stelle sicher, dass wir nur Mitglieder prüfen, die keine Bots sind und nicht offline sind
             active_members = [
                 m for m in guild.members
                 if not m.bot and m.status != discord.Status.offline
             ]
             count = len(active_members)
-            # db_users.set_max_active übernimmt die Logik für max_active und max_active_log
+            
+            # --- NEUE DEBUG-AUSGABE: Prüft, welcher Wert an die DB gesendet wird ---
+            print(f"DEBUG: Active count for {guild.name} ({guild.id}): {count}")
+            # ---------------------------------------------------------------------
+
             db_users.set_max_active(str(guild.id), count) 
 
     @check_active_users.before_loop
     async def before_check(self):
         await self.bot.wait_until_ready()
 
+    # ============================================================
+    # Listener: Loggt NUR Kanalaktivität
+    # ============================================================
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        # Ignoriere Bots und DMs
+        if message.author.bot or not message.guild:
+            return
+
+        guild_id = str(message.guild.id)
+        user_id = str(message.author.id)
+        channel_id = str(message.channel.id)
+
+        # Loggt Kanal-Aktivität
+        db_messages.log_channel_activity(channel_id, guild_id, user_id)
+        # Levelsystem XP-Logik wurde entfernt.
+
+
     # ------------------------------------------------------------
-    # Listener: Normale Befehle (Prefix)
+    # Listener: Normale Befehle (Prefix) - NUR COMMAND USAGE LOGGEN
     # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_command(self, ctx: Context[commands.Bot]):
-        # Prüfen, ob der Befehl in einem Server ausgeführt wurde
         if not ctx.guild:
-            return # DM-Befehle für diese Logs ignorieren oder gesondert behandeln
+            return 
         
         guild_id = str(ctx.guild.id)
         
-        # 1. Befehlsnutzung protokollieren
+        # Befehlsnutzung protokollieren
         db_commands.log_command_usage(ctx.command.qualified_name, guild_id)
-        
-        # 2. Kanalaktivität protokollieren (muss Channel-ID haben)
-        if ctx.channel:
-             # user_id ist erforderlich für die 'messages'-Tabelle
-            user_id = str(ctx.author.id)
-            db_messages.log_channel_activity(str(ctx.channel.id), guild_id, user_id)
 
 
     # ------------------------------------------------------------
@@ -63,29 +76,28 @@ class ActivityTracker(commands.Cog):
         interaction: discord.Interaction,
         command: discord.app_commands.Command
     ):
-        # Prüfen, ob die Interaktion in einem Server stattfand
         if not interaction.guild:
-            return # DM-Befehle für diese Logs ignorieren
+            return 
         
         guild_id = str(interaction.guild.id)
         
         # 1. Befehlsnutzung protokollieren
         db_commands.log_command_usage(command.qualified_name, guild_id)
         
-        # 2. Kanalaktivität protokollieren (war die Quelle des IntegrityError)
+        # 2. Loggt Kanal-Aktivität (Soll zählen)
         if interaction.channel and interaction.user:
-            # user_id ist erforderlich für die 'messages'-Tabelle
             user_id = str(interaction.user.id)
-            # Wenn log_channel_activity auch die user_id benötigt, muss sie übergeben werden.
-            db_messages.log_channel_activity(str(interaction.channel.id), guild_id, user_id)
+            channel_id = str(interaction.channel.id)
+
+            db_messages.log_channel_activity(channel_id, guild_id, user_id)
+
 
 # ------------------------------------------------------------
-# Topcommands
+# Hybrid Commands (topcommands, mr, topc)
 # ------------------------------------------------------------
 
     @commands.hybrid_command(name="topcommands", description="Zeigt die am häufigsten genutzten Befehle")
     async def topcommands(self, ctx: Context[commands.Bot], limit: Optional[int] = 5) -> None:
-        # Hier muss ctx.guild geprüft werden, da DM-Befehle erlaubt sind, aber die DB-Logik guild_id benötigt
         if not ctx.guild:
              await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
              return
@@ -103,10 +115,6 @@ class ActivityTracker(commands.Cog):
             
         await ctx.send(embed=embed)
 
-# ------------------------------------------------------------
-# Userrekord
-# ------------------------------------------------------------
-
     @commands.hybrid_command(name="mr", description="Zeigt den Rekord der meisten Mitglieder")
     async def mr(self, ctx: Context[commands.Bot]):
         if not ctx.guild:
@@ -114,10 +122,11 @@ class ActivityTracker(commands.Cog):
              return
              
         guild_id = str(ctx.guild.id)
-        record = db_users.get_max_members(guild_id)
+        record = db_users.get_max_members(guild_id) # Retrieves the record
         
         if record:
-            await ctx.send(f"👥 Rekord-Mitgliederzahl: **{record}**")
+            # Die Task zählt aktive Mitglieder, daher die Ausgabe anpassen
+            await ctx.send(f"👥 Rekord der aktiven Mitglieder: **{record}**")
         else:
             await ctx.send("Es wurde noch kein Mitgliederrekord gespeichert.")
 

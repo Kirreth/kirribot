@@ -13,7 +13,6 @@ import math
 # ------------------------------------------------------------
 # Hilfsfunktionen
 # ------------------------------------------------------------
-
 def get_base_path(*paths: str) -> str:
     """Erstellt einen sicheren Pfad relativ zum Projekt-Wurzelverzeichnis."""
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -22,7 +21,6 @@ def get_base_path(*paths: str) -> str:
 # ------------------------------------------------------------
 # Schriftarten laden
 # ------------------------------------------------------------
-
 try:
     FONT_PATH = get_base_path("assets", "fonts", "RobotoMono-VariableFont_wght.ttf")
     font_main = ImageFont.truetype(FONT_PATH, 40)
@@ -38,9 +36,8 @@ except Exception as e:
     font_name = ImageFont.load_default()
 
 # ------------------------------------------------------------
-# Levelberechnung (Unverändert)
+# Levelberechnung
 # ------------------------------------------------------------
-
 def berechne_level(counter: int) -> int:
     if counter < 1:
         return 0
@@ -63,10 +60,10 @@ def berechne_fortschritt(counter: int, level: int):
     
     return progress_percent, xp_in_level, xp_needed
 
-# ------------------------------------------------------------
-# Rank Card erstellen
-# ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# Rank Card erstellen 
+# ------------------------------------------------------------
 async def create_rank_card(member: discord.User, counter: int, level: int, rank: int, progress_percent: float, xp_current_in_level: int, xp_needed_for_level_up: int) -> io.BytesIO:
     """Erstellt das Rank-Bild mit Benutzername, weißer Schrift/Balken und leichtem Overlay."""
     width, height = 800, 200
@@ -79,7 +76,7 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     progress_color = (255, 255, 255, 255) 
     
     # ------------------------------------------------------------
-    # Hintergrundbild laden (Unverändert)
+    # Hintergrundbild laden
     # ------------------------------------------------------------
     try:
         images_dir = get_base_path("images") 
@@ -111,7 +108,7 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     draw = ImageDraw.Draw(img) 
     
     # ------------------------------------------------------------
-    # Avatar rund einfügen (Unverändert)
+    # Avatar rund einfügen
     # ------------------------------------------------------------
     try:
         avatar_size = (150, 150)
@@ -130,7 +127,7 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
         print(f"⚠️ Avatar konnte nicht geladen werden: {e}")
 
     # ------------------------------------------------------------
-    # BENUTZERNAME HINZUFÜGEN (Neu)
+    # BENUTZERNAME HINZUFÜGEN
     # ------------------------------------------------------------
     name_text = member.display_name
     
@@ -196,6 +193,92 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     buf.seek(0)
     return buf
 
+
+# ------------------------------------------------------------
+# Top 5 Rank Card erstellen
+# ------------------------------------------------------------
+
+async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.BytesIO:
+    """Erstellt das Bild für die Top 5 Rangliste."""
+    width, height = 750, 60 + (len(results) * 120)  # Höhe basierend auf Anzahl der Einträge
+    
+    # 🎨 Initialisierung
+    img = Image.new("RGB", (width, height), (30, 30, 30))
+    draw = ImageDraw.Draw(img)
+    
+    fill_color = "#FFFFFF" 
+    rank_color = (255, 215, 0, 255) # Gold
+    
+    # 🏆 Titel
+    title_text = "🏆 Top 5 Spieler"
+    bbox_title = draw.textbbox((0, 0), title_text, font=font_main)
+    text_w_title = bbox_title[2] - bbox_title[0]
+    draw.text(((width - text_w_title) // 2, 10), title_text, fill=fill_color, font=font_main)
+    
+    start_y = 60 # Startposition für den ersten Eintrag
+
+    medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
+    avatar_size = 80
+    
+    for i, (uid, counter, level) in enumerate(results):
+        member = ctx.guild.get_member(int(uid))
+        if member is None:
+            continue # Überspringen, falls der Benutzer nicht gefunden wird
+
+        # ------------------------------------------------------------
+        # Hintergrund und Medaillen-Text
+        # ------------------------------------------------------------
+        y_pos = start_y + (i * 120)
+        
+        # Hintergrund-Rechteck
+        draw.rectangle([10, y_pos, width - 10, y_pos + 100], fill=(40, 40, 40))
+        
+        # Rang-Text
+        rank_text = medals[i] if i < len(medals) else f"#{i+1}"
+        draw.text((25, y_pos + 30), rank_text, fill=rank_color, font=font_main)
+
+        # ------------------------------------------------------------
+        # Avatar
+        # ------------------------------------------------------------
+        try:
+            asset = member.display_avatar.with_format("png").with_size(128)
+            data = io.BytesIO(await asset.read())
+            avatar_img = Image.open(data).resize((avatar_size, avatar_size)).convert("RGBA")
+
+            mask = Image.new("L", (avatar_size, avatar_size), 0)
+            mask_draw = ImageDraw.Draw(mask)
+            mask_draw.ellipse((0, 0, avatar_size, avatar_size), fill=255)
+            
+            # Avatar-Position (startet nach der Medaille)
+            avatar_x = 100
+            avatar_y = y_pos + 10
+            img.paste(avatar_img, (avatar_x, avatar_y), mask)
+            
+            # Avatar-Umrandung
+            draw.ellipse((avatar_x-5, avatar_y-5, avatar_x + avatar_size + 5, avatar_y + avatar_size + 5), outline=(100, 100, 100), width=3)
+            
+        except Exception as e:
+            print(f"⚠️ Avatar konnte nicht geladen werden für {member.name}: {e}")
+
+        # ------------------------------------------------------------
+        # Name, Level und XP
+        # ------------------------------------------------------------
+        name_x = avatar_x + avatar_size + 20
+        
+        # Name
+        draw.text((name_x, y_pos + 15), member.display_name, fill=fill_color, font=font_name)
+        
+        # Level und XP
+        draw.text((name_x, y_pos + 50), f"Level: {level} | XP: {counter}", fill=fill_color, font=font_small)
+
+    # ------------------------------------------------------------
+    # Ausgabe vorbereiten
+    # ------------------------------------------------------------
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
 # ------------------------------------------------------------
 # Cog-Klasse für das Levelsystem 
 # ------------------------------------------------------------
@@ -207,6 +290,10 @@ class Leveling(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot or not message.guild:
+            return
+
+        ctx = await self.bot.get_context(message)
+        if ctx.valid: 
             return
 
         uid = str(message.author.id)
@@ -251,11 +338,10 @@ class Leveling(commands.Cog):
                 await message.add_reaction(emoji)
             except Exception as e:
                 print(f"⚠️ Konnte Reaktion nicht hinzufügen: {e}")
-
-# ------------------------------------------------------------
-# Rank Befehl
-# ------------------------------------------------------------
-
+                
+    # ------------------------------------------------------------
+    # Rank Befehl
+    # ------------------------------------------------------------
     @commands.hybrid_command(name="rank", description="Zeigt das Level-Profil eines Users an")
     async def rank(self, ctx: Context[commands.Bot], user: Optional[Union[discord.User, discord.Member]] = None):
         """Zeigt das Level-Profil eines Users."""
@@ -281,9 +367,7 @@ class Leveling(commands.Cog):
         level = berechne_level(counter)
         progress_percent, xp_current_in_level, xp_needed_for_level_up = berechne_fortschritt(counter, level)
 
-# ------------------------------------------------------------
-#  Rang berechnen 
-# ------------------------------------------------------------
+        # Rang berechnen 
         cursor.execute("SELECT COUNT(*) + 1 FROM user WHERE counter > %s", (counter,))
         rank_res = cursor.fetchone()
         rank = rank_res[0] if rank_res else 1
@@ -295,16 +379,13 @@ class Leveling(commands.Cog):
         await ctx.send(file=discord.File(image_stream, filename=f"rank_card_{user.name}.png"))
 
 
-# ------------------------------------------------------------
-# Top 5 Befehl
-# ------------------------------------------------------------
-
-
-
+    # ------------------------------------------------------------
+    # Top 5 Befehl
+    # ------------------------------------------------------------
 
     @commands.hybrid_command(name="top5", description="Zeigt die Top 5 User im Levelsystem an")
     async def top5(self, ctx: Context[commands.Bot]):
-        """Zeigt die Top 5 Benutzer mit dem höchsten Level und XP an."""
+        """Zeigt die Top 5 Benutzer mit dem höchsten Level und XP als Bild an."""
         await ctx.defer()
 
         conn = db.get_connection()
@@ -330,24 +411,9 @@ class Leveling(commands.Cog):
             ))
             return
 
-        # 📊 Rangliste aufbauen
-        description = ""
-        medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
-        for i, (uid, counter, level) in enumerate(results):
-            member = ctx.guild.get_member(int(uid))
-            display_name = member.display_name if member else f"User {uid}"
-            medal = medals[i] if i < len(medals) else f"#{i+1}"
-            description += f"{medal} **{display_name}** — Level {level} ({counter} XP)\n"
-
-        embed = discord.Embed(
-            title="🏆 Top 5 Spieler im Levelsystem",
-            description=description,
-            color=discord.Color.gold()
-        )
-        embed.set_footer(text="Bleib aktiv, um aufzusteigen! 💪")
-
-        await ctx.send(embed=embed)
-
+        # 🖼️ BILD ERSTELLEN
+        image_stream = await create_top5_card(ctx, results)
+        await ctx.send(file=discord.File(image_stream, filename="top5_leaderboard.png"))
 
 
 # ------------------------------------------------------------
