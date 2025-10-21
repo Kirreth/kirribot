@@ -284,6 +284,7 @@ async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.Byte
 # ------------------------------------------------------------
 
 class Leveling(commands.Cog):
+    """Levelsystem für Nachrichten-Zählung und Rangkarten"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 

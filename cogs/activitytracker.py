@@ -7,6 +7,7 @@ from utils.database import users as db_users, commands as db_commands, messages 
 from typing import Optional
 
 class ActivityTracker(commands.Cog):
+    """Verfolgt die Aktivität der Nutzer auf dem Server"""
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.check_active_users.start() 

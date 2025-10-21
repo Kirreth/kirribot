@@ -5,6 +5,7 @@ import os
 WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", 0))
 
 class WelcomeLeave(commands.Cog):
+    """Loggt Member Join/Leave Ereignisse mit Invite-Tracking"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.invites = {}

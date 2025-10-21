@@ -5,6 +5,7 @@ from discord.ext.commands import Context
 from typing import Optional
 
 class Help(commands.Cog):
+    """Bietet Hilfe zu den verfügbaren Modulen und Befehlen"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         # Füllen der Cog-Namen Liste hier ist nicht nötig, da wir sie bei jeder Ausführung neu erstellen,

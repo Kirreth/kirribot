@@ -31,6 +31,7 @@ def save_facts(facts):
 # Cog
 # ------------------------------------------------------------
 class Fakt(commands.Cog):
+    """Verwaltet tägliche Fakten und zugehörige Befehle"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.daily_fact.start()

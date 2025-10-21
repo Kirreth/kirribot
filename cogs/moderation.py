@@ -6,6 +6,7 @@ from utils.database import moderation as db_mod
 from typing import Optional 
 
 class Moderation(commands.Cog):
+    """Bietet Moderationsbefehle wie Clear, Mute, Warn, Ban und Sanctions"""
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         # Definiere die erlaubte Channel ID

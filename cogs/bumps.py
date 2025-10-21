@@ -11,6 +11,7 @@ DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
 
 class Bumps(commands.Cog):
+    """Verwaltet Disboard Bumps und zugehörige Befehle"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 

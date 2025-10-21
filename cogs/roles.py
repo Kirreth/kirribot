@@ -6,6 +6,7 @@ from utils import database as db
 from typing import Optional
 
 class Roles(commands.Cog):
+    """Verwaltet Rollenbefehle wie das Setzen und Entfernen der Bumper-Rolle"""
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
