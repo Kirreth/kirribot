@@ -91,3 +91,15 @@ def mark_congratulated(user_id: str):
     conn.commit()
     cursor.close()
     conn.close()
+
+
+# ------------------------------------------------------------
+# Geburtstag entfernen
+# ------------------------------------------------------------
+def remove_birthday(user_id: str, guild_id: str):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM birthdays WHERE user_id = %s AND guild_id = %s", (user_id, guild_id))
+    conn.commit()
+    cursor.close()
+    conn.close()

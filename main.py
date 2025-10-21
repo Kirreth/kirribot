@@ -69,7 +69,9 @@ async def run_bot():
             "cogs.activitytracker",
             "cogs.joinleft",
             "cogs.birthday",
-            "cogs.quiz"
+            "cogs.quiz",
+            "cogs.selfinfo",
+            "cogs.metafrage"
         ]
 
         for cog in cogs:

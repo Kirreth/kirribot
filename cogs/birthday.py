@@ -82,6 +82,16 @@ class Birthday(commands.Cog):
     async def before_check_birthdays(self):
         await self.bot.wait_until_ready()
 
+    # ------------------------------------------------------------
+    # Command: Geburtstag entfernen
+    # ------------------------------------------------------------
+
+    @commands.hybrid_command(name="removebirthday", description="Entfernt deinen gespeicherten Geburtstag")
+    async def remove_birthday(self, ctx: Context):
+        """Löscht den gespeicherten Geburtstag eines Users"""
+        db_birthday.remove_birthday(str(ctx.author.id), str(ctx.guild.id))
+        await ctx.send("✅ Dein Geburtstag wurde entfernt.", ephemeral=True)
+
 
 # ------------------------------------------------------------
 # Cog Setup
