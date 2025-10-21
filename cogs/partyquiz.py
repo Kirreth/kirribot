@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.ui import View, Button
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-QUIZ_FILE = os.path.join(BASE_DIR, "data", "quiz_questions.json")
+QUIZ_FILE = os.path.join(BASE_DIR, "data", "general_knowledge_questions.json")
 
 def ensure_quiz_file():
     data_dir = os.path.join(BASE_DIR, "data")
