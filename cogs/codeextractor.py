@@ -6,7 +6,7 @@ from pygments.lexers import guess_lexer, guess_lexer_for_filename
 from pygments.util import ClassNotFound
 
 # ------------------------------------------------------------
-# Context Menu Command muss auf Modulebene definiert werden
+# Context Menu Command auf Modulebene
 # ------------------------------------------------------------
 async def to_code_callback(interaction: discord.Interaction, message: discord.Message):
     start_time = time.perf_counter()
@@ -19,36 +19,31 @@ async def to_code_callback(interaction: discord.Interaction, message: discord.Me
         return
 
     # --------------------------------------------------------
-    # Sprache ermitteln
+    # Sprache ermitteln (robuster)
     # --------------------------------------------------------
+    language = ""
     try:
+        # Versuch, den Lexer anhand des Inhalts zu erraten
         lexer = guess_lexer(content)
-        language = lexer.name.lower()  # z.B. python, javascript, etc.
+        language = lexer.name.lower()
     except ClassNotFound:
-        language = ""  # Kein spezieller Codeblock, normale Markdown
+        language = ""  # kein spezieller Codeblock
 
     end_time = time.perf_counter()
     duration = end_time - start_time
 
     # --------------------------------------------------------
-    # Nachricht als Codeblock zurückgeben
+    # Nachricht mit Codeblock + Dauer
     # --------------------------------------------------------
-    code_block = f"```{language}\n{content}\n```" if language else f"```\n{content}\n```"
+    formatted_message = f"```{language}\n{content}\n```\n-# Ermittlung der Sprache hat {duration:.2f} Sekunden gedauert"
 
-    embed = discord.Embed(
-        title="💻 Nachricht als Code",
-        description=code_block,
-        color=discord.Color.blurple()
-    )
-    embed.set_footer(text=f"-# Ermittlung der Sprache hat {duration:.2f} Sekunden gedauert")
-
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(formatted_message)
 
 # ------------------------------------------------------------
-# Cog für andere Befehle (falls du später noch welche willst)
+# Cog für andere Befehle (falls benötigt)
 # ------------------------------------------------------------
 class CodeExtractor(commands.Cog):
-    """Cog für zusätzliche Commands (Context Menu ist außerhalb)"""
+    """Cog für zusätzliche Commands"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -57,9 +52,7 @@ class CodeExtractor(commands.Cog):
 # Cog Setup
 # ------------------------------------------------------------
 async def setup(bot: commands.Bot):
-    # Cog hinzufügen
     await bot.add_cog(CodeExtractor(bot))
-
     # Context Menu auf Bot-Tree registrieren
     bot.tree.add_command(app_commands.ContextMenu(
         name="toCode",

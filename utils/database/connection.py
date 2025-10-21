@@ -23,7 +23,7 @@ def get_connection():
 
 
 def setup_database():
-    """Erstellt alle Tabellen, falls sie nicht existieren"""
+    """Erstellt alle Tabellen, falls sie nicht existieren, und fügt fehlende Spalten hinzu"""
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -60,18 +60,26 @@ def setup_database():
     """)
 
     # ------------------------------------------------------------
-    # Nachrichten loggen (messages) – jetzt mit action_count
+    # Nachrichten loggen (messages)
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
             guild_id VARCHAR(20),
             user_id VARCHAR(20),
-            channel_id VARCHAR(20),
-            action_count INT NOT NULL DEFAULT 0,
-            last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            channel_id VARCHAR(20)
         )
     """)
+    
+    # Prüfen, ob Spalte 'action_count' existiert, sonst hinzufügen
+    cursor.execute("SHOW COLUMNS FROM messages LIKE 'action_count'")
+    if cursor.fetchone() is None:
+        cursor.execute("ALTER TABLE messages ADD COLUMN action_count INT NOT NULL DEFAULT 0 AFTER channel_id")
+
+    # Prüfen, ob Spalte 'last_action' existiert, sonst hinzufügen
+    cursor.execute("SHOW COLUMNS FROM messages LIKE 'last_action'")
+    if cursor.fetchone() is None:
+        cursor.execute("ALTER TABLE messages ADD COLUMN last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER action_count")
 
     # ------------------------------------------------------------
     # Levelsystem
@@ -162,7 +170,6 @@ def setup_database():
             last_congratulated DATE
         )
     """)
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS birthday_settings (
             guild_id VARCHAR(50) PRIMARY KEY,
