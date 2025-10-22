@@ -228,6 +228,870 @@
     "question": "Wer schrieb 'Der Kleine Prinz'?",
     "options": ["Antoine de Saint-Exupéry", "Jules Verne", "Victor Hugo", "Albert Camus"],
     "answer": "Antoine de Saint-Exupéry"
-}
+  },
+  {
+    "question": "Was ist die Hauptstadt von China?",
+    "options": ["Shanghai", "Hongkong", "Peking", "Guangzhou"],
+    "answer": "Peking"
+  },
+  {
+    "question": "Wie heißt der längste Fluss der Welt?",
+    "options": ["Nil", "Jangtse", "Amazonas", "Mississippi"],
+    "answer": "Amazonas"
+  },
+  {
+    "question": "Welcher Ozean ist der größte und tiefste?",
+    "options": ["Indischer Ozean", "Atlantischer Ozean", "Pazifischer Ozean", "Arktischer Ozean"],
+    "answer": "Pazifischer Ozean"
+  },
+  {
+    "question": "Was ist der höchste Berg der Welt?",
+    "options": ["K2", "Mount Kilimanjaro", "Mount Everest", "Mount McKinley"],
+    "answer": "Mount Everest"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Indien?",
+    "options": ["Mumbai", "Neu-Delhi", "Kalkutta", "Bangalore"],
+    "answer": "Neu-Delhi"
+  },
+  {
+    "question": "Welches Land wird oft als 'Land der aufgehenden Sonne' bezeichnet?",
+    "options": ["China", "Südkorea", "Japan", "Vietnam"],
+    "answer": "Japan"
+  },
+  {
+    "question": "Durch welche Stadt fließt die Themse?",
+    "options": ["Liverpool", "Manchester", "London", "Glasgow"],
+    "answer": "London"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Ägypten?",
+    "options": ["Alexandria", "Kairo", "Gizeh", "Luxor"],
+    "answer": "Kairo"
+  },
+  {
+    "question": "Wie viele Zeitzonen durchquert Russland ungefähr?",
+    "options": ["5", "8", "11", "14"],
+    "answer": "11"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Südafrika (legislativ)?",
+    "options": ["Johannesburg", "Pretoria", "Durban", "Kapstadt"],
+    "answer": "Kapstadt"
+  },
+  {
+    "question": "Was ist die größte Stadt in Deutschland nach Einwohnerzahl?",
+    "options": ["Hamburg", "München", "Berlin", "Köln"],
+    "answer": "Berlin"
+  },
+  {
+    "question": "Welches Meer liegt zwischen Europa und Afrika?",
+    "options": ["Rotes Meer", "Schwarzes Meer", "Mittelmeer", "Nordsee"],
+    "answer": "Mittelmeer"
+  },
+  {
+    "question": "In welchem Land befindet sich die 'Große Mauer'?",
+    "options": ["Japan", "China", "Indien", "Südkorea"],
+    "answer": "China"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Portugal?",
+    "options": ["Porto", "Lissabon", "Faro", "Coimbra"],
+    "answer": "Lissabon"
+  },
+  {
+    "question": "Welches Land grenzt im Norden an die USA?",
+    "options": ["Mexiko", "Russland", "Kanada", "Grönland"],
+    "answer": "Kanada"
+  },
+  {
+    "question": "Was ist die Währung von Großbritannien?",
+    "options": ["Euro", "US-Dollar", "Britisches Pfund", "Schweizer Franken"],
+    "answer": "Britisches Pfund"
+  },
+  {
+    "question": "In welchem Land liegt der Vulkan Fuji?",
+    "options": ["Philippinen", "Indonesien", "Japan", "Neuseeland"],
+    "answer": "Japan"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Argentinien?",
+    "options": ["Santiago", "Montevideo", "Buenos Aires", "Lima"],
+    "answer": "Buenos Aires"
+  },
+  {
+    "question": "Wie nennt man die Landbrücke, die Nord- und Südamerika verbindet?",
+    "options": ["Suez-Landenge", "Landenge von Tehuantepec", "Panama-Landenge", "Beringstraße"],
+    "answer": "Panama-Landenge"
+  },
+  {
+    "question": "Welches ist das bevölkerungsreichste Land Afrikas?",
+    "options": ["Ägypten", "Äthiopien", "Nigeria", "Südafrika"],
+    "answer": "Nigeria"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Griechenland?",
+    "options": ["Thessaloniki", "Patras", "Athen", "Heraklion"],
+    "answer": "Athen"
+  },
+  {
+    "question": "Welcher Fluss fließt durch Wien, Budapest und Belgrad?",
+    "options": ["Rhein", "Donau", "Elbe", "Wolga"],
+    "answer": "Donau"
+  },
+  {
+    "question": "Was ist der flächenmäßig kleinste Staat der Welt?",
+    "options": ["Monaco", "Nauru", "Vatikanstadt", "San Marino"],
+    "answer": "Vatikanstadt"
+  },
+  {
+    "question": "Welches Land ist ein Kontinent?",
+    "options": ["Neuseeland", "Indonesien", "Australien", "Grönland"],
+    "answer": "Australien"
+  },
+  {
+    "question": "Welcher Kontinent hat die meisten Länder?",
+    "options": ["Asien", "Europa", "Afrika", "Südamerika"],
+    "answer": "Afrika"
+  },
+  {
+    "question": "Was ist die Hauptstadt der Türkei?",
+    "options": ["Istanbul", "Izmir", "Ankara", "Antalya"],
+    "answer": "Ankara"
+  },
+  {
+    "question": "Wie heißt die berühmte Meerenge zwischen Europa und Asien bei Istanbul?",
+    "options": ["Straße von Gibraltar", "Dardanellen", "Bosporus", "Suezkanal"],
+    "answer": "Bosporus"
+  },
+  {
+    "question": "Welches Land ist flächenmäßig das größte in Südamerika?",
+    "options": ["Argentinien", "Brasilien", "Peru", "Kolumbien"],
+    "answer": "Brasilien"
+  },
+  {
+    "question": "Was ist die offizielle Sprache in Brasilien?",
+    "options": ["Spanisch", "Französisch", "Portugiesisch", "Englisch"],
+    "answer": "Portugiesisch"
+  },
+  {
+    "question": "Wie viele Bundesstaaten hat die USA?",
+    "options": ["48", "50", "51", "52"],
+    "answer": "50"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Mexiko?",
+    "options": ["Guadalajara", "Mexiko-Stadt", "Monterrey", "Cancún"],
+    "answer": "Mexiko-Stadt"
+  },
+  {
+    "question": "Welcher Fluss bildet die Grenze zwischen Deutschland und Frankreich im Südwesten?",
+    "options": ["Mosel", "Donau", "Rhein", "Oder"],
+    "answer": "Rhein"
+  },
+  {
+    "question": "In welcher Stadt steht die Freiheitsstatue?",
+    "options": ["Boston", "Philadelphia", "New York City", "Washington D.C."],
+    "answer": "New York City"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Thailand?",
+    "options": ["Chiang Mai", "Phuket", "Bangkok", "Pattaya"],
+    "answer": "Bangkok"
+  },
+  {
+    "question": "Welches Land ist bekannt für den Eiffelturm?",
+    "options": ["Italien", "Deutschland", "Frankreich", "Spanien"],
+    "answer": "Frankreich"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Südkorea?",
+    "options": ["Pjöngjang", "Seoul", "Busan", "Incheon"],
+    "answer": "Seoul"
+  },
+  {
+    "question": "Welches ist das am dünnsten besiedelte Land der Welt?",
+    "options": ["Australien", "Kanada", "Mongolei", "Island"],
+    "answer": "Mongolei"
+  },
+  {
+    "question": "Wie heißt die schmalste Stelle des Ärmelkanals?",
+    "options": ["Straße von Messina", "Straße von Dover", "Straße von Gibraltar", "Suezkanal"],
+    "answer": "Straße von Dover"
+  },
+  {
+    "question": "In welchem Land liegt die Halbinsel Yucatán?",
+    "options": ["Kolumbien", "Honduras", "Mexiko", "Kuba"],
+    "answer": "Mexiko"
+  },
+  {
+    "question": "Was ist der größte See Afrikas?",
+    "options": ["Tanganjikasee", "Viktoriasee", "Malawisee", "Tschadsee"],
+    "answer": "Viktoriasee"
+  },
+  {
+    "question": "In welcher Stadt befindet sich der schiefe Turm von Pisa?",
+    "options": ["Rom", "Florenz", "Pisa", "Venedig"],
+    "answer": "Pisa"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Kuba?",
+    "options": ["Santiago de Cuba", "Havanna", "Varadero", "Camagüey"],
+    "answer": "Havanna"
+  },
+  {
+    "question": "Welches Gebirge trennt Europa und Asien?",
+    "options": ["Alpen", "Pyrenäen", "Kaukasus", "Ural"],
+    "answer": "Ural"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Island?",
+    "options": ["Oslo", "Reykjavík", "Helsinki", "Kopenhagen"],
+    "answer": "Reykjavík"
+  },
+  {
+    "question": "Welches Land ist bekannt für seine Geysire und heißen Quellen?",
+    "options": ["Schweden", "Norwegen", "Island", "Grönland"],
+    "answer": "Island"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Neuseeland?",
+    "options": ["Auckland", "Christchurch", "Wellington", "Queenstown"],
+    "answer": "Wellington"
+  },
+  {
+    "question": "Was ist die Währung von Japan?",
+    "options": ["Won", "Yuan", "Yen", "Baht"],
+    "answer": "Yen"
+  },
+  {
+    "question": "In welchem Land befindet sich das Taj Mahal?",
+    "options": ["China", "Nepal", "Pakistan", "Indien"],
+    "answer": "Indien"
+  },
+  {
+    "question": "Welches Land ist ein Archipel mit über 7.000 Inseln?",
+    "options": ["Indonesien", "Malediven", "Philippinen", "Japan"],
+    "answer": "Philippinen"
+  },
+  {
+    "question": "Wer war der erste römische Kaiser?",
+    "options": ["Julius Caesar", "Nero", "Augustus", "Konstantin der Große"],
+    "answer": "Augustus"
+  },
+  {
+    "question": "In welchem Jahr wurde die Republik Deutschland (Weimarer Republik) gegründet?",
+    "options": ["1914", "1919", "1923", "1933"],
+    "answer": "1919"
+  },
+  {
+    "question": "Wer war der Anführer der Sowjetunion während des Zweiten Weltkriegs?",
+    "options": ["Wladimir Lenin", "Nikita Chruschtschow", "Josef Stalin", "Leo Trotzki"],
+    "answer": "Josef Stalin"
+  },
+  {
+    "question": "Wann begann die Französische Revolution?",
+    "options": ["1776", "1789", "1799", "1804"],
+    "answer": "1789"
+  },
+  {
+    "question": "Wer war die Frau, die während des Hundertjährigen Krieges Frankreich führte?",
+    "options": ["Eleonore von Aquitanien", "Jeanne d'Arc", "Maria Curie", "Katarina von Medici"],
+    "answer": "Jeanne d'Arc"
+  },
+  {
+    "question": "In welchem Jahr sank die Titanic?",
+    "options": ["1905", "1912", "1918", "1923"],
+    "answer": "1912"
+  },
+  {
+    "question": "Wer war Martin Luther?",
+    "options": ["Entdecker", "Reformator", "Künstler", "Politiker"],
+    "answer": "Reformator"
+  },
+  {
+    "question": "In welchem Jahr endete der Erste Weltkrieg?",
+    "options": ["1916", "1918", "1919", "1920"],
+    "answer": "1918"
+  },
+  {
+    "question": "Wer war der Gründer des mongolischen Reiches?",
+    "options": ["Kublai Khan", "Dschingis Khan", "Attila", "Tamerlan"],
+    "answer": "Dschingis Khan"
+  },
+  {
+    "question": "Wie hieß die Währung in Deutschland vor dem Euro?",
+    "options": ["Reichsmark", "Goldmark", "D-Mark", "Ostmark"],
+    "answer": "D-Mark"
+  },
+  {
+    "question": "Wer verfasste die Unabhängigkeitserklärung der Vereinigten Staaten?",
+    "options": ["Benjamin Franklin", "Thomas Jefferson", "George Washington", "John Adams"],
+    "answer": "Thomas Jefferson"
+  },
+  {
+    "question": "In welchem Jahr fand die Entdeckung Amerikas durch Kolumbus statt?",
+    "options": ["1453", "1492", "1517", "1607"],
+    "answer": "1492"
+  },
+  {
+    "question": "Wer war der letzte Zar von Russland?",
+    "options": ["Peter der Große", "Alexander I.", "Nikolaus II.", "Iwan der Schreckliche"],
+    "answer": "Nikolaus II."
+  },
+  {
+    "question": "In welchem Jahr wurde die UNESCO gegründet?",
+    "options": ["1942", "1945", "1950", "1960"],
+    "answer": "1945"
+  },
+  {
+    "question": "Wie hieß die Mauer, die Ost- und Westberlin trennte?",
+    "options": ["Große Berliner Mauer", "Mauer des Eisernen Vorhangs", "Berliner Mauer", "Trennwand"],
+    "answer": "Berliner Mauer"
+  },
+  {
+    "question": "Wer war die erste Bundeskanzlerin Deutschlands?",
+    "options": ["Hannelore Kraft", "Angela Merkel", "Annegret Kramp-Karrenbauer", "Sahra Wagenknecht"],
+    "answer": "Angela Merkel"
+  },
+  {
+    "question": "In welchem Jahr wurde Deutschland wiedervereinigt?",
+    "options": ["1989", "1990", "1991", "1992"],
+    "answer": "1990"
+  },
+  {
+    "question": "Wer leitete die Bewegung zur Unabhängigkeit Indiens?",
+    "options": ["Jawaharlal Nehru", "Indira Gandhi", "Mahatma Gandhi", "Muhammad Ali Jinnah"],
+    "answer": "Mahatma Gandhi"
+  },
+  {
+    "question": "Was ist das älteste bekannte Schriftsystem?",
+    "options": ["Hieroglyphen", "Lateinische Schrift", "Keilschrift", "Chinesische Schriftzeichen"],
+    "answer": "Keilschrift"
+  },
+  {
+    "question": "Wann endete der Zweite Weltkrieg in Europa?",
+    "options": ["1944", "1945", "1946", "1947"],
+    "answer": "1945"
+  },
+  {
+    "question": "Wer war der Erfinder der Glühbirne (praktikable kommerzielle Version)?",
+    "options": ["Nikola Tesla", "Thomas Edison", "James Watt", "Albert Einstein"],
+    "answer": "Thomas Edison"
+  },
+  {
+    "question": "Wer war Julius Caesar?",
+    "options": ["Griechischer Philosoph", "Römischer Feldherr und Staatsmann", "Ägyptischer Pharao", "Persischer König"],
+    "answer": "Römischer Feldherr und Staatsmann"
+  },
+  {
+    "question": "In welchem Jahr wurde die Europäische Union (als EWG) gegründet?",
+    "options": ["1951", "1957", "1965", "1993"],
+    "answer": "1957"
+  },
+  {
+    "question": "In welchem Jahr wurde die erste deutsche Demokratie (Paulskirchenversammlung) gegründet?",
+    "options": ["1799", "1815", "1848", "1871"],
+    "answer": "1848"
+  },
+  {
+    "question": "Was war die Renaissance?",
+    "options": ["Eine mittelalterliche Krankheit", "Eine Epoche der Religionskriege", "Eine Epoche des kulturellen Aufbruchs", "Eine industrielle Revolution"],
+    "answer": "Eine Epoche des kulturellen Aufbruchs"
+  },
+  {
+    "question": "Wer war die Frau von Heinrich VIII., deren Scheidung zur Spaltung mit der katholischen Kirche führte?",
+    "options": ["Anne Boleyn", "Jane Seymour", "Katharina von Aragón", "Anna von Kleve"],
+    "answer": "Katharina von Aragón"
+  },
+  {
+    "question": "In welchem Jahr fand die Schlacht von Hastings statt?",
+    "options": ["1066", "1189", "1215", "1346"],
+    "answer": "1066"
+  },
+  {
+    "question": "Wer war Alexander der Große?",
+    "options": ["Römischer Kaiser", "Griechischer Philosoph", "König von Makedonien", "Persischer Herrscher"],
+    "answer": "König von Makedonien"
+  },
+  {
+    "question": "Wer war der erste Bundespräsident der Bundesrepublik Deutschland?",
+    "options": ["Konrad Adenauer", "Theodor Heuss", "Walter Scheel", "Gustav Heinemann"],
+    "answer": "Theodor Heuss"
+  },
+  {
+    "question": "In welchem Jahrhundert lebte William Shakespeare?",
+    "options": ["15. und 16. Jahrhundert", "16. und 17. Jahrhundert", "17. und 18. Jahrhundert", "18. und 19. Jahrhundert"],
+    "answer": "16. und 17. Jahrhundert"
+  },
+  {
+    "question": "Was war das Hauptziel des Kalten Krieges?",
+    "options": ["Eine militärische Invasion Europas", "Ein ideologischer Konflikt zwischen Ost und West", "Ein Kampf um Ölreserven", "Ein Rassenkrieg"],
+    "answer": "Ein ideologischer Konflikt zwischen Ost und West"
+  },
+  {
+    "question": "Wer war die letzte Pharaonin von Ägypten?",
+    "options": ["Nofretete", "Hatschepsut", "Kleopatra VII.", "Nefertari"],
+    "answer": "Kleopatra VII."
+  },
+  {
+    "question": "Was versteht man unter der Magna Carta?",
+    "options": ["Ein römisches Gesetzbuch", "Eine englische Urkunde, die die Macht des Königs einschränkte", "Eine Sammlung von mittelalterlichen Gedichten", "Ein Vertrag zwischen Frankreich und England"],
+    "answer": "Eine englische Urkunde, die die Macht des Königs einschränkte"
+  },
+  {
+    "question": "In welchem Jahr wurde die Atombombe auf Hiroshima abgeworfen?",
+    "options": ["1943", "1945", "1948", "1950"],
+    "answer": "1945"
+  },
+  {
+    "question": "Wer war der Gründer des Islam?",
+    "options": ["Jesus Christus", "Prophet Mohammed", "Buddha", "Mose"],
+    "answer": "Prophet Mohammed"
+  },
+  {
+    "question": "Was war die Seidenstraße?",
+    "options": ["Ein Seeweg nach Indien", "Ein altes Handelsnetzwerk", "Eine chinesische Dynastie", "Ein militärischer Verteidigungswall"],
+    "answer": "Ein altes Handelsnetzwerk"
+  },
+  {
+    "question": "In welchem Jahr wurde die UNO gegründet?",
+    "options": ["1939", "1945", "1949", "1951"],
+    "answer": "1945"
+  },
+  {
+    "question": "Wer ist bekannt für den Satz: 'Ich denke, also bin ich'?",
+    "options": ["Immanuel Kant", "Friedrich Nietzsche", "René Descartes", "Sokrates"],
+    "answer": "René Descartes"
+  },
+  {
+    "question": "Wie lange dauerte der Hundertjährige Krieg?",
+    "options": ["100 Jahre", "99 Jahre", "116 Jahre", "75 Jahre"],
+    "answer": "116 Jahre"
+  },
+  {
+    "question": "Wer war der Komponist von 'Die Zauberflöte'?",
+    "options": ["Ludwig van Beethoven", "Johann Sebastian Bach", "Wolfgang Amadeus Mozart", "Richard Wagner"],
+    "answer": "Wolfgang Amadeus Mozart"
+  },
+  {
+    "question": "Welches Ereignis markiert traditionell den Beginn der modernen Geschichtsschreibung in Europa?",
+    "options": ["Die Entdeckung Amerikas", "Die Französische Revolution", "Die Reformation", "Der Fall des Römischen Reiches"],
+    "answer": "Die Französische Revolution"
+  },
+  {
+    "question": "Was war die Große Depression?",
+    "options": ["Ein Bürgerkrieg", "Eine weltweite Wirtschaftskrise", "Eine schwere Naturkatastrophe", "Eine kulturelle Bewegung"],
+    "answer": "Eine weltweite Wirtschaftskrise"
+  },
+  {
+    "question": "In welchem Jahr wurde Nelson Mandela zum Präsidenten Südafrikas gewählt?",
+    "options": ["1990", "1992", "1994", "1996"],
+    "answer": "1994"
+  },
+  {
+    "question": "Wer war der Erfinder des Buchdrucks?",
+    "options": ["Leonardo da Vinci", "Johannes Gutenberg", "Galileo Galilei", "Isaac Newton"],
+    "answer": "Johannes Gutenberg"
+  },
+  {
+    "question": "Was war die Hauptursache der Spanischen Grippe?",
+    "options": ["Ein Bakterium", "Ein Virus (H1N1)", "Schlechte Ernährung", "Eine Pilzinfektion"],
+    "answer": "Ein Virus (H1N1)"
+  },
+  {
+    "question": "Welcher römische Kaiser machte das Christentum zur Staatsreligion?",
+    "options": ["Augustus", "Nero", "Theodosius I.", "Diokletian"],
+    "answer": "Theodosius I."
+  },
+  {
+    "question": "Was ist die Einheit der elektrischen Spannung?",
+    "options": ["Ampere", "Ohm", "Volt", "Watt"],
+    "answer": "Volt"
+  },
+  {
+    "question": "Wie viele Beine hat eine Spinne?",
+    "options": ["6", "8", "10", "12"],
+    "answer": "8"
+  },
+  {
+    "question": "Was ist die chemische Formel für Wasser?",
+    "options": ["CO₂", "H₂O", "NaCl", "O₂"],
+    "answer": "H₂O"
+  },
+  {
+    "question": "Was ist der Aggregatzustand von Wasser bei 0°C und Normaldruck?",
+    "options": ["Gasförmig", "Flüssig", "Fest und flüssig", "Fest"],
+    "answer": "Fest und flüssig"
+  },
+  {
+    "question": "Was ist das größte Organ des menschlichen Körpers?",
+    "options": ["Leber", "Gehirn", "Lunge", "Haut"],
+    "answer": "Haut"
+  },
+  {
+    "question": "Welches Gas macht den größten Teil der Erdatmosphäre aus?",
+    "options": ["Sauerstoff", "Stickstoff", "Argon", "Kohlendioxid"],
+    "answer": "Stickstoff"
+  },
+  {
+    "question": "Was besagt das Ohmsche Gesetz?",
+    "options": ["Masse kann nicht vernichtet werden.", "Kraft = Masse × Beschleunigung.", "Spannung = Widerstand × Strom.", "Druck ist proportional zum Volumen."],
+    "answer": "Spannung = Widerstand × Strom."
+  },
+  {
+    "question": "Wie schnell bewegt sich das Licht im Vakuum (ungefähr)?",
+    "options": ["300 km/s", "3.000 km/s", "30.000 km/s", "300.000 km/s"],
+    "answer": "300.000 km/s"
+  },
+  {
+    "question": "Wer entwickelte die Relativitätstheorie?",
+    "options": ["Max Planck", "Werner Heisenberg", "Albert Einstein", "Niels Bohr"],
+    "answer": "Albert Einstein"
+  },
+  {
+    "question": "Was ist die Einheit der Kraft?",
+    "options": ["Joule", "Pascal", "Newton", "Watt"],
+    "answer": "Newton"
+  },
+  {
+    "question": "Welches Element ist der Hauptbestandteil von Diamanten?",
+    "options": ["Silizium", "Eisen", "Kohlenstoff", "Gold"],
+    "answer": "Kohlenstoff"
+  },
+  {
+    "question": "Wie viele Planeten hat unser Sonnensystem?",
+    "options": ["7", "8", "9", "10"],
+    "answer": "8"
+  },
+  {
+    "question": "Wer formulierte die Gesetze der klassischen Mechanik?",
+    "options": ["Galileo Galilei", "Isaac Newton", "Johannes Kepler", "Nikolaus Kopernikus"],
+    "answer": "Isaac Newton"
+  },
+  {
+    "question": "Was ist Photosynthese?",
+    "options": ["Der Abbau von Zucker.", "Die Zellatmung bei Tieren.", "Umwandlung von Lichtenergie in chemische Energie.", "Die Verdunstung von Wasser."],
+    "answer": "Umwandlung von Lichtenergie in chemische Energie."
+  },
+  {
+    "question": "Welches Element hat das chemische Symbol 'K'?",
+    "options": ["Kupfer", "Kohlenstoff", "Kalium", "Kobalt"],
+    "answer": "Kalium"
+  },
+  {
+    "question": "Wie viele Chromosomen hat ein gesunder Mensch?",
+    "options": ["23", "46", "48", "92"],
+    "answer": "46"
+  },
+  {
+    "question": "Was ist die ungefähre Temperatur der Sonne an ihrer Oberfläche?",
+    "options": ["1.000°C", "5.500°C", "10.000°C", "50.000°C"],
+    "answer": "5.500°C"
+  },
+  {
+    "question": "Was ist der pH-Wert von reinem Wasser?",
+    "options": ["0", "5", "7", "14"],
+    "answer": "7"
+  },
+  {
+    "question": "Wer entdeckte die Penicillin-Wirkung?",
+    "options": ["Louis Pasteur", "Robert Koch", "Alexander Fleming", "Jonas Salk"],
+    "answer": "Alexander Fleming"
+  },
+  {
+    "question": "Was ist die Einheit der Leistung?",
+    "options": ["Joule", "Volt", "Ohm", "Watt"],
+    "answer": "Watt"
+  },
+  {
+    "question": "Wie nennt man die Reaktion, bei der Atome verschmelzen?",
+    "options": ["Kernspaltung", "Kernfusion", "Chemische Reaktion", "Ionisation"],
+    "answer": "Kernfusion"
+  },
+  {
+    "question": "Welches Gas benötigen Pflanzen zum Überleben (neben Wasser und Licht)?",
+    "options": ["Sauerstoff", "Stickstoff", "Kohlenstoffdioxid", "Helium"],
+    "answer": "Kohlenstoffdioxid"
+  },
+  {
+    "question": "Was ist die Funktion der roten Blutkörperchen?",
+    "options": ["Bekämpfung von Infektionen", "Blutgerinnung", "Sauerstofftransport", "Nährstoffspeicherung"],
+    "answer": "Sauerstofftransport"
+  },
+  {
+    "question": "Was ist der Fachbegriff für die Lehre vom Leben?",
+    "options": ["Geologie", "Physik", "Biologie", "Chemie"],
+    "answer": "Biologie"
+  },
+  {
+    "question": "Was ist der Fachbegriff für die Lehre von den Sternen und Planeten?",
+    "options": ["Geographie", "Astrologie", "Kosmologie", "Astronomie"],
+    "answer": "Astronomie"
+  },
+  {
+    "question": "Was ist das chemische Symbol für Gold?",
+    "options": ["Gd", "Au", "Ag", "Gl"],
+    "answer": "Au"
+  },
+  {
+    "question": "Wie wird Gelbfieber übertragen?",
+    "options": ["Durch kontaminiertes Wasser", "Durch Mückenstich", "Durch direkten Kontakt", "Durch die Luft"],
+    "answer": "Durch Mückenstich"
+  },
+  {
+    "question": "Wer entdeckte die Struktur der DNA (Doppelhelix)?",
+    "options": ["Linus Pauling", "Rosalind Franklin", "Watson und Crick", "Charles Darwin"],
+    "answer": "Watson und Crick"
+  },
+  {
+    "question": "Was ist die Einheit des Widerstands?",
+    "options": ["Volt", "Ampere", "Ohm", "Hertz"],
+    "answer": "Ohm"
+  },
+  {
+    "question": "Wie nennt man die Linie, die die Erde in die Nord- und Südhalbkugel teilt?",
+    "options": ["Wendekreis", "Längengrad", "Äquator", "Polarkreis"],
+    "answer": "Äquator"
+  },
+  {
+    "question": "Was ist die Hauptfunktion des Kleinhirns?",
+    "options": ["Steuerung der Sprache", "Koordination der Bewegung", "Regulierung des Gedächtnisses", "Verarbeitung visueller Informationen"],
+    "answer": "Koordination der Bewegung"
+  },
+  {
+    "question": "Welches Metall ist bei Raumtemperatur flüssig?",
+    "options": ["Gold", "Blei", "Aluminium", "Quecksilber"],
+    "answer": "Quecksilber"
+  },
+  {
+    "question": "Wer entdeckte die Gesetze der Vererbung?",
+    "options": ["Louis Pasteur", "Gregor Mendel", "Charles Darwin", "Alfred Russell Wallace"],
+    "answer": "Gregor Mendel"
+  },
+  {
+    "question": "Was ist die Schwerkraft?",
+    "options": ["Eine elektromagnetische Welle", "Eine grundlegende Naturkraft", "Ein atmosphärisches Phänomen", "Eine Lichtbrechung"],
+    "answer": "Eine grundlegende Naturkraft"
+  },
+  {
+    "question": "Was ist ein Virus?",
+    "options": ["Eine Bakterienart", "Ein Parasit", "Ein Pilz", "Ein infektiöses Agens"],
+    "answer": "Ein infektiöses Agens"
+  },
+  {
+    "question": "Welches Organ produziert Insulin?",
+    "options": ["Leber", "Niere", "Bauchspeicheldrüse", "Milz"],
+    "answer": "Bauchspeicheldrüse"
+  },
+  {
+    "question": "Wie nennt man den Prozess, bei dem ein Feststoff direkt zu Gas wird?",
+    "options": ["Kondensation", "Schmelzen", "Sublimation", "Verdampfen"],
+    "answer": "Sublimation"
+  },
+  {
+    "question": "Welches Element wird in Glühlampen oft als Glühfaden verwendet?",
+    "options": ["Kupfer", "Wolfram", "Platin", "Eisen"],
+    "answer": "Wolfram"
+  },
+  {
+    "question": "Was ist ein Neutron?",
+    "options": ["Ein positiv geladenes Teilchen", "Ein negativ geladenes Teilchen", "Ein ungeladenes Teilchen im Atomkern", "Ein Teilchen, das die Ladung ausgleicht"],
+    "answer": "Ein ungeladenes Teilchen im Atomkern"
+  },
+  {
+    "question": "Was ist die Ursache für Ebbe und Flut?",
+    "options": ["Erdrotation", "Windströmungen", "Gravitation des Mondes und der Sonne", "Vulkanausbrüche unter Wasser"],
+    "answer": "Gravitation des Mondes und der Sonne"
+  },
+  {
+    "question": "Wer ist bekannt für die Formel E=mc²?",
+    "options": ["Isaac Newton", "Nikola Tesla", "Albert Einstein", "Marie Curie"],
+    "answer": "Albert Einstein"
+  },
+  {
+    "question": "Was ist das kleinste Blutgefäß?",
+    "options": ["Arterie", "Vene", "Kapillare", "Aorta"],
+    "answer": "Kapillare"
+  },
+  {
+    "question": "Welches Tier hat drei Herzen?",
+    "options": ["Krokodil", "Frosch", "Tintenfisch", "Hai"],
+    "answer": "Tintenfisch"
+  },
+  {
+    "question": "Wie viele Kalorien hat ein Gramm Fett ungefähr?",
+    "options": ["4 kcal", "7 kcal", "9 kcal", "12 kcal"],
+    "answer": "9 kcal"
+  },
+  {
+    "question": "Wer komponierte die '9. Sinfonie' (mit der 'Ode an die Freude')?",
+    "options": ["Johann Sebastian Bach", "Ludwig van Beethoven", "Franz Schubert", "Joseph Haydn"],
+    "answer": "Ludwig van Beethoven"
+  },
+  {
+    "question": "Was ist ein Sonett?",
+    "options": ["Ein Musikstück für Soloinstrumente", "Eine Gedichtform", "Ein mittelalterlicher Tanz", "Eine literarische Erzählform"],
+    "answer": "Eine Gedichtform"
+  },
+  {
+    "question": "Wer ist der Autor von 'Faust'?",
+    "options": ["Friedrich Schiller", "Franz Kafka", "Johann Wolfgang von Goethe", "Heinrich Heine"],
+    "answer": "Johann Wolfgang von Goethe"
+  },
+  {
+    "question": "Was ist der Name des berühmtesten Museums in Paris?",
+    "options": ["Musée d'Orsay", "Centre Pompidou", "Louvre", "Musée Rodin"],
+    "answer": "Louvre"
+  },
+  {
+    "question": "Wer malte das Bild 'Die Erschaffung Adams' an der Decke der Sixtinischen Kapelle?",
+    "options": ["Raphael", "Donatello", "Michelangelo", "Leonardo da Vinci"],
+    "answer": "Michelangelo"
+  },
+  {
+    "question": "Was ist die bekannteste Oper von Wolfgang Amadeus Mozart?",
+    "options": ["Carmen", "Fidelio", "Die Zauberflöte", "Der Barbier von Sevilla"],
+    "answer": "Die Zauberflöte"
+  },
+  {
+    "question": "Wer schrieb das Kinderbuch 'Pippi Langstrumpf'?",
+    "options": ["Erich Kästner", "Astrid Lindgren", "Michael Ende", "Otfried Preußler"],
+    "answer": "Astrid Lindgren"
+  },
+  {
+    "question": "Was ist der Unterschied zwischen Oper und Operette?",
+    "options": ["Oper ist immer in Italienisch.", "Operette ist leichter und humorvoller.", "Operette verwendet nur Sprechgesang.", "Es gibt keinen Unterschied."],
+    "answer": "Operette ist leichter und humorvoller."
+  },
+  {
+    "question": "Welche Kunstrichtung wird oft mit Salvador Dalí in Verbindung gebracht?",
+    "options": ["Impressionismus", "Kubismus", "Surrealismus", "Expressionismus"],
+    "answer": "Surrealismus"
+  },
+  {
+    "question": "Was ist ein Holzschnitt?",
+    "options": ["Eine Form der Bildhauerei.", "Eine Technik zum Schnitzen von Holzfiguren.", "Eine Drucktechnik.", "Eine Architekturmethode."],
+    "answer": "Eine Drucktechnik."
+  },
+  {
+    "question": "Wer schrieb das berühmte Drama 'Hamlet'?",
+    "options": ["Friedrich Schiller", "William Shakespeare", "Bertolt Brecht", "Molière"],
+    "answer": "William Shakespeare"
+  },
+  {
+    "question": "Was ist ein Haiku?",
+    "options": ["Eine japanische Kampfkunst", "Eine japanische Gedichtform mit 5, 7, 5 Silben", "Ein Musikinstrument", "Ein traditioneller japanischer Tanz"],
+    "answer": "Eine japanische Gedichtform mit 5, 7, 5 Silben"
+  },
+  {
+    "question": "Wer war der Leadsänger der Band Queen?",
+    "options": ["Elton John", "Mick Jagger", "Freddie Mercury", "Paul McCartney"],
+    "answer": "Freddie Mercury"
+  },
+  {
+    "question": "Was ist das meistverkaufte Buch der Welt (neben der Bibel)?",
+    "options": ["Der Herr der Ringe", "Don Quijote", "Harry Potter und der Stein der Weisen", "Eine Geschichte aus zwei Städten"],
+    "answer": "Don Quijote"
+  },
+  {
+    "question": "Wer malte 'Der Schrei'?",
+    "options": ["Claude Monet", "Paul Gauguin", "Edvard Munch", "Gustav Klimt"],
+    "answer": "Edvard Munch"
+  },
+  {
+    "question": "Welche Instrumente gehören zu einem klassischen Streichquartett?",
+    "options": ["2 Violinen, Cello, Kontrabass", "Violine, Viola, Cello, Kontrabass", "2 Violinen, Viola, Cello", "Violine, 2 Violas, Cello"],
+    "answer": "2 Violinen, Viola, Cello"
+  },
+  {
+    "question": "Was ist ein Ballett?",
+    "options": ["Ein Musikstück für Chor", "Eine Form des Theaters", "Eine Bühnentanzkunst", "Ein Sportwettkampf"],
+    "answer": "Eine Bühnentanzkunst"
+  },
+  {
+    "question": "Wer schrieb den Roman 'Krieg und Frieden'?",
+    "options": ["Fjodor Dostojewski", "Leo Tolstoi", "Anton Tschechow", "Michail Bulgakow"],
+    "answer": "Leo Tolstoi"
+  },
+  {
+    "question": "Was ist die Akropolis?",
+    "options": ["Eine moderne Bibliothek", "Ein antikes Theater", "Eine Burg auf einem Felsplateau", "Ein römischer Tempel"],
+    "answer": "Eine Burg auf einem Felsplateau"
+  },
+  {
+    "question": "Welche Farbe hat die berühmte 'Blaue Periode' von Pablo Picasso?",
+    "options": ["Rot", "Gelb", "Grün", "Blau"],
+    "answer": "Blau"
+  },
+  {
+    "question": "Was ist eine Freske?",
+    "options": ["Ein Gemälde auf Holz", "Wandmalerei auf feuchtem Putz", "Eine Skulptur aus Marmor", "Eine Druckgrafik"],
+    "answer": "Wandmalerei auf feuchtem Putz"
+  },
+  {
+    "question": "Wie viele Seiten hat ein Würfel?",
+    "options": ["4", "6", "8", "12"],
+    "answer": "6"
+  },
+  {
+    "question": "Wie viele Stunden hat ein Tag?",
+    "options": ["12", "18", "24", "36"],
+    "answer": "24"
+  },
+  {
+    "question": "Was ist das Gegenteil von Ebbe?",
+    "options": ["Wind", "Strömung", "Flut", "Welle"],
+    "answer": "Flut"
+  },
+  {
+    "question": "Wie nennt man das Tier, das das Horn auf der Nase hat?",
+    "options": ["Gepard", "Nashorn", "Elefant", "Giraffe"],
+    "answer": "Nashorn"
+  },
+  {
+    "question": "Was ist der Unterschied zwischen Klima und Wetter?",
+    "options": ["Klima ist kurzfristig, Wetter ist langfristig.", "Klima ist langfristig, Wetter ist kurzfristig.", "Klima betrifft nur Wüsten.", "Wetter betrifft nur die Meere."],
+    "answer": "Klima ist langfristig, Wetter ist kurzfristig."
+  },
+  {
+    "question": "Was ist die Masseinheit für die Lautstärke?",
+    "options": ["Volt", "Hertz", "Decibel", "Watt"],
+    "answer": "Decibel"
+  },
+  {
+    "question": "Was ist die Mehrzahl von Kaktus?",
+    "options": ["Kakte", "Kaktusse", "Kakteen", "Kaktüsse"],
+    "answer": "Kakteen"
+  },
+  {
+    "question": "Welches Tier ist das Wappentier Australiens (neben dem Känguru)?",
+    "options": ["Koala", "Emu", "Wombat", "Dingo"],
+    "answer": "Emu"
+  },
+  {
+    "question": "Was ist die Farbe, die durch Mischen von Rot und Blau entsteht?",
+    "options": ["Grün", "Lila (Violett)", "Gelb", "Braun"],
+    "answer": "Lila (Violett)"
+  },
+  {
+    "question": "Was ist die Hauptstadt von Marokko?",
+    "options": ["Casablanca", "Marrakesch", "Fès", "Rabat"],
+    "answer": "Rabat"
+  },
+  {
+    "question": "Was ist der Titel des berühmtesten Gemäldes von Gustav Klimt?",
+    "options": ["Die Dame mit dem Fächer", "Der Kuss", "Judith", "Adele Bloch-Bauer I"],
+    "answer": "Der Kuss"
+  },
+  {
+    "question": "Wie viele Ringe hat das olympische Symbol?",
+    "options": ["4", "5", "6", "7"],
+    "answer": "5"
+  },
+  {
+    "question": "Welcher Tag ist der US-amerikanische Unabhängigkeitstag?",
+    "options": ["1. Mai", "4. Juli", "14. Juli", "31. Oktober"],
+    "answer": "4. Juli"
+  }
 ]
- 
