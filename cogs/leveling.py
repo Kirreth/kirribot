@@ -199,85 +199,121 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
 # ------------------------------------------------------------
 
 async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.BytesIO:
-    """Erstellt das Bild für die Top 5 Rangliste."""
-    width, height = 750, 60 + (len(results) * 120)  # Höhe basierend auf Anzahl der Einträge
-    
-    # 🎨 Initialisierung
-    img = Image.new("RGB", (width, height), (30, 30, 30))
-    draw = ImageDraw.Draw(img)
-    
-    fill_color = "#FFFFFF" 
-    rank_color = (255, 215, 0, 255) # Gold
-    
-    # 🏆 Titel
-    title_text = "🏆 Top 5 Spieler"
-    bbox_title = draw.textbbox((0, 0), title_text, font=font_main)
-    text_w_title = bbox_title[2] - bbox_title[0]
-    draw.text(((width - text_w_title) // 2, 10), title_text, fill=fill_color, font=font_main)
-    
-    start_y = 60 # Startposition für den ersten Eintrag
+    """Erstellt ein futuristisches Discord-Ranking-Bild mit korrektem Fortschrittsbalken."""
+    width, height = 750, 80 + (len(results) * 130)
 
+    # 🎨 Hintergrund mit leichtem Farbverlauf
+    base = Image.new("RGB", (width, height), "#1E1E2E")
+    overlay = Image.new("RGB", (width, height), "#2A1A40")
+    img = Image.blend(base, overlay, alpha=0.3)
+    draw = ImageDraw.Draw(img)
+
+    # Farben und Fonts
+    fill_color = "#E0E0E0"
+    accent = "#00FFFF"  # Neon-Cyan
+    neon_violet = "#9D00FF"
+    rank_color = (255, 215, 0, 255)  # Gold
+
+
+    # 🏆 Titel mit Glow-Effekt
+    title_text = "🏆 TOP 5 USER"
+    bbox_title = draw.textbbox((0, 0), title_text, font=font_main)
+    title_x = (width - (bbox_title[2] - bbox_title[0])) // 2
+    draw.text((title_x + 2, 12 + 2), title_text, fill=neon_violet, font=font_main)
+    draw.text((title_x, 10), title_text, fill=accent, font=font_main)
+
+    start_y = 80
+    avatar_size = 90
     medals = ["🥇", "🥈", "🥉", "🏅", "🎖️"]
-    avatar_size = 80
-    
+
+    # 🔁 Einträge durchlaufen
     for i, (uid, counter, level) in enumerate(results):
         member = ctx.guild.get_member(int(uid))
         if member is None:
-            continue # Überspringen, falls der Benutzer nicht gefunden wird
+            continue
 
-        # ------------------------------------------------------------
-        # Hintergrund und Medaillen-Text
-        # ------------------------------------------------------------
-        y_pos = start_y + (i * 120)
-        
-        # Hintergrund-Rechteck
-        draw.rectangle([10, y_pos, width - 10, y_pos + 100], fill=(40, 40, 40))
-        
-        # Rang-Text
+        y_pos = start_y + (i * 130)
+        box_y1, box_y2 = y_pos, y_pos + 110
+
+        # 🔳 Box-Hintergrund mit abgerundeten Ecken
+        box = Image.new("RGBA", (width - 40, 110), (40, 40, 60, 220))
+        mask = Image.new("L", (width - 40, 110), 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, width - 40, 110), radius=20, fill=255)
+        img.paste(box, (20, y_pos), mask)
+
+        # 💡 Leichte Neonlinie links
+        draw.rectangle([25, y_pos + 10, 30, box_y2 - 10], fill=accent)
+
+        # 🏅 Rang
         rank_text = medals[i] if i < len(medals) else f"#{i+1}"
-        draw.text((25, y_pos + 30), rank_text, fill=rank_color, font=font_main)
+        draw.text((45, y_pos + 35), rank_text, fill=rank_color, font=font_name)
 
-        # ------------------------------------------------------------
-        # Avatar
-        # ------------------------------------------------------------
+        # 👤 Avatar mit Glow
         try:
             asset = member.display_avatar.with_format("png").with_size(128)
             data = io.BytesIO(await asset.read())
             avatar_img = Image.open(data).resize((avatar_size, avatar_size)).convert("RGBA")
 
+            # Glow-Effekt
+            glow = Image.new("RGBA", (avatar_size + 20, avatar_size + 20), (0, 0, 0, 0))
+            glow_draw = ImageDraw.Draw(glow)
+            glow_draw.ellipse((0, 0, avatar_size + 20, avatar_size + 20), fill=(0, 255, 255, 80))
+            img.paste(glow, (130 - 10, y_pos), glow)
+
+            # Runde Maske
             mask = Image.new("L", (avatar_size, avatar_size), 0)
-            mask_draw = ImageDraw.Draw(mask)
-            mask_draw.ellipse((0, 0, avatar_size, avatar_size), fill=255)
-            
-            # Avatar-Position (startet nach der Medaille)
-            avatar_x = 100
-            avatar_y = y_pos + 10
-            img.paste(avatar_img, (avatar_x, avatar_y), mask)
-            
-            # Avatar-Umrandung
-            draw.ellipse((avatar_x-5, avatar_y-5, avatar_x + avatar_size + 5, avatar_y + avatar_size + 5), outline=(100, 100, 100), width=3)
-            
+            ImageDraw.Draw(mask).ellipse((0, 0, avatar_size, avatar_size), fill=255)
+            img.paste(avatar_img, (130, y_pos + 10), mask)
+
         except Exception as e:
             print(f"⚠️ Avatar konnte nicht geladen werden für {member.name}: {e}")
 
-        # ------------------------------------------------------------
-        # Name, Level und XP
-        # ------------------------------------------------------------
-        name_x = avatar_x + avatar_size + 20
-        
-        # Name
-        draw.text((name_x, y_pos + 15), member.display_name, fill=fill_color, font=font_name)
-        
-        # Level und XP
-        draw.text((name_x, y_pos + 50), f"Level: {level} | XP: {counter}", fill=fill_color, font=font_small)
+        # 📜 Name & Level
+        name_x = 130 + avatar_size + 30
+        draw.text((name_x, y_pos + 20), member.display_name, fill=fill_color, font=font_name)
+        draw.text((name_x, y_pos + 60), f"Level {level} • XP {counter}", fill="#AAAAAA", font=font_small)
 
-    # ------------------------------------------------------------
-    # Ausgabe vorbereiten
-    # ------------------------------------------------------------
+        # 📈 Fortschrittsbalken mit richtiger Berechnung
+        bar_x1, bar_x2 = name_x, width - 80
+        bar_y = y_pos + 90
+
+        # Fortschritt korrekt berechnen
+        progress, xp_current, xp_needed = berechne_fortschritt(counter, level)
+        progress = max(0.0, min(1.0, progress))  # Clamp auf 0–1
+
+        # Hintergrund des Balkens
+        draw.rounded_rectangle((bar_x1, bar_y, bar_x2, bar_y + 10), radius=5, fill=(70, 70, 90))
+
+        # Fortschritt (Cyan → Violett Verlauf)
+        bar_width = int((bar_x2 - bar_x1) * progress)
+        if bar_width > 0:
+            gradient = Image.new("RGB", (bar_width, 10), "#000000")
+            grad_draw = ImageDraw.Draw(gradient)
+            for x in range(bar_width):
+                # Schönerer Übergang: von #00FFFF nach #9D00FF
+                r = int(0 + (157 - 0) * (x / bar_width))
+                g = int(255 - (255 - 0) * (x / bar_width))
+                b = 255
+                grad_draw.line((x, 0, x, 10), fill=(r, g, b))
+            img.paste(gradient, (bar_x1, bar_y))
+
+        # Glühender Punkt am Ende
+        if bar_width > 0:
+            glow_radius = 8
+            glow = Image.new("RGBA", (glow_radius * 2, glow_radius * 2), (0, 0, 0, 0))
+            glow_draw = ImageDraw.Draw(glow)
+            glow_draw.ellipse((0, 0, glow_radius * 2, glow_radius * 2), fill=(0, 255, 255, 180))
+            img.paste(glow, (bar_x1 + bar_width - glow_radius, bar_y - 4), glow)
+
+    # 📦 Ausgabe
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
     return buf
+
+
+
+
 
 # ------------------------------------------------------------
 # Cog-Klasse für das Levelsystem 
