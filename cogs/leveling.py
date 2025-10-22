@@ -302,7 +302,7 @@ async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.Byte
             glow_radius = 8
             glow = Image.new("RGBA", (glow_radius * 2, glow_radius * 2), (0, 0, 0, 0))
             glow_draw = ImageDraw.Draw(glow)
-            glow_draw.ellipse((0, 0, glow_radius * 2, glow_radius * 2), fill=(0, 255, 255, 180))
+            glow_draw.ellipse((0, 0, glow_radius * 2, glow_radius * 2), fill=(157, 0, 255, 180))
             img.paste(glow, (bar_x1 + bar_width - glow_radius, bar_y - 4), glow)
 
     # 📦 Ausgabe
