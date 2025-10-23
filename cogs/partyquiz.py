@@ -6,11 +6,14 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 
+# --- Konfiguration und Dateiverwaltung (Unverändert) ---
+
 # Pfad-Setup
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # Stellen Sie sicher, dass "data" und die JSON-Datei vorhanden sind.
 QUIZ_FILE = os.path.join(BASE_DIR, "data", "general_knowledge_questions.json")
 
+# Sicherstellen, dass die Datei existiert und Fragen laden
 def ensure_quiz_file():
     """Stellt sicher, dass das Datenverzeichnis und die Quiz-Datei existieren."""
     data_dir = os.path.join(BASE_DIR, "data")
@@ -30,25 +33,24 @@ def load_questions():
         print("Fehler: general_knowledge_questions.json ist keine gültige JSON-Datei oder ist leer.")
         return []
 
+# --- Haupt-Cog für den Bot ---
+
 class PartyQuiz(commands.Cog):
-    """Quiz-Spiel für alle zugelassenen Teilnehmer"""
+    """Quiz-Spiel mit dynamischer Spieler-Registrierung."""
+    
+    REGISTRATION_TIME = 30 # Sekunden für die Anmeldung
+    MIN_PLAYERS = 1        # Mindestanzahl Spieler, um das Quiz zu starten (könnte auch 2 sein)
 
     def __init__(self, bot):
         self.bot = bot
         self.active_games = {}  # guild_id -> QuizGame
 
-    @commands.hybrid_command(name="partyquiz", description="Starte ein Party-Quiz mit ausgewählten Spielern!")
-    async def partyquiz(self, ctx: commands.Context, spieler: commands.Greedy[discord.Member]):
-        """Startet ein Quiz und nimmt eine Liste von Spielern an."""
+    @commands.hybrid_command(name="partyquiz", description="Starte ein Quiz und öffne die Anmeldung!")
+    async def partyquiz(self, ctx: commands.Context):
         guild_id = ctx.guild.id
         
         if guild_id in self.active_games:
             await ctx.send("❌ Ein Quiz läuft bereits in diesem Server!")
-            return
-            
-        if not spieler:
-            # Sendet eine Fehlermeldung, wenn keine Spieler gementioned wurden
-            await ctx.send("❌ Du musst mindestens einen Spieler mit `@mention` angeben, z.B. `/partyquiz @Spieler1 @Spieler2`.")
             return
 
         questions = load_questions()
@@ -56,19 +58,90 @@ class PartyQuiz(commands.Cog):
             await ctx.send("❌ Es sind noch nicht genügend Fragen vorhanden (mind. 5).")
             return
 
-        # Wählt eine feste Anzahl an Fragen aus
-        selected_questions = random.sample(questions, k=min(20, len(questions)))
+        # Phase 1: Spieler-Registrierung
+        registration_view = RegistrationView(self)
         
-        # Übergibt die IDs der erlaubten Spieler an das Spiel
-        allowed_player_ids = [p.id for p in spieler]
+        embed = discord.Embed(
+            title="🎯 Party-Quiz Anmeldung geöffnet!",
+            description=f"Drücke den **'Mitspielen!'**-Button, um am Quiz teilzunehmen.\nDie Anmeldung schließt in **{self.REGISTRATION_TIME} Sekunden**.",
+            color=discord.Color.green()
+        )
+        
+        await ctx.send(embed=embed, view=registration_view)
+        
+        # Warte auf das Ende der Anmeldezeit oder bis die View geschlossen wird
+        registration_successful = await registration_view.wait()
+
+        # Phase 2: Spielstart oder Abbruch
+        allowed_player_ids = registration_view.players
+        
+        if len(allowed_player_ids) < self.MIN_PLAYERS:
+            await ctx.send(f"❌ Das Quiz wurde abgebrochen. Es wurden nicht genügend Spieler (mind. {self.MIN_PLAYERS}) gefunden.")
+            return
+
+        # Start des eigentlichen Spiels
+        selected_questions = random.sample(questions, k=min(20, len(questions)))
         game = QuizGame(ctx, selected_questions, allowed_player_ids)
         self.active_games[guild_id] = game
         
-        await game.start()
+        # Sende die Startmeldung und beginne das Spiel
+        player_mentions = ", ".join(f"<@{p_id}>" for p_id in allowed_player_ids)
+        await ctx.send(f"🎉 **Anmeldung beendet!** Das Quiz startet mit {len(allowed_player_ids)} Spielern: {player_mentions}")
+        await game.next_question()
         
         # Spiel beendet, aus aktiven Spielen entfernen
         if guild_id in self.active_games:
             del self.active_games[guild_id]
+
+# --- UI für die Spieler-Registrierung ---
+
+class RegistrationView(View):
+    def __init__(self, cog: PartyQuiz):
+        super().__init__(timeout=cog.REGISTRATION_TIME)
+        self.players = set() # Speichert die IDs der registrierten Spieler
+        self.cog = cog
+        
+        self.add_item(RegistrationButton(self))
+
+    async def on_timeout(self):
+        # Aktualisiere die ursprüngliche Nachricht, wenn das Timeout erreicht ist
+        if self.message:
+            for item in self.children:
+                item.disabled = True # Deaktiviere den Button
+            
+            new_embed = self.message.embeds[0]
+            new_embed.title = "🎯 Anmeldung geschlossen!"
+            new_embed.description = f"**{len(self.players)}** Spieler haben sich angemeldet."
+            new_embed.color = discord.Color.red()
+            
+            await self.message.edit(embed=new_embed, view=self)
+            
+        self.stop() # Beendet das Warten in der PartyQuiz-Klasse
+
+class RegistrationButton(Button):
+    def __init__(self, view: RegistrationView):
+        super().__init__(label="Mitspielen!", style=discord.ButtonStyle.primary)
+        self.view_ref = view
+
+    async def callback(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+        
+        if user_id in self.view_ref.players:
+            await interaction.response.send_message("Du bist bereits angemeldet!", ephemeral=True)
+            return
+
+        # Spieler registrieren
+        self.view_ref.players.add(user_id)
+        
+        # Feedback (ephemeral)
+        await interaction.response.send_message("✅ Du bist registriert! Das Quiz startet bald.", ephemeral=True)
+        
+        # Aktualisiere die öffentliche Nachricht (z.B. Spielerzahl)
+        new_embed = self.view_ref.message.embeds[0]
+        new_embed.description = f"Drücke den **'Mitspielen!'**-Button, um am Quiz teilzunehmen.\nAngemeldete Spieler: **{len(self.view_ref.players)}**\nDie Anmeldung schließt in Kürze."
+        await self.view_ref.message.edit(embed=new_embed, view=self.view_ref)
+
+# --- QuizGame und Quiz-Buttons (Angepasst, um die neue Logik zu verwenden) ---
 
 class QuizGame:
     """Verwaltet ein einzelnes Party-Quiz"""
@@ -82,11 +155,6 @@ class QuizGame:
         self.current_index = 0
         self.message = None
         self.allowed_players = set(allowed_players) # Zugelassene Spieler-IDs
-
-    async def start(self):
-        player_mentions = ", ".join(f"<@{p_id}>" for p_id in self.allowed_players)
-        await self.ctx.send(f"🎉 Das Party-Quiz startet jetzt mit {len(self.allowed_players)} Spielern: {player_mentions}")
-        await self.next_question()
 
     async def next_question(self):
         if self.current_index >= len(self.questions):
@@ -127,7 +195,6 @@ class QuizGame:
 
     async def register_answer(self, user: discord.User, answer: str, correct_answer: str):
         """Registriert die Antwort eines Spielers und aktualisiert den Score."""
-        # Da der PartyQuizButton bereits auf die Berechtigung prüft, muss hier nur das Scoring erfolgen.
         if user.id not in self.scores:
             self.scores[user.id] = 0
             
@@ -139,11 +206,7 @@ class QuizGame:
             await self.ctx.send("⚠️ Niemand von den zugelassenen Spielern hat am Quiz teilgenommen.")
             return
 
-        # Top Spieler sortieren
-        sorted_scores = sorted(self.scores.items(), key=lambda x: x[1], reverse=True)
-        description = ""
-        
-        # Nur zugelassene Spieler im Ranking anzeigen, auch wenn sie 0 Punkte haben
+        # Erstellt das finale Ranking der zugelassenen Spieler
         final_ranking_data = []
         for player_id in self.allowed_players:
             score = self.scores.get(player_id, 0)
@@ -152,21 +215,15 @@ class QuizGame:
         # Sortieren nach Punkten
         final_ranking_data.sort(key=lambda x: x[1], reverse=True)
 
-
+        description = ""
         for idx, (user_id, score) in enumerate(final_ranking_data, start=1):
             member = self.ctx.guild.get_member(user_id)
-            # Stellt sicher, dass der Benutzer noch im Server ist
             name = member.display_name if member else f"Unbekannter Spieler ({user_id})"
             
-            # Emoji für die Top 3
-            if idx == 1:
-                emoji = "🥇"
-            elif idx == 2:
-                emoji = "🥈"
-            elif idx == 3:
-                emoji = "🥉"
-            else:
-                emoji = f"{idx}."
+            if idx == 1: emoji = "🥇"
+            elif idx == 2: emoji = "🥈"
+            elif idx == 3: emoji = "🥉"
+            else: emoji = f"{idx}."
                 
             description += f"{emoji} **{name}** – **{score}** Punkte\n"
 
@@ -184,7 +241,6 @@ class QuizGame:
 
 class PartyQuizView(View):
     def __init__(self, options, correct_answer, game: QuizGame):
-        # Setzt das Timeout der View auf die Fragezeit des Spiels
         super().__init__(timeout=game.TIME_PER_QUESTION)
         self.correct_answer = correct_answer
         self.game = game
@@ -210,7 +266,7 @@ class PartyQuizButton(Button):
         
         # 1. Spieler-Autorisierungsprüfung (Ephemerer Fehler)
         if user_id not in self.game.allowed_players:
-            await interaction.response.send_message("❌ Du bist nicht als Teilnehmer dieses Quiz zugelassen.", ephemeral=True)
+            await interaction.response.send_message("❌ Du bist nicht als Teilnehmer dieses Quiz zugelassen. Die Anmeldung ist beendet.", ephemeral=True)
             return
         
         # 2. Mehrfachklick-Prüfung (Ephemerer Fehler)
@@ -234,6 +290,7 @@ class PartyQuizButton(Button):
             ephemeral=True
         )
 
-# Die Setup-Funktion für den Cog
+# --- Setup des Cogs ---
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(PartyQuiz(bot))
