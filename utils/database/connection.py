@@ -27,7 +27,6 @@ def setup_database():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # ... (Alle anderen Tabellen bleiben unverändert) ...
 
     # ------------------------------------------------------------
     # Nachrichten loggen (messages)
@@ -41,9 +40,7 @@ def setup_database():
         )
     """)
     
-    # ⚠️ REPARATUR BLOCK: Fügt fehlende Spalten und den notwendigen UNIQUE INDEX hinzu ⚠️
-    
-    # 1. Prüfen, ob Spalte 'action_count' existiert, sonst hinzufügen
+
     cursor.execute("SHOW COLUMNS FROM messages LIKE 'action_count'")
     if cursor.fetchone() is None:
         try:
@@ -51,7 +48,6 @@ def setup_database():
         except Error as e:
             print(f"WARNUNG: action_count konnte nicht hinzugefügt werden: {e}")
 
-    # 2. Prüfen, ob Spalte 'last_action' existiert, sonst hinzufügen
     cursor.execute("SHOW COLUMNS FROM messages LIKE 'last_action'")
     if cursor.fetchone() is None:
         try:
@@ -60,29 +56,17 @@ def setup_database():
         except Error as e:
             print(f"WARNUNG: last_action konnte nicht hinzugefügt werden: {e}")
             
-    # 3. Den fehlenden UNIQUE KEY hinzufügen, der für ON DUPLICATE KEY UPDATE benötigt wird
-    # Dies ist die LÖSUNG für den "Field doesn't have a default value" Fehler in messages.py
+
     try:
-        # Versucht, einen Unique Index hinzuzufügen, falls er fehlt.
-        # Wichtig: MySQL/MariaDB erlaubt das Hinzufügen eines UNIQUE KEY nur, 
-        # wenn die Kombination (guild_id, user_id, channel_id) bisher keine Duplikate enthält.
-        # Da Ihre Logik darauf basiert, dass jede Kombination nur einmal existiert (mit Zähler),
-        # sollte das funktionieren.
+
         cursor.execute("ALTER TABLE messages ADD UNIQUE KEY unique_activity (guild_id, user_id, channel_id)")
     except Error as e:
-        # Ignoriert den Fehler, falls der Index bereits existiert oder Duplikate vorhanden sind.
-        # Wenn der Fehler besagt, dass Duplikate existieren, müssten diese vorher manuell bereinigt werden.
         if 'Duplicate entry' in str(e):
              print(f"WARNUNG: Unique Index konnte aufgrund bestehender Duplikate nicht hinzugefügt werden. Bitte bereinigen Sie die messages Tabelle. Fehler: {e}")
         elif 'already exists' in str(e):
-             # Index existiert bereits, alles ist gut
              pass 
         else:
              print(f"WARNUNG: Index konnte nicht hinzugefügt werden: {e}")
-
-    # ... (Alle anderen Tabellen bleiben unverändert) ...
-    # (Ich lasse den Rest der setup_database Funktion hier weg, da Sie die komplette Datei 
-    # nur aus Platzgründen nicht posten mussten, aber die Korrektur nur hier liegt.)
 
     # ------------------------------------------------------------
     # Levelsystem
