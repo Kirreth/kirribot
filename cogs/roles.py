@@ -12,18 +12,26 @@ class Roles(commands.Cog):
         self.bot = bot
 
 # ------------------------------------------------------------
-# Bumper Rolle setzen
+# Bumper Rolle setzen (und entfernen)
 # ------------------------------------------------------------
 
     @commands.hybrid_command(
         name="setbumber", 
-        description="Setzt die Bumper-Rolle für den Server"
+        description="Setzt die Bumper-Rolle für den Server. Lasse die Rolle weg, um sie zu entfernen."
     )
     @commands.has_permissions(administrator=True)
     async def setbumber(self, ctx: Context[commands.Bot], role: Optional[discord.Role] = None) -> None:
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
+        
+        # 🚩 KORREKTUR 1: Blockiere Ausführung in DMs, da ctx.guild benötigt wird.
+        if ctx.guild is None:
+            await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+            return
+            
+        guild_id: str = str(ctx.guild.id)
         role_id: Optional[str] = str(role.id) if role else None
 
+        # Die Datenbankfunktion db.set_bumper_role übernimmt die Speicherung
+        # der guild_id und der optionalen role_id.
         db.set_bumper_role(guild_id, role_id)
 
         if role:
@@ -32,19 +40,9 @@ class Roles(commands.Cog):
             await ctx.send("✅ Die Bumper-Rolle wurde entfernt.")
 
 # ------------------------------------------------------------
-# Bumper Rolle entfernen
+# 🚩 ENTFERNT: Der delbumber Befehl ist redundant, da setbumber(role=None) 
+# denselben Zweck erfüllt.
 # ------------------------------------------------------------
-
-    @commands.hybrid_command(
-        name="delbumber", 
-        description="Entfernt die Bumper-Rolle für den Server"
-    )
-    @commands.has_permissions(administrator=True)
-    async def delbumber(self, ctx: Context[commands.Bot]) -> None:
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
-
-        db.set_bumper_role(guild_id, None)
-        await ctx.send("✅ Die Bumper-Rolle wurde entfernt.")
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Roles(bot))

@@ -91,7 +91,8 @@ async def run_bot():
             "cogs.metafrage",
             "cogs.partyquiz",
             "cogs.codeextractor",
-            "cogs.fakt"
+            "cogs.fakt",
+            "cogs.setup"
         ]
 
         for cog in cogs:

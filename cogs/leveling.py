@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 from typing import Union, Optional
-from utils.database import connection as db
+# Stellen Sie sicher, dass Sie 'connection' importieren, falls es in utils/database so definiert ist
+from utils.database import connection as db 
 from utils.database import messages as db_messages
 import random
 from PIL import Image, ImageDraw, ImageFont
@@ -312,9 +313,6 @@ async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.Byte
     return buf
 
 
-
-
-
 # ------------------------------------------------------------
 # Cog-Klasse für das Levelsystem 
 # ------------------------------------------------------------
@@ -335,12 +333,14 @@ class Leveling(commands.Cog):
 
         uid = str(message.author.id)
         uname = message.author.name
-        guild_id = str(message.guild.id)
+        guild_id = str(message.guild.id) # 🚩 Neu: Guild ID holen
         channel_id = str(message.channel.id)
 
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter, level FROM user WHERE id=%s", (uid,))
+        
+        # 🚩 Angepasst: SELECT benötigt guild_id
+        cursor.execute("SELECT counter, level FROM user WHERE id=%s AND guild_id=%s", (uid, guild_id))
         result = cursor.fetchone()
 
         old_level = 0
@@ -353,14 +353,16 @@ class Leveling(commands.Cog):
         new_level = berechne_level(counter)
 
         if result is None:
+            # 🚩 Angepasst: INSERT mit guild_id
             cursor.execute(
-                "INSERT INTO user (id, name, counter, level) VALUES (%s, %s, %s, %s)",
-                (uid, uname, counter, new_level),
+                "INSERT INTO user (guild_id, id, name, counter, level) VALUES (%s, %s, %s, %s, %s)",
+                (guild_id, uid, uname, counter, new_level),
             )
         else:
+            # 🚩 Angepasst: UPDATE benötigt guild_id im WHERE-Teil und aktualisiert den Namen
             cursor.execute(
-                "UPDATE user SET counter=%s, level=%s WHERE id=%s",
-                (counter, new_level, uid),
+                "UPDATE user SET counter=%s, level=%s, name=%s WHERE id=%s AND guild_id=%s",
+                (counter, new_level, uname, uid, guild_id),
             )
 
         conn.commit()
@@ -385,10 +387,13 @@ class Leveling(commands.Cog):
         await ctx.defer()
         user = user or ctx.author
         uid = str(user.id)
+        guild_id = str(ctx.guild.id) # 🚩 Neu: Guild ID holen
 
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT counter FROM user WHERE id=%s", (uid,))
+        
+        # 🚩 Angepasst: SELECT benötigt guild_id
+        cursor.execute("SELECT counter FROM user WHERE id=%s AND guild_id=%s", (uid, guild_id))
         result = cursor.fetchone()
 
         if not result:
@@ -404,8 +409,8 @@ class Leveling(commands.Cog):
         level = berechne_level(counter)
         progress_percent, xp_current_in_level, xp_needed_for_level_up = berechne_fortschritt(counter, level)
 
-        # Rang berechnen 
-        cursor.execute("SELECT COUNT(*) + 1 FROM user WHERE counter > %s", (counter,))
+        # 🚩 Angepasst: Rang muss auf guild_id eingeschränkt werden
+        cursor.execute("SELECT COUNT(*) + 1 FROM user WHERE counter > %s AND guild_id=%s", (counter, guild_id))
         rank_res = cursor.fetchone()
         rank = rank_res[0] if rank_res else 1
 
@@ -424,17 +429,19 @@ class Leveling(commands.Cog):
     async def top5(self, ctx: Context[commands.Bot]):
         """Zeigt die Top 5 Benutzer mit dem höchsten Level und XP als Bild an."""
         await ctx.defer()
+        guild_id = str(ctx.guild.id) # 🚩 Neu: Guild ID holen
 
         conn = db.get_connection()
         cursor = conn.cursor()
 
-        # Top 5 Benutzer anhand ihres Counters (XP)
+        # 🚩 Angepasst: SELECT ist auf guild_id beschränkt
         cursor.execute("""
             SELECT id, counter, level 
             FROM user 
+            WHERE guild_id = %s
             ORDER BY counter DESC 
             LIMIT 5
-        """)
+        """, (guild_id,)) # guild_id als Tupel übergeben
         results = cursor.fetchall()
 
         cursor.close()
@@ -443,7 +450,7 @@ class Leveling(commands.Cog):
         if not results:
             await ctx.send(embed=discord.Embed(
                 title="Noch keine Daten vorhanden 😢",
-                description="Es wurden noch keine Nachrichten gezählt.",
+                description="Es wurden noch keine Nachrichten auf diesem Server gezählt.",
                 color=discord.Color.red()
             ))
             return

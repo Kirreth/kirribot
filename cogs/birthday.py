@@ -1,4 +1,3 @@
-# cogs/birthday.py
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
@@ -21,6 +20,10 @@ class Birthday(commands.Cog):
     @commands.hybrid_command(name="birthday", description="Setze deinen Geburtstag (Format: TT.MM.JJJJ)")
     async def set_birthday(self, ctx: Context, datum: str):
         """Speichert den Geburtstag eines Users"""
+        if ctx.guild is None:
+             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
+             return
+             
         try:
             parsed_date = datetime.strptime(datum, "%d.%m.%Y").date()
         except ValueError:
@@ -37,6 +40,10 @@ class Birthday(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     async def set_birthday_channel(self, ctx: Context, channel: Optional[discord.TextChannel] = None):
         """Legt fest, in welchem Channel Geburtstagsgrüße gepostet werden"""
+        if ctx.guild is None:
+             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
+             return
+             
         if channel is None:
             channel = ctx.channel
 
@@ -50,9 +57,14 @@ class Birthday(commands.Cog):
     async def check_birthdays(self):
         """Wird täglich ausgeführt und gratuliert automatisch"""
         today = date.today()
+        # Annahme: get_today_birthdays() liefert (user_id, guild_id, birthday_date, last_congratulated)
         birthdays = db_birthday.get_today_birthdays()
 
-        for user_id, guild_id, birthday in birthdays:
+        for user_id, guild_id, birthday_date, last_congratulated in birthdays:
+            # Stelle sicher, dass an diesem Tag noch nicht gratuliert wurde
+            if last_congratulated and last_congratulated == today:
+                continue
+
             guild = self.bot.get_guild(int(guild_id))
             if not guild:
                 continue
@@ -69,11 +81,17 @@ class Birthday(commands.Cog):
             if not member:
                 continue
 
-            age = today.year - birthday.year
+            age = today.year - birthday_date.year
             msg = f"🎉 Alles Gute zum **{age}. Geburtstag**, {member.mention}! 🥳"
-            await channel.send(msg)
+            
+            try:
+                await channel.send(msg)
+            except discord.Forbidden:
+                 print(f"WARNUNG: Keine Sendeberechtigung in Channel {channel.id} in Guild {guild.id}")
+                 continue
 
-            db_birthday.mark_congratulated(user_id)
+            # 🚩 KORREKTUR: Muss user_id UND guild_id übergeben, um den richtigen Eintrag zu markieren.
+            db_birthday.mark_congratulated(user_id, guild_id) 
 
     # ------------------------------------------------------------
     # Task starten
@@ -85,10 +103,13 @@ class Birthday(commands.Cog):
     # ------------------------------------------------------------
     # Command: Geburtstag entfernen
     # ------------------------------------------------------------
-
     @commands.hybrid_command(name="removebirthday", description="Entfernt deinen gespeicherten Geburtstag")
     async def remove_birthday(self, ctx: Context):
         """Löscht den gespeicherten Geburtstag eines Users"""
+        if ctx.guild is None:
+             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
+             return
+             
         db_birthday.remove_birthday(str(ctx.author.id), str(ctx.guild.id))
         await ctx.send("✅ Dein Geburtstag wurde entfernt.", ephemeral=True)
 

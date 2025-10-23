@@ -9,6 +9,7 @@ import os
 
 load_dotenv()
 
+# Lade die Channel ID aus der Umgebungsvariable (Sollte eine ID > 0 sein)
 ALLOWED_CHANNEL_ID_ENV: int = int(os.getenv("ALLOWED_CHANNEL_ID", "0")) 
 
 class Moderation(commands.Cog):
@@ -16,6 +17,7 @@ class Moderation(commands.Cog):
     
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        # Instanzvariable verwenden
         self.ALLOWED_CHANNEL_ID = ALLOWED_CHANNEL_ID_ENV 
         
         if self.ALLOWED_CHANNEL_ID == 0:
@@ -96,7 +98,8 @@ class Moderation(commands.Cog):
             return
 
         db_mod.add_warn(str(member.id), str(ctx.guild.id), reason)
-        warns = db_mod.get_warns(str(member.id), str(ctx.guild.id), within_hours=24)
+        # Die Warnungen in 24h basieren auf der Annahme, dass db_mod.get_warns nur Warns innerhalb der letzten 24 Stunden liefert.
+        warns = db_mod.get_warns(str(member.id), str(ctx.guild.id), within_hours=24) 
 
         await ctx.send(
             f"⚠️ {member.mention} wurde verwarnt.\nGrund: {reason}\n👉 Warnungen in 24h: **{len(warns)}**"
@@ -114,18 +117,17 @@ class Moderation(commands.Cog):
                 await ctx.send(f"⚠️ Fehler beim automatischen Timeout: {e}", ephemeral=True)
 
     # ------------------------------------------------------------
-    # Verwarnungen des Users anzeigen
+    # Sanktionen des Users anzeigen
     # ------------------------------------------------------------
-#-------------
-# Sanktionen des Users anzeigen
-#-------------
     @commands.hybrid_command(name="sanctions", description="Zeigt alle Sanktionen (Warns, Mutes, Bans) eines Benutzers an")
-    @commands.check(lambda ctx: ctx.channel.id == 1428357460506443926) # Korrigierter Inline-Check
+    # 🚩 KORREKTUR: Verwende self.ALLOWED_CHANNEL_ID für den dynamischen Check
+    @commands.check(lambda ctx: ctx.cog.ALLOWED_CHANNEL_ID != 0 and ctx.channel.id == ctx.cog.ALLOWED_CHANNEL_ID) 
     async def sanctions(self, ctx: commands.Context, member: discord.Member) -> None:
         guild_id = str(ctx.guild.id)
         member_id = str(member.id)
         
         # 1. Daten abrufen (Annahme: Funktionen existieren und liefern [(timestamp, reason, info...), ...])
+        # Hier wird nur innerhalb von 24h abgefragt, was mit der Footer-Beschreibung (Gesamt-Warnungen (letzte 24h)) konsistent ist.
         warns = db_mod.get_warns(member_id, guild_id, within_hours=24) 
         timeouts = db_mod.get_timeouts(member_id, guild_id)
         bans = db_mod.get_bans(member_id, guild_id)
@@ -138,8 +140,10 @@ class Moderation(commands.Cog):
                 (timestamp, "⚠️ Warn", reason)
             )
         
+        # Annahme: timeouts liefert (timestamp, duration_minutes, reason)
         for timestamp, duration, reason in timeouts:
-            duration_str = str(timedelta(minutes=duration))
+            # Stelle sicher, dass duration als Integer interpretiert wird, falls es aus der DB als etwas anderes kommt
+            duration_str = str(timedelta(minutes=int(duration))) 
             all_sanctions.append(
                 (timestamp, "🔇 Timeout", f"{reason} ({duration_str})")
             )
@@ -157,19 +161,16 @@ class Moderation(commands.Cog):
             return
 
         description = ""
-        count_warns = 0
         
-        for idx, (timestamp, type_emoji, reason_text) in enumerate(all_sanctions, start=1):
+        # Nur die letzten 10 Sanktionen anzeigen, um die Nachricht nicht zu überladen
+        for idx, (timestamp, type_emoji, reason_text) in enumerate(all_sanctions[:10], start=1):
             dt = datetime.fromtimestamp(timestamp)
             time_str = dt.strftime("%Y-%m-%d %H:%M")
             description += f"**{idx}.** {time_str} **{type_emoji}** - {reason_text}\n"
-            
-            if "Warn" in type_emoji:
-                count_warns += 1
 
 
         embed = discord.Embed(
-            title=f"🚨 Sanktionen für {member}",
+            title=f"🚨 Letzte Sanktionen für {member}",
             description=description,
             color=discord.Color.red()
         )
@@ -180,9 +181,13 @@ class Moderation(commands.Cog):
     async def sanctions_error(self, ctx: commands.Context, error: commands.CommandError):
         # Behandelt den Fehler, wenn der Check fehlschlägt (Commands.CheckFailure)
         if isinstance(error, commands.CheckFailure):
-            # ID ist hier hartkodiert, um den Fehler zu vermeiden
-            allowed_id = 1428357460506443926 
-            msg = f"❌ Dieser Befehl kann nur im dafür vorgesehenen Channel (<#{allowed_id}>) ausgeführt werden."
+            # 🚩 KORREKTUR: Verwende die Instanzvariable für die Channel-ID
+            allowed_id = self.ALLOWED_CHANNEL_ID 
+            
+            if allowed_id != 0:
+                 msg = f"❌ Dieser Befehl kann nur im dafür vorgesehenen Channel (<#{allowed_id}>) ausgeführt werden."
+            else:
+                 msg = "❌ Dieser Befehl kann nur in einem bestimmten Channel ausgeführt werden. Bitte Admin bitten, ALLOWED_CHANNEL_ID in der .env zu setzen."
         else:
             # Bei anderen Fehlern (z.B. fehlende Argumente)
             msg = f"🚫 Ein Fehler ist aufgetreten: {error}"
@@ -200,9 +205,6 @@ class Moderation(commands.Cog):
     # ------------------------------------------------------------
     # Verwarnungen des Users löschen
     # ------------------------------------------------------------
-#-------------
-# Verwarnungen des Users löschen
-#-------------
     @commands.hybrid_command(name="clearwarns", description="Löscht alle Warnungen eines Benutzers")
     async def clearwarns(self, ctx: commands.Context, member: discord.Member) -> None:
         db_mod.clear_warns(str(member.id), str(ctx.guild.id))
@@ -211,9 +213,6 @@ class Moderation(commands.Cog):
     # ------------------------------------------------------------
     # User bannen
     # ------------------------------------------------------------
-#-------------
-# User bannen
-#-------------
     @commands.hybrid_command(name="ban", description="Bannt einen Benutzer")
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
         if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
@@ -232,9 +231,6 @@ class Moderation(commands.Cog):
     # ------------------------------------------------------------
     # User entbannen
     # ------------------------------------------------------------
-#-------------
-# User entbannen
-#-------------
     @commands.hybrid_command(name="unban", description="Entbannt einen Benutzer")
     async def unban(self, ctx: commands.Context, user: discord.User) -> None:
         try:

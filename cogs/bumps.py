@@ -1,7 +1,9 @@
 # cogs/bumps.py
 import discord
 from discord.ext import commands
-from datetime import datetime, timedelta, timezone
+# Importiere discord.utils.utcnow() für timezone-aware datetime
+from discord.utils import utcnow 
+from datetime import datetime, timedelta, timezone 
 from utils.database import bumps as db_bumps
 from typing import Union, Optional
 
@@ -21,6 +23,7 @@ class Bumps(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
+        # 1. Schnelle Checks (Muss von Disboard sein, muss auf einem Server sein)
         if message.author.id != DISBOARD_ID or not message.guild:
             return
 
@@ -30,28 +33,32 @@ class Bumps(commands.Cog):
         if is_success_message:
             bumper: Optional[Union[discord.User, discord.Member]]
             
-            # Bei Slash Commands (Discord Bot-Interaktion)
+            # 2. Bumper finden: Nutze die zuverlässige Interaction (Slash Command)
             if message.interaction and message.interaction.user:
                 bumper = message.interaction.user
-            # Fallback (weniger zuverlässig)
-            elif message.mentions: 
-                bumper = message.mentions[0] if message.mentions[0].id != DISBOARD_ID else None
+            
+            # 🚩 KORREKTUR: Entferne oder ignoriere unzuverlässige Fallbacks (message.mentions), 
+            # da Disboard fast immer Interactions verwendet. Wenn keine Interaction da ist, ignorieren wir.
             else:
-                return 
-
+                 return 
+            
+            # 3. Speichern
             if not bumper:
-                return
+                 return
 
             user_id: str = str(bumper.id)
             guild_id: str = str(message.guild.id)
-            current_time: datetime = datetime.utcnow() # UTC-Zeit verwenden
+            
+            # 🚩 KORREKTUR: Verwende discord.utils.utcnow() oder datetime.now(timezone.utc)
+            current_time: datetime = utcnow() 
 
             # Datenbank-Aktionen: Loggen, Zähler erhöhen, Cooldown-Zeit speichern
+            # Alle Aktionen verwenden guild_id korrekt für die Multi-Server-Fähigkeit
             db_bumps.log_bump(user_id, guild_id, current_time)
             db_bumps.increment_total_bumps(user_id, guild_id)
             db_bumps.set_last_bump_time(guild_id, current_time) 
             
-            print(f"✅ Bump von {bumper} gespeichert und Cooldown-Zeit aktualisiert")
+            print(f"✅ Bump von {bumper} ({user_id}) in Guild {message.guild.id} gespeichert.")
 
 # ------------------------------------------------------------
 # Nächster Bump Befehl (/nextbump)
@@ -62,9 +69,12 @@ class Bumps(commands.Cog):
         description="Zeigt an, wann der nächste Disboard Bump möglich ist."
     )
     async def nextbump(self, ctx: commands.Context) -> None:
+        if not ctx.guild:
+            return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+            
         await ctx.defer()
         
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
+        guild_id: str = str(ctx.guild.id)
         
         # Ruft den letzten Bump-Zeitstempel (datetime.datetime, UTC) ab oder None
         last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id)
@@ -78,12 +88,13 @@ class Bumps(commands.Cog):
                 color=discord.Color.green()
             )
         else:
-            # Stelle sicher, dass last_bump_time als UTC behandelt wird
+            # Stelle sicher, dass last_bump_time als UTC behandelt wird (wird durch utcnow() im Listener gewährleistet, 
+            # aber dieser Check ist eine gute Redundanz, falls die DB Naive-Zeiten liefert)
             if last_bump_time.tzinfo is None:
                 last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
             
             next_bump_time: datetime = last_bump_time + BUMP_COOLDOWN
-            now_utc: datetime = datetime.utcnow().replace(tzinfo=timezone.utc)
+            now_utc: datetime = utcnow() 
             
             if now_utc >= next_bump_time:
                 embed = discord.Embed(
@@ -101,7 +112,7 @@ class Bumps(commands.Cog):
                 
                 time_str: str = f"{hours} Stunden und {minutes} Minuten"
                 
-                # Discord Timestamp
+                # Discord Timestamp (Konvertierung zu int für den Unix-Zeitstempel)
                 timestamp_str: str = f"<t:{int(next_bump_time.timestamp())}:R>"
                 
                 embed = discord.Embed(
@@ -122,8 +133,12 @@ class Bumps(commands.Cog):
         description="Zeigt die Top 3 mit den meisten Bumps insgesamt"
     )
     async def topb(self, ctx: commands.Context) -> None:
+        if not ctx.guild:
+            return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+
         await ctx.defer()
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
+        guild_id: str = str(ctx.guild.id)
+        # Holt Top Bumper basierend auf guild_id
         top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
 
         if not top_users:
@@ -133,6 +148,7 @@ class Bumps(commands.Cog):
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
             user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            # Fallback für User, die den Server verlassen haben
             if not user:
                 try:
                     user = await self.bot.fetch_user(int(user_id))
@@ -158,8 +174,12 @@ class Bumps(commands.Cog):
         description="Zeigt die Top 3 mit den meisten Bumps in den letzten 30 Tagen"
     )
     async def topmb(self, ctx: commands.Context) -> None:
+        if not ctx.guild:
+            return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+            
         await ctx.defer()
-        guild_id: str = str(ctx.guild.id) if ctx.guild else "0"
+        guild_id: str = str(ctx.guild.id)
+        # Holt Top Bumper basierend auf guild_id
         top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
 
         if not top_users:
@@ -169,6 +189,7 @@ class Bumps(commands.Cog):
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
             user = ctx.guild.get_member(int(user_id)) if ctx.guild else None
+            # Fallback für User, die den Server verlassen haben
             if not user:
                 try:
                     user = await self.bot.fetch_user(int(user_id))

@@ -133,8 +133,9 @@ class Quiz(commands.Cog):
             if view.chosen == q["answer"]:
                 score += 1
 
-            await msg.edit(view=None)
+            await msg.edit(view=None) # Löscht die Buttons nach Beantwortung/Timeout
 
+        # Die Guild ID ist wichtig für die Multi-Server-Fähigkeit der Datenbank.
         db_quiz.save_quiz_result(str(ctx.author.id), str(ctx.guild.id) if ctx.guild else "0", score)
 
 
@@ -148,13 +149,19 @@ class Quiz(commands.Cog):
             role = discord.utils.get(ctx.guild.roles, name=role_name)
 
             if not role:
-                role = await ctx.guild.create_role(name=role_name, color=discord.Color.gold())
+                try:
+                    role = await ctx.guild.create_role(name=role_name, color=discord.Color.gold())
+                except discord.Forbidden:
+                    # Falls Rolle nicht erstellt werden kann, trotzdem weitermachen
+                    pass
 
-            try:
-                await ctx.author.add_roles(role)
-                result_text += f"\n🏆 Glückwunsch! Du hast die Rolle {role.mention} erhalten!"
-            except discord.Forbidden:
-                result_text += "\n⚠️ Ich konnte die Rolle nicht vergeben (fehlende Berechtigung)."
+
+            if role:
+                try:
+                    await ctx.author.add_roles(role)
+                    result_text += f"\n🏆 Glückwunsch! Du hast die Rolle {role.mention} erhalten!"
+                except discord.Forbidden:
+                    result_text += "\n⚠️ Ich konnte die Rolle nicht vergeben (fehlende Berechtigung)."
 
         await ctx.send(
             embed=discord.Embed(
@@ -175,9 +182,15 @@ class QuizView(View):
         self.correct_answer = correct_answer
         self.chosen = None
         for opt in options:
-            self.add_item(QuizButton(label=opt, correct_answer=correct_answer))
+            # Stellt sicher, dass die Button-Labels nicht länger als 80 Zeichen sind
+            btn_label = opt[:80]
+            self.add_item(QuizButton(label=btn_label, correct_answer=correct_answer))
 
     async def on_timeout(self):
+        # Deaktiviere die Buttons nach Timeout
+        for item in self.children:
+             if isinstance(item, Button):
+                 item.disabled = True
         self.stop()
 
 
@@ -187,10 +200,14 @@ class QuizButton(Button):
         self.correct_answer = correct_answer
 
     async def callback(self, interaction: discord.Interaction):
+        # 🚩 KORRIGIERTE LOGIK: SOFORT AUF INTERAKTION ANTWORTEN, UM FEHLER ZU VERMEIDEN
+        await interaction.response.defer() 
+        
+        # Prüfen, ob der Nutzer bereits geantwortet hat
         if self.view.chosen is not None:
-             await interaction.response.defer()
              return
 
+        # Logik zur Bestimmung der korrekten/falschen Antwort
         if self.label == self.correct_answer:
             self.style = discord.ButtonStyle.success
         else:
@@ -198,11 +215,15 @@ class QuizButton(Button):
             
         self.view.chosen = self.label
         
+        # Alle Buttons deaktivieren
         for item in self.view.children:
             if isinstance(item, Button):
                 item.disabled = True
-                
-        await interaction.response.edit_message(view=self.view)
+        
+        # Nachricht bearbeiten, da zuvor defer() gesendet wurde
+        await interaction.edit_original_response(view=self.view)
+        
+        # Beendet die View, damit die nächste Frage geladen wird
         self.view.stop()
 
 

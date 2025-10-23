@@ -30,10 +30,11 @@ class ActivityTracker(commands.Cog):
             count = len(active_members)
             
             # --- DEBUG-AUSGABE: Prüft, welcher Wert an die DB gesendet wird ---
-            print(f"DEBUG: Active count for {guild.name} ({guild.id}): {count}")
+            # print(f"DEBUG: Active count for {guild.name} ({guild.id}): {count}")
             # ---------------------------------------------------------------------
 
             # Speichert den Rekord der AKTIVEN Nutzer (in 'active_users' Tabelle)
+            # Nutzt guild_id: str(guild.id)
             db_users.set_max_active(str(guild.id), count) 
 
     @tasks.loop(minutes=5.0)
@@ -47,9 +48,8 @@ class ActivityTracker(commands.Cog):
             total_count = guild.member_count 
             
             # Speichert den Rekord der GESAMTMITGLIEDER (in 'members' Tabelle)
+            # Nutzt guild_id: str(guild.id)
             db_users.set_max_members(str(guild.id), total_count)
-            # Optionaler Debug-Print
-            # print(f"DEBUG: Total member count for {guild.name}: {total_count}")
 
 
     @check_active_users.before_loop
@@ -58,7 +58,7 @@ class ActivityTracker(commands.Cog):
         await self.bot.wait_until_ready()
 
     # ============================================================
-    # Listener: Loggt NUR Kanalaktivität
+    # Listener: Loggt Kanalaktivität
     # ============================================================
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -70,7 +70,8 @@ class ActivityTracker(commands.Cog):
         user_id = str(message.author.id)
         channel_id = str(message.channel.id)
 
-        # Loggt Kanal-Aktivität
+        # Loggt Kanal-Aktivität (nutzt guild_id, user_id, channel_id für den UNIQUE KEY)
+        # 🚩 KEINE ÄNDERUNG NÖTIG: Der Aufruf ist korrekt.
         db_messages.log_channel_activity(channel_id, guild_id, user_id)
         # Levelsystem XP-Logik wurde entfernt.
 
@@ -86,6 +87,7 @@ class ActivityTracker(commands.Cog):
         guild_id = str(ctx.guild.id)
         
         # Befehlsnutzung protokollieren
+        # Nutzt command_name und guild_id
         db_commands.log_command_usage(ctx.command.qualified_name, guild_id)
 
 
@@ -104,6 +106,7 @@ class ActivityTracker(commands.Cog):
         guild_id = str(interaction.guild.id)
         
         # 1. Befehlsnutzung protokollieren
+        # Nutzt command_name und guild_id
         db_commands.log_command_usage(command.qualified_name, guild_id)
         
         # 2. Loggt Kanal-Aktivität (Soll zählen)
@@ -111,6 +114,7 @@ class ActivityTracker(commands.Cog):
             user_id = str(interaction.user.id)
             channel_id = str(interaction.channel.id)
 
+            # Loggt Kanal-Aktivität (nutzt guild_id, user_id, channel_id für den UNIQUE KEY)
             db_messages.log_channel_activity(channel_id, guild_id, user_id)
 
 
@@ -124,10 +128,11 @@ class ActivityTracker(commands.Cog):
     @commands.hybrid_command(name="topcommands", description="Zeigt die am häufigsten genutzten Befehle")
     async def topcommands(self, ctx: Context[commands.Bot], limit: Optional[int] = 5) -> None:
         if not ctx.guild:
-             await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
-             return
-             
+              await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
+              return
+              
         guild_id = str(ctx.guild.id)
+        # Holt Top Commands basierend auf guild_id
         results = db_commands.get_top_commands(guild_id, limit)
         
         if not results:
@@ -136,7 +141,7 @@ class ActivityTracker(commands.Cog):
             
         embed = discord.Embed(title="📊 Top Befehle", color=discord.Color.green())
         for idx, (cmd, uses) in enumerate(results, start=1):
-            embed.add_field(name=f"{idx}. {cmd}", value=f"✅ {uses} Aufrufe", inline=False)
+            embed.add_field(name=f"{idx}. /{cmd}", value=f"✅ {uses} Aufrufe", inline=False)
             
         await ctx.send(embed=embed)
 
@@ -146,9 +151,9 @@ class ActivityTracker(commands.Cog):
     @commands.hybrid_command(name="mr", description="Zeigt den Rekord der aktivsten Mitglieder")
     async def mr(self, ctx: Context[commands.Bot]):
         if not ctx.guild:
-             await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
-             return
-             
+              await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
+              return
+              
         guild_id = str(ctx.guild.id)
         # Ruft den Rekord der AKTIVEN Mitglieder ab
         record = db_users.get_max_active(guild_id) 
@@ -165,16 +170,16 @@ class ActivityTracker(commands.Cog):
     @commands.hybrid_command(name="mrr", description="Zeigt den Rekord der gesamten Mitgliederanzahl auf dem Server.")
     async def mrr(self, ctx: commands.Context):
         if not ctx.guild:
-             return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
-             
+              return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
+              
         guild_id = str(ctx.guild.id)
         # Ruft den Rekord der GESAMTEN Mitglieder ab
         record = db_users.get_max_members(guild_id) 
         
         if record and record != "0": # Prüfen auf gespeicherten Wert
-             await ctx.send(f"📈 Rekord der **gesamten** Mitglieder: **{record}**")
+              await ctx.send(f"📈 Rekord der **gesamten** Mitglieder: **{record}**")
         else:
-             await ctx.send("Es wurde noch kein Rekord der gesamten Mitglieder gespeichert.")
+              await ctx.send("Es wurde noch kein Rekord der gesamten Mitglieder gespeichert.")
 
 #-------------
 # Top 5 Channel (Aktivität)
@@ -182,10 +187,11 @@ class ActivityTracker(commands.Cog):
     @commands.hybrid_command(name="topc", description="Zeigt die 5 aktivsten Channels des Servers")
     async def topc(self, ctx: Context[commands.Bot]):
         if not ctx.guild:
-             await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
-             return
-             
+              await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.")
+              return
+              
         guild_id = str(ctx.guild.id)
+        # Holt Top Channels basierend auf guild_id
         results = db_messages.get_top_channels(guild_id, 5)
         
         if not results:
@@ -196,6 +202,7 @@ class ActivityTracker(commands.Cog):
         
         for idx, (channel_id, count) in enumerate(results, start=1):
             channel = ctx.guild.get_channel(int(channel_id))
+            # Verwende den Namen des Channels, wenn er existiert, ansonsten eine Fallback-Meldung
             name = channel.mention if channel else f"Gelöscht ({channel_id})"
             embed.add_field(name=f"{idx}. {name}", value=f"💬 {count} Aktionen", inline=False)
             

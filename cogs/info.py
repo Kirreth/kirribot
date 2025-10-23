@@ -22,6 +22,12 @@ class Info(commands.Cog):
         description="Zeigt Infos über einen Benutzer"
     )
     async def userinfo(self, ctx: Context[commands.Bot], user: discord.Member) -> None:
+        
+        # Stelle sicher, dass der Befehl auf einem Server ausgeführt wird
+        if ctx.guild is None:
+             await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+             return
+             
         embed = discord.Embed(
             # Verwende user.display_name für den Anzeigenamen (Nickname oder Global Name)
             title=f"Infos über {user.display_name}", 
@@ -57,18 +63,28 @@ class Info(commands.Cog):
 # Level des Users
 # ------------------------------------------------------------
 
+        guild_id = str(ctx.guild.id)
+        user_id = str(user.id)
         conn = db.get_connection()
-        cursor = conn.cursor()
-        # Stellen Sie sicher, dass die Datenbankverbindung geöffnet ist
-        # und der Query korrekt ausgeführt wird
-        cursor.execute("SELECT counter, level FROM user WHERE id = %s", (str(user.id),))
-        result = cursor.fetchone()
-        conn.close()
+        
+        try:
+            cursor = conn.cursor()
+            # 🚩 KORREKTUR: Abfrage muss nun 'user_id' UND 'guild_id' verwenden!
+            query = "SELECT counter, level FROM user WHERE id = %s AND guild_id = %s"
+            cursor.execute(query, (user_id, guild_id)) 
+            result = cursor.fetchone()
+            cursor.close()
 
-        if result:
-            counter, level = result
-            embed.add_field(name="Nachrichten", value=f"{counter} Nachrichten", inline=True)
-            embed.add_field(name="Level", value=f"🆙 Level {level}", inline=True)
+            if result:
+                counter, level = result
+                embed.add_field(name="Nachrichten", value=f"{counter} Nachrichten", inline=True)
+                embed.add_field(name="Level", value=f"🆙 Level {level}", inline=True)
+                
+        except Exception as e:
+            # Optional: Hier Fehlerbehandlung oder Logging einfügen
+            print(f"Fehler bei Datenbankabfrage für Level-Info: {e}")
+        finally:
+            conn.close()
 
         await ctx.send(embed=embed)
 

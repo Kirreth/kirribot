@@ -1,3 +1,4 @@
+# cogs/selfinfo.py
 import discord
 from discord.ext import commands
 from utils.database import connection as db
@@ -11,56 +12,76 @@ class SelfInfo(commands.Cog):
 
     @commands.hybrid_command(name="selfinfo", description="Zeigt alle gespeicherten Infos über dich.")
     async def selfinfo(self, ctx: commands.Context):
+        
+        # Stelle sicher, dass der Befehl auf einem Server ausgeführt wird
+        if ctx.guild is None:
+             await ctx.send("Dieser Befehl kann nur in einem Server ausgeführt werden.", ephemeral=True)
+             return
+
         await ctx.defer(ephemeral=True)
 
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild.id)
 
         conn = db.get_connection()
-        cursor = conn.cursor(dictionary=True)
+        level_data = None
+        birthday_data = None
+        warn_data = None
+        quiz_data = None
+        
+        try:
+            cursor = conn.cursor(dictionary=True)
 
-        # ------------------------------------------------------------
-        # LEVELDATEN
-        # ------------------------------------------------------------
-        cursor.execute("""
-            SELECT level, counter 
-            FROM user 
-            WHERE id = %s
-        """, (user_id,))
-        level_data = cursor.fetchone()
+            # ------------------------------------------------------------
+            # 🚩 KORREKTUR: LEVELDATEN MÜSSEN PRO GILDE ABGEFRAGT WERDEN
+            # ------------------------------------------------------------
+            cursor.execute("""
+                SELECT level, counter 
+                FROM user 
+                WHERE id = %s AND guild_id = %s
+            """, (user_id, guild_id))
+            level_data = cursor.fetchone()
 
-        # ------------------------------------------------------------
-        # GEBURTSTAG
-        # ------------------------------------------------------------
-        cursor.execute("""
-            SELECT birthday 
-            FROM birthdays 
-            WHERE user_id = %s AND guild_id = %s
-        """, (user_id, guild_id))
-        birthday_data = cursor.fetchone()
+            # ------------------------------------------------------------
+            # GEBURTSTAG (bereits korrekte Abfrage)
+            # ------------------------------------------------------------
+            cursor.execute("""
+                SELECT birthday 
+                FROM birthdays 
+                WHERE user_id = %s AND guild_id = %s
+            """, (user_id, guild_id))
+            birthday_data = cursor.fetchone()
 
-        # ------------------------------------------------------------
-        # VERWARNUNGEN
-        # ------------------------------------------------------------
-        cursor.execute("""
-            SELECT COUNT(*) AS count 
-            FROM warns 
-            WHERE user_id = %s AND guild_id = %s
-        """, (user_id, guild_id))
-        warn_data = cursor.fetchone()
+            # ------------------------------------------------------------
+            # VERWARNUNGEN (bereits korrekte Abfrage)
+            # ------------------------------------------------------------
+            cursor.execute("""
+                SELECT COUNT(*) AS count 
+                FROM warns 
+                WHERE user_id = %s AND guild_id = %s
+            """, (user_id, guild_id))
+            warn_data = cursor.fetchone()
 
-        # ------------------------------------------------------------
-        # QUIZ
-        # ------------------------------------------------------------
-        cursor.execute("""
-            SELECT score, date_played 
-            FROM quiz_results 
-            WHERE user_id = %s AND guild_id = %s
-        """, (user_id, guild_id))
-        quiz_data = cursor.fetchone()
+            # ------------------------------------------------------------
+            # QUIZ (bereits korrekte Abfrage)
+            # ------------------------------------------------------------
+            cursor.execute("""
+                SELECT score, date_played 
+                FROM quiz_results 
+                WHERE user_id = %s AND guild_id = %s
+            """, (user_id, guild_id))
+            quiz_data = cursor.fetchone()
 
-        cursor.close()
-        conn.close()
+            cursor.close()
+            
+        except Exception as e:
+            # Hier kann ein Fehler-Logging eingefügt werden
+            print(f"Datenbankfehler in selfinfo: {e}")
+            await ctx.send("Beim Abrufen deiner Daten ist ein Fehler aufgetreten.", ephemeral=True)
+            return # Fehlerfall beenden
+            
+        finally:
+            conn.close() # 🚩 SICHERSTELLUNG: Verbindung wird immer geschlossen
 
         # ------------------------------------------------------------
         # EMBED
@@ -104,9 +125,11 @@ class SelfInfo(commands.Cog):
 
         # Quiz-Ergebnisse
         if quiz_data:
+            # Stellen Sie sicher, dass das Datum korrekt formatiert wird, falls es ein datetime-Objekt ist
+            date_str = quiz_data['date_played'].strftime("%d.%m.%Y") if isinstance(quiz_data['date_played'], datetime) else str(quiz_data['date_played'])
             embed.add_field(
                 name="🧠 Quiz",
-                value=f"Punkte: **{quiz_data['score']}**\nDatum: {quiz_data['date_played']}",
+                value=f"Punkte: **{quiz_data['score']}**\nDatum: {date_str}",
                 inline=False
             )
         else:

@@ -1,6 +1,8 @@
 # utils/database/moderation.py
 from .connection import get_connection
 import time
+from typing import List, Tuple, Any
+
 # ------------------------------------------------------------
 # User-Warns hinzufügen
 # ------------------------------------------------------------
@@ -8,30 +10,35 @@ import time
 def add_warn(user_id: str, guild_id: str, reason: str):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO warns (user_id, guild_id, reason, timestamp)
-        VALUES (%s, %s, %s, %s)
-    """, (user_id, guild_id, reason, int(time.time())))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("""
+            INSERT INTO warns (user_id, guild_id, reason, timestamp)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, guild_id, reason, int(time.time())))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
 
 # ------------------------------------------------------------
 # User-Warns abrufen
 # ------------------------------------------------------------
 
-def get_warns(user_id: str, guild_id: str, within_hours: int = 24):
+def get_warns(user_id: str, guild_id: str, within_hours: int = 24) -> List[Tuple[Any, ...]]:
     cutoff = int(time.time()) - within_hours * 3600
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("""
-    SELECT timestamp, reason FROM warns
-    WHERE user_id = %s AND guild_id = %s AND timestamp > %s
-    """, (user_id, guild_id, cutoff))
+    results = []
+    try:
+        cur.execute("""
+        SELECT timestamp, reason FROM warns
+        WHERE user_id = %s AND guild_id = %s AND timestamp > %s
+        """, (user_id, guild_id, cutoff))
 
-    results = cur.fetchall()
-    cur.close()
-    conn.close()
+        results = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
     return results
 
 
@@ -41,12 +48,14 @@ def get_warns(user_id: str, guild_id: str, within_hours: int = 24):
 def clear_warns(user_id: str, guild_id: str):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("""
-        DELETE FROM warns WHERE user_id = %s AND guild_id = %s
-    """, (user_id, guild_id))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("""
+            DELETE FROM warns WHERE user_id = %s AND guild_id = %s
+        """, (user_id, guild_id))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
 
 
 # ------------------------------------------------------------
@@ -56,29 +65,34 @@ def clear_warns(user_id: str, guild_id: str):
 def add_timeout(user_id: str, guild_id: str, minutes: int, reason: str):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO timeouts (user_id, guild_id, duration_minutes, reason, timestamp)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (user_id, guild_id, minutes, reason, int(time.time())))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("""
+            INSERT INTO timeouts (user_id, guild_id, duration_minutes, reason, timestamp)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (user_id, guild_id, minutes, reason, int(time.time())))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
 
 #-------------
 # User-Timeouts abrufen
 #-------------
-def get_timeouts(user_id: str, guild_id: str):
+def get_timeouts(user_id: str, guild_id: str) -> List[Tuple[Any, ...]]:
     conn = get_connection()
     cur = conn.cursor()
-    # Ruft alle Timeouts ab, da Timeouts in der Regel nicht ablaufen, bevor sie aus der DB gelöscht werden (falls implementiert)
-    cur.execute("""
-    SELECT timestamp, duration_minutes, reason FROM timeouts
-    WHERE user_id = %s AND guild_id = %s
-    """, (user_id, guild_id))
+    results = []
+    try:
+        # Ruft alle Timeouts ab, da Timeouts in der Regel nicht ablaufen, bevor sie aus der DB gelöscht werden (falls implementiert)
+        cur.execute("""
+        SELECT timestamp, duration_minutes, reason FROM timeouts
+        WHERE user_id = %s AND guild_id = %s
+        """, (user_id, guild_id))
 
-    results = cur.fetchall()
-    cur.close()
-    conn.close()
+        results = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
     return results
 
 # ------------------------------------------------------------
@@ -88,27 +102,32 @@ def get_timeouts(user_id: str, guild_id: str):
 def add_ban(user_id: str, guild_id: str, reason: str):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO bans (user_id, guild_id, reason, timestamp)
-        VALUES (%s, %s, %s, %s)
-    """, (user_id, guild_id, reason, int(time.time())))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("""
+            INSERT INTO bans (user_id, guild_id, reason, timestamp)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, guild_id, reason, int(time.time())))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
 
 #-------------
 # User Bann abrufen
 #-------------
-def get_bans(user_id: str, guild_id: str):
+def get_bans(user_id: str, guild_id: str) -> List[Tuple[Any, ...]]:
     conn = get_connection()
     cur = conn.cursor()
-    # Ruft alle Bans ab
-    cur.execute("""
-    SELECT timestamp, reason FROM bans
-    WHERE user_id = %s AND guild_id = %s
-    """, (user_id, guild_id))
+    results = []
+    try:
+        # Ruft alle Bans ab
+        cur.execute("""
+        SELECT timestamp, reason FROM bans
+        WHERE user_id = %s AND guild_id = %s
+        """, (user_id, guild_id))
 
-    results = cur.fetchall()
-    cur.close()
-    conn.close()
+        results = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
     return results

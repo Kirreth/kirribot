@@ -6,3 +6,4 @@ from .leveling import *
 from .bumps import *
 from .moderation import *
 from .birthday import *
+from .roles import *
