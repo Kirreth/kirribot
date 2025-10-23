@@ -3,14 +3,23 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from datetime import timedelta, datetime
 from utils.database import moderation as db_mod
-from typing import Optional 
+from typing import Optional
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+ALLOWED_CHANNEL_ID_ENV: int = int(os.getenv("ALLOWED_CHANNEL_ID", "0")) 
 
 class Moderation(commands.Cog):
     """Bietet Moderationsbefehle wie Clear, Mute, Warn, Ban und Sanctions"""
+    
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        # Definiere die erlaubte Channel ID
-        self.ALLOWED_CHANNEL_ID = 1428357460506443926
+        self.ALLOWED_CHANNEL_ID = ALLOWED_CHANNEL_ID_ENV 
+        
+        if self.ALLOWED_CHANNEL_ID == 0:
+             print("❌ WARNUNG: ALLOWED_CHANNEL_ID wurde nicht in der .env-Datei gefunden oder ist 0.")
 
     # ------------------------------------------------------------
     # Cog-weit: Nur Moderatoren/Admins dürfen Commands ausführen
