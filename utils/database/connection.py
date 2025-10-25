@@ -188,6 +188,20 @@ def setup_database():
         )
     """)
 
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS bump_totals (
+    guild_id VARCHAR(20) NOT NULL,
+    user_id VARCHAR(20) NOT NULL,
+    total_count INT DEFAULT 1,
+    last_bump_time DATETIME,
+    notified_status BOOLEAN DEFAULT FALSE,
+    
+    -- Definiert den Primary Key und den Unique Key, den MySQL für ODKU benötigt.
+    PRIMARY KEY (guild_id, user_id) 
+        )
+   """)
+
     # ------------------------------------------------------------
     # Geburtstage (birthdays) - MIGRATION DES PRIMARY KEY
     # ------------------------------------------------------------

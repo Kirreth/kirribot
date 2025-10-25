@@ -8,13 +8,14 @@ from typing import Optional, List, Tuple
 # ------------------------------------------------------------
 
 def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
+    """Protokolliert jeden einzelnen Bump-Vorgang in der 'bumps' Log-Tabelle."""
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # Speichern Sie den Timestamp immer in UTC (wie in cogs/bumps.py)
-        # Python's datetime.timestamp() ist standardmäßig POSIX-Timestamp
+        # Speichern Sie den Timestamp immer in UTC als POSIX-Timestamp (INT)
         cur.execute("""
-            INSERT INTO bumps (guild_id, user_id, timestamp) VALUES (%s, %s, %s)
+            INSERT INTO bumps (guild_id, user_id, timestamp) 
+            VALUES (%s, %s, %s)
         """, (guild_id, user_id, int(timestamp.timestamp())))
         conn.commit()
     finally:
@@ -26,16 +27,17 @@ def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
 # ------------------------------------------------------------
 
 def increment_total_bumps(user_id: str, guild_id: str) -> None:
-    """Inkrementiert die Gesamtanzahl der Bumps für den Benutzer im Guild."""
+    """Inkrementiert die Gesamtanzahl der Bumps für den Benutzer im Guild (MySQL-korrigiert)."""
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # UPSERT-Logik: Versuche zu aktualisieren, wenn vorhanden; füge andernfalls ein.
+        # KORREKTUR für MySQL: Verwendet ON DUPLICATE KEY UPDATE.
+        # Setzt total_count auf 1 beim ersten Eintrag, inkrementiert bei Duplikat.
         cur.execute("""
-            INSERT INTO total_bumps (guild_id, user_id, total_count)
+            INSERT INTO bump_totals (guild_id, user_id, total_count)
             VALUES (%s, %s, 1)
-            ON CONFLICT (guild_id, user_id) 
-            DO UPDATE SET total_count = total_bumps.total_count + 1
+            ON DUPLICATE KEY UPDATE 
+                total_count = total_count + 1
         """, (guild_id, user_id))
         conn.commit()
     finally:
@@ -47,19 +49,20 @@ def increment_total_bumps(user_id: str, guild_id: str) -> None:
 # ------------------------------------------------------------
 
 def set_last_bump_time(guild_id: str, timestamp: datetime) -> None:
-    """Speichert den UTC-Zeitstempel des letzten Bumps für den Cooldown-Check."""
+    """Speichert den UTC-Zeitstempel des letzten Bumps für den Cooldown-Check (MySQL-korrigiert)."""
     conn = get_connection()
     cur = conn.cursor()
     try:
         # Der Zeitstempel wird als POSIX Timestamp gespeichert (int)
         ts = int(timestamp.timestamp())
         
-        # UPSERT-Logik für den Server-Status
+        # KORREKTUR für MySQL: Verwendet ON DUPLICATE KEY UPDATE.
+        # Aktualisiert den last_bump_timestamp, wenn guild_id bereits existiert.
         cur.execute("""
             INSERT INTO server_status (guild_id, last_bump_timestamp)
             VALUES (%s, %s)
-            ON CONFLICT (guild_id) 
-            DO UPDATE SET last_bump_timestamp = EXCLUDED.last_bump_timestamp
+            ON DUPLICATE KEY UPDATE 
+                last_bump_timestamp = VALUES(last_bump_timestamp)
         """, (guild_id, ts))
         
         conn.commit()
@@ -84,7 +87,7 @@ def get_last_bump_time(guild_id: str) -> Optional[datetime]:
         cur.close()
         conn.close()
 
-    if result is None:
+    if result is None or result[0] is None:
         return None
         
     # Konvertiere den POSIX Timestamp zurück in ein UTC datetime-Objekt
@@ -97,13 +100,15 @@ def get_last_bump_time(guild_id: str) -> Optional[datetime]:
 # ------------------------------------------------------------
 
 def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> List[Tuple[str, int]]:
+    """Ruft die Top-Bumper ab, entweder insgesamt oder über einen bestimmten Zeitraum."""
     conn = get_connection()
     cur = conn.cursor()
     results = []
     
     try:
         if days:
-            # Monats-Top: Zählt weiterhin aus der 'bumps' Log-Tabelle
+            # Top über einen Zeitraum (liest aus der Log-Tabelle 'bumps')
+            # 86400 Sekunden pro Tag
             cutoff = int(datetime.utcnow().timestamp()) - days * 86400
             cur.execute("""
                 SELECT user_id, COUNT(*) as count FROM bumps
@@ -113,9 +118,9 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> L
                 LIMIT %s
             """, (guild_id, cutoff, limit))
         else:
-            # Gesamt-Top: Liest direkt aus der 'total_bumps' Zählertabelle
+            # Gesamt-Top (liest aus der Zählertabelle 'bump_totals')
             cur.execute("""
-                SELECT user_id, total_count FROM total_bumps
+                SELECT user_id, total_count FROM bump_totals
                 WHERE guild_id = %s
                 ORDER BY total_count DESC
                 LIMIT %s
