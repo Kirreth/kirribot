@@ -13,8 +13,6 @@ def set_bumper_role(guild_id: str, role_id: Optional[str]) -> None:
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # Annahme: Eine Tabelle namens 'guild_settings' oder 'server_config' existiert
-        # und speichert Einstellungen pro Gilde.
         cur.execute("""
             INSERT INTO guild_settings (guild_id, bumper_role_id)
             VALUES (%s, %s)
@@ -46,7 +44,7 @@ def get_bumper_role(guild_id: str) -> Optional[str]:
     return str(result[0]) if result and result[0] else None
 
 # ------------------------------------------------------------
-# NEU: Alle Server-Einstellungen für die Erinnerungs-Task abrufen
+# Alle Server-Einstellungen für die Erinnerungs-Task abrufen
 # ------------------------------------------------------------
 def get_all_guild_settings() -> List[Tuple[str, str, str]]:
     """
@@ -59,7 +57,6 @@ def get_all_guild_settings() -> List[Tuple[str, str, str]]:
     cur = conn.cursor()
     results: List[Tuple[str, str, str]] = []
     
-    # ACHTUNG: Das Feld 'bump_reminder_channel_id' MUSS in Ihrer 'guild_settings'-Tabelle existieren!
     query = """
     SELECT 
         guild_id, 
@@ -73,14 +70,11 @@ def get_all_guild_settings() -> List[Tuple[str, str, str]]:
     
     try:
         cur.execute(query)
-        # Type-Cast zur Klarheit. Die DB gibt Strings oder None zurück.
         raw_results = cur.fetchall()
         for row in raw_results:
-            # Wir stellen sicher, dass alle drei Werte vorhanden sind (durch WHERE-Klausel)
             if row[0] and row[1] and row[2]:
                  results.append((str(row[0]), str(row[1]), str(row[2])))
     except Exception as e:
-        # Fügen Sie hier ein geeignetes Log hinzu, falls ein Logger vorhanden ist
         print(f"Fehler beim Abrufen aller Guild-Einstellungen: {e}")
         return []
     finally:
