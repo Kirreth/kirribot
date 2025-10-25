@@ -10,9 +10,8 @@ DB_USER = os.getenv("DB_USER", "root")
 DB_PASS = os.getenv("DB_PASS", "")
 DB_NAME = os.getenv("DB_NAME", "activity_db")
 
-# ⚠️ WICHTIG: ERSETZEN SIE DIESEN PLATZHALTER MIT DER ECHTEN ID IHRES BESTEHENDEN SERVERS!
-# Die ID wurde bereits durch Sie eingetragen: 1427785033032401058
-EXISTING_GUILD_ID = 1427785033032401058
+
+EXISTING_GUILD_ID = os.getenv("EXISTING_GUILD_ID")
 
 
 def get_connection():
@@ -32,7 +31,7 @@ def setup_database():
     cursor = conn.cursor()
 
     # ------------------------------------------------------------
-    # Servereinstellungen (Setup) - NEU: Nur CREATE IF NOT EXISTS
+    # Servereinstellungen (Setup)
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS guild_settings (
@@ -55,9 +54,7 @@ def setup_database():
         )
     """)
     
-    # Migration der Spalten für messages
     
-    # 🚩 KORREKTUR für 'action_count' (Trennzeichen execute/fetchone)
     cursor.execute("SHOW COLUMNS FROM messages LIKE 'action_count'")
     if cursor.fetchone() is None:
         try:
@@ -65,7 +62,6 @@ def setup_database():
         except Error as e:
             print(f"WARNUNG: action_count konnte nicht hinzugefügt werden: {e}")
 
-    # 🚩 KORREKTUR für 'last_action' (Trennzeichen execute/fetchone) - Hier lag der Fehler!
     cursor.execute("SHOW COLUMNS FROM messages LIKE 'last_action'")
     if cursor.fetchone() is None:
         try:
@@ -74,7 +70,6 @@ def setup_database():
             print(f"WARNUNG: last_action konnte nicht hinzugefügt werden: {e}")
             
     try:
-        # Fügt den UNIQUE KEY hinzu, der für die ON DUPLICATE KEY UPDATE Logik notwendig ist
         cursor.execute("ALTER TABLE messages ADD UNIQUE KEY unique_activity (guild_id, user_id, channel_id)")
     except Error as e:
         if 'Duplicate entry' in str(e):
@@ -87,23 +82,15 @@ def setup_database():
     # ------------------------------------------------------------
     # Levelsystem (user) - MIGRATION DES PRIMARY KEY
     # ------------------------------------------------------------
-    
-    # 1. Prüfen, ob die guild_id Spalte fehlt (Indikator für alte Struktur)
+
     cursor.execute("SHOW COLUMNS FROM user LIKE 'guild_id'")
     if cursor.fetchone() is None:
-        # Führt die Migration durch
         try:
-            # 1. Spalte hinzufügen
             cursor.execute("ALTER TABLE user ADD COLUMN guild_id VARCHAR(20) AFTER id")
-            
-            # 2. Spalte mit der alten Server-ID befüllen
             print(f"INFO: Fülle user-Tabelle mit alter Server-ID: {EXISTING_GUILD_ID}")
-            # HINWEIS: Bei SQL-Abfragen sollten numerische IDs als String übergeben werden,
-            # daher wird die Variable hier als String behandelt, auch wenn sie als Zahl definiert ist.
             cursor.execute(f"UPDATE user SET guild_id = '{EXISTING_GUILD_ID}' WHERE guild_id IS NULL OR guild_id = ''")
             conn.commit()
 
-            # 3. Alten Primärschlüssel (id) entfernen
             try:
                 cursor.execute("ALTER TABLE user DROP PRIMARY KEY")
             except Error as e:
@@ -118,7 +105,6 @@ def setup_database():
             print(f"❌ FATALER FEHLER bei der user-Tabelle Migration: {e}")
             
     
-    # Definition der Tabelle (CREATE IF NOT EXISTS muss dennoch vorhanden sein)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
             guild_id VARCHAR(20) NOT NULL,
@@ -154,7 +140,7 @@ def setup_database():
         )
    """)
     
-    
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS server_status (
             guild_id VARCHAR(20) PRIMARY KEY,
