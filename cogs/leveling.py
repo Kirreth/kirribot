@@ -176,7 +176,7 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     xp_text_progress = f"{xp_current_in_level}/{xp_needed_for_level_up} XP bis Level {level + 1}"
     
     # 1. Text: Gesamt-XP (linksbündig)
-    draw.text((bar_x, bar_y + bar_height + 5), xp_text_total, fill=fill_color, font=font_small)
+    draw.text((bar_x, bar_y + bar_height + 15), xp_text_total, fill=fill_color, font=font_small)
 
     # 2. Text: Fortschritt-XP (rechts daneben)
     bbox_total = draw.textbbox((0, 0), xp_text_total, font=font_small)
@@ -184,7 +184,7 @@ async def create_rank_card(member: discord.User, counter: int, level: int, rank:
     
     start_x_progress = bar_x + text_w_total + 20 
 
-    draw.text((start_x_progress, bar_y + bar_height + 5), xp_text_progress, fill=progress_color, font=font_small)
+    draw.text((start_x_progress, bar_y + bar_height + 15), xp_text_progress, fill=progress_color, font=font_small)
     
     # ------------------------------------------------------------
     # Ausgabe vorbereiten
