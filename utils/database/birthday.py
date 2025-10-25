@@ -25,7 +25,6 @@ def set_birthday(user_id: str, guild_id: str, birthday: datetime.date):
 # ------------------------------------------------------------
 # Geburtstag abrufen
 # ------------------------------------------------------------
-# 🚩 KORREKTUR: Füge guild_id zum Abruf hinzu, da der Geburtstag pro Gilde gespeichert wird
 def get_birthday(user_id: str, guild_id: str) -> Optional[datetime.date]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -81,8 +80,6 @@ def get_birthday_channel(guild_id: str) -> Optional[str]:
 # ------------------------------------------------------------
 # Alle heutigen Geburtstage abrufen (mit Altersberechnung)
 # ------------------------------------------------------------
-# Der Query ist funktional korrekt, da er user_id und guild_id zurückgibt, 
-# was für die spätere Verarbeitung nötig ist. last_congratulated wird hier als Datum verglichen.
 def get_today_birthdays() -> List[Tuple[Any, ...]]:
     today = datetime.date.today()
     conn = db.get_connection()
@@ -106,7 +103,6 @@ def get_today_birthdays() -> List[Tuple[Any, ...]]:
 # ------------------------------------------------------------
 # Speichern, dass jemand bereits gratuliert wurde
 # ------------------------------------------------------------
-# 🚩 KORREKTUR: Füge guild_id zur Signatur und zur WHERE-Klausel hinzu
 def mark_congratulated(user_id: str, guild_id: str):
     today = datetime.date.today()
     conn = db.get_connection()
