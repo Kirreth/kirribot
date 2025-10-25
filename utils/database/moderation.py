@@ -83,7 +83,6 @@ def get_timeouts(user_id: str, guild_id: str) -> List[Tuple[Any, ...]]:
     cur = conn.cursor()
     results = []
     try:
-        # Ruft alle Timeouts ab, da Timeouts in der Regel nicht ablaufen, bevor sie aus der DB gelöscht werden (falls implementiert)
         cur.execute("""
         SELECT timestamp, duration_minutes, reason FROM timeouts
         WHERE user_id = %s AND guild_id = %s
