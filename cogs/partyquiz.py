@@ -95,7 +95,7 @@ class RegistrationView(View):
     async def on_timeout(self):
         if self.message:
             for item in self.children:
-                item.disabled = Tru
+                item.disabled = True
             
             new_embed = self.message.embeds[0]
             new_embed.title = "🎯 Anmeldung geschlossen!"
