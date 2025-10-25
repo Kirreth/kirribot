@@ -36,9 +36,6 @@ def log_message(guild_id: str, user_id: str, channel_id: str) -> None:
     """
     Loggt eine reguläre Nachricht. Ruft log_channel_activity mit der richtigen Parameterreihenfolge auf.
     """
-    # ⚠️ Die Parameterreihenfolge im Aufruf ist falsch. 
-    # log_channel_activity erwartet: (channel_id, guild_id, user_id)
-    # Korrekter Aufruf:
     log_channel_activity(channel_id, guild_id, user_id)
 
 
@@ -55,7 +52,6 @@ def get_top_channels(guild_id: str, limit: int = 5) -> List[Tuple[str, int]]:
     results = []
     
     try:
-        # Summiert action_count pro Kanal
         cur.execute("""
             SELECT channel_id, SUM(action_count) as total_count FROM messages
             WHERE guild_id = %s
@@ -84,7 +80,6 @@ def get_top_messages(guild_id: str, limit: int = 5) -> List[Tuple[str, int]]:
     results = []
 
     try:
-        # Summiert action_count pro User
         cur.execute("""
             SELECT user_id, SUM(action_count) as total_count FROM messages
             WHERE guild_id = %s AND user_id != 'system'
