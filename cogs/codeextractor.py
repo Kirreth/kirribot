@@ -4,7 +4,7 @@ from discord import app_commands
 import time
 from pygments.lexers import guess_lexer
 from pygments.util import ClassNotFound
-import re # NEU: Für die Fallback-Mustererkennung
+import re
 
 # ------------------------------------------------------------
 # Kontext Menü Befehl auf Modulebene (Verbesserte, kostengünstige Version)
@@ -12,7 +12,7 @@ import re # NEU: Für die Fallback-Mustererkennung
 async def to_code_callback(interaction: discord.Interaction, message: discord.Message):
     start_time = time.perf_counter()
 
-    content = message.content.strip() # Whitespace entfernen
+    content = message.content.strip()
     if not content:
         await interaction.response.send_message(
             "❌ Diese Nachricht enthält keinen Text.", ephemeral=True
@@ -24,36 +24,27 @@ async def to_code_callback(interaction: discord.Interaction, message: discord.Me
     # --------------------------------------------------------
     language = ""
     try:
-        # Versuch, den Lexer anhand des Inhalts zu erraten
         lexer = guess_lexer(content)
         language = lexer.name.lower()
     except ClassNotFound:
-        language = "" # Pygments konnte die Sprache nicht erraten
+        language = ""
 
     # --------------------------------------------------------
     # 2. FALLBACK: Muster-Matching für kurze, eindeutige Snippets (kostenlos & schnell)
     # --------------------------------------------------------
     if not language:
-        # Reguläre Ausdrücke zur Erkennung gängiger Sprachen
-        
-        # Python: def, class, import, print(), if __name__ ==
         if re.search(r'^\s*(def |class |import |print\s*\(|if __name__ == )', content, re.IGNORECASE | re.MULTILINE):
             language = "python"
         
-        # JavaScript/TypeScript/Node: const/let/var, function, console.log
         elif re.search(r'^\s*(const|let|var|function|async function)\s+[\w_]+|^\s*console\.log\(', content):
-            language = "javascript" # Standard-Alias
+            language = "javascript" 
             
-        # C/C++/C#/Java (C-ähnlich): #include, public/private/static, int/void/string main
         elif re.search(r'^\s*#include\s+<|^\s*(public|private|static)\s+(void|int|string)\s+(main|class)\s*', content, re.IGNORECASE | re.MULTILINE):
-            # Für kurze Snippets ist 'cpp' oder 'c' ein guter, allgemeiner C-Familien-Lexer
             language = "cpp" 
 
-        # SQL: SELECT, INSERT, UPDATE, DELETE, FROM
         elif re.search(r'^\s*(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN)\s+', content, re.IGNORECASE | re.MULTILINE):
             language = "sql"
             
-        # HTML/XML
         elif content.startswith('<') and content.endswith('>'):
             language = "html"
 
@@ -65,7 +56,6 @@ async def to_code_callback(interaction: discord.Interaction, message: discord.Me
     # Nachricht mit Codeblock + Dauer
     # --------------------------------------------------------
     if not language:
-        # Wenn immer noch keine Sprache erkannt, als 'text' oder leer lassen
         language = "text" 
 
     formatted_message = (
@@ -89,7 +79,6 @@ class CodeExtractor(commands.Cog):
 # ------------------------------------------------------------
 async def setup(bot: commands.Bot):
     await bot.add_cog(CodeExtractor(bot))
-    # Context Menu auf Bot-Tree registrieren
     bot.tree.add_command(app_commands.ContextMenu(
         name="toCode",
         callback=to_code_callback
