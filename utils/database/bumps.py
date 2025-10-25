@@ -12,7 +12,6 @@ def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # Speichern Sie den Timestamp immer in UTC als POSIX-Timestamp (INT)
         cur.execute("""
             INSERT INTO bumps (guild_id, user_id, timestamp) 
             VALUES (%s, %s, %s)
@@ -31,8 +30,6 @@ def increment_total_bumps(user_id: str, guild_id: str) -> None:
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # KORREKTUR für MySQL: Verwendet ON DUPLICATE KEY UPDATE.
-        # Setzt total_count auf 1 beim ersten Eintrag, inkrementiert bei Duplikat.
         cur.execute("""
             INSERT INTO bump_totals (guild_id, user_id, total_count)
             VALUES (%s, %s, 1)
@@ -53,11 +50,8 @@ def set_last_bump_time(guild_id: str, timestamp: datetime) -> None:
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # Der Zeitstempel wird als POSIX Timestamp gespeichert (int)
         ts = int(timestamp.timestamp())
         
-        # KORREKTUR für MySQL: Verwendet ON DUPLICATE KEY UPDATE.
-        # Aktualisiert den last_bump_timestamp, wenn guild_id bereits existiert.
         cur.execute("""
             INSERT INTO server_status (guild_id, last_bump_timestamp)
             VALUES (%s, %s)
@@ -90,9 +84,7 @@ def get_last_bump_time(guild_id: str) -> Optional[datetime]:
     if result is None or result[0] is None:
         return None
         
-    # Konvertiere den POSIX Timestamp zurück in ein UTC datetime-Objekt
     timestamp_int = result[0]
-    # Verwenden Sie timezone.utc, um explizit die Zeitzone zu setzen
     return datetime.fromtimestamp(timestamp_int, tz=timezone.utc)
 
 # ------------------------------------------------------------
@@ -107,8 +99,6 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> L
     
     try:
         if days:
-            # Top über einen Zeitraum (liest aus der Log-Tabelle 'bumps')
-            # 86400 Sekunden pro Tag
             cutoff = int(datetime.utcnow().timestamp()) - days * 86400
             cur.execute("""
                 SELECT user_id, COUNT(*) as count FROM bumps
@@ -118,7 +108,6 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> L
                 LIMIT %s
             """, (guild_id, cutoff, limit))
         else:
-            # Gesamt-Top (liest aus der Zählertabelle 'bump_totals')
             cur.execute("""
                 SELECT user_id, total_count FROM bump_totals
                 WHERE guild_id = %s
