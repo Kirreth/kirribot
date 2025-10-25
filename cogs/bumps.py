@@ -7,20 +7,15 @@ from typing import Union, Optional, List, Tuple
 from utils.database import bumps as db_bumps
 from utils.database import roles as db_roles
 
-# Disboard's User ID
 DISBOARD_ID: int = 302050872383242240
-# Disboard Cooldown (2 Stunden)
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
-# Zeitpuffer, bevor die Erinnerung gesendet wird (z.B. 5 Minuten nach Ablauf)
 REMINDER_BUFFER: timedelta = timedelta(minutes=5)
-# Wie oft soll die Hintergrundaufgabe laufen
 REMINDER_CHECK_INTERVAL: timedelta = timedelta(minutes=5)
 
 class Bumps(commands.Cog):
     """Verwaltet Disboard Bumps, Rollenbefehle und Statistiken und sendet Bump-Erinnerungen"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # Starte die Hintergrundaufgabe, sobald der Bot bereit ist
         if not self.bump_reminder_check.is_running():
             self.bump_reminder_check.start()
     
@@ -34,23 +29,19 @@ class Bumps(commands.Cog):
     @tasks.loop(minutes=REMINDER_CHECK_INTERVAL.total_seconds() / 60)
     async def bump_reminder_check(self) -> None:
         """Prüft, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
-        
-        # Annahme: Diese Funktion gibt eine Liste von (guild_id, bumper_role_id, reminder_channel_id) zurück
-        # DIESE DATEN MÜSSEN IN IHRER DB GESPEICHERT WERDEN
+
         guild_settings: List[Tuple[str, str, str]] = db_roles.get_all_guild_settings() 
 
         for guild_id_str, role_id_str, channel_id_str in guild_settings:
             guild_id = int(guild_id_str)
             
-            # Annahme: Diese Funktion gibt (last_bump_time, notified_status) zurück
             bump_data: Optional[Tuple[datetime, bool]] = db_bumps.get_last_bump_time_and_notified_status(guild_id_str)
             
             if bump_data is None:
-                continue # Server wurde noch nie gebumpt
+                continue 
 
             last_bump_time, already_notified = bump_data
             
-            # Stelle sicher, dass die Datenbankzeit UTC ist
             if last_bump_time.tzinfo is None:
                 last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
             
@@ -58,7 +49,6 @@ class Bumps(commands.Cog):
             reminder_time = next_bump_time + REMINDER_BUFFER
             now_utc = utcnow()
             
-            # Prüfen, ob der Cooldown abgelaufen ist UND noch keine Erinnerung gesendet wurde
             if now_utc >= reminder_time and not already_notified:
                 guild = self.bot.get_guild(guild_id)
                 role = guild.get_role(int(role_id_str)) if guild and role_id_str else None
@@ -69,13 +59,11 @@ class Bumps(commands.Cog):
                     continue
 
                 try:
-                    # Erinnerungsnachricht mit Tag der Bumper-Rolle
                     await channel.send(
                         f"⏰ **Bump-Zeit!** Der 2-stündige Cooldown ist abgelaufen. "
                         f"Jemand von {role.mention} kann jetzt `/bump` nutzen! <t:{int(next_bump_time.timestamp())}:R>"
                     )
                     
-                    # Setze den Notified-Status in der DB auf True, um Wiederholungen zu verhindern
                     db_bumps.set_notified_status(guild_id_str, True)
                     print(f"✅ Erinnerung erfolgreich gesendet für Guild {guild_id_str}.")
                     
@@ -90,24 +78,20 @@ class Bumps(commands.Cog):
         await self.bot.wait_until_ready()
 
     # ------------------------------------------------------------
-    # Bump registrieren (Angepasst)
+    # Bump registrieren
     # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        # Debug: jede Nachricht sehen
         print(f"[DEBUG] Nachricht empfangen: author={message.author}, content='{message.content}'")
 
-        # Nur Disboard Nachrichten auf Servern
         if message.author.id != DISBOARD_ID or not message.guild:
             return
         
         is_success_message = False
 
-        # 1. Prüfen im message.content (für ältere Formate)
         if "Bump done" in message.content or "Bump erfolgreich" in message.content:
             is_success_message = True
 
-        # 2. Prüfen in Embeds
         if not is_success_message and message.embeds:
             embed = message.embeds[0]
             embed_text = (embed.title or "") + (embed.description or "")
@@ -122,10 +106,8 @@ class Bumps(commands.Cog):
         
         bumper: Optional[Union[discord.User, discord.Member]] = None
 
-        # Interaction prüfen (Weg 1: Slash-Command User)
         if message.interaction and message.interaction.user:
             bumper = message.interaction.user
-        # Erwähnung prüfen (Weg 2: Alter Text-Befehl User)
         elif message.mentions:
             bumper = message.mentions[0]
         else:
@@ -136,17 +118,15 @@ class Bumps(commands.Cog):
         guild_id = str(message.guild.id)
         current_time = utcnow()
 
-        # Loggen in DB
         print(f"[DEBUG] Versuche Bump zu loggen: user={user_id}, guild={guild_id}, timestamp={current_time}")
         db_bumps.log_bump(user_id, guild_id, current_time)
         db_bumps.increment_total_bumps(user_id, guild_id)
         db_bumps.set_last_bump_time(guild_id, current_time)
-        # NEU: Setze den Notified-Status auf False, da ein neuer Bump stattgefunden hat
         db_bumps.set_notified_status(guild_id, False) 
         print(f"✅ Bump von {bumper} ({user_id}) in Guild {guild_id} gespeichert und Erinnerung zurückgesetzt.")
 
     # ------------------------------------------------------------
-    # Nächster Bump (Unverändert)
+    # Nächster Bump
     # ------------------------------------------------------------
     @commands.hybrid_command(
         name="nextbump",
@@ -167,7 +147,6 @@ class Bumps(commands.Cog):
                 color=discord.Color.green()
             )
         else:
-            # Stelle sicher, dass last_bump_time eine Zeitzone hat
             if last_bump_time.tzinfo is None:
                 last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
             next_bump_time = last_bump_time + BUMP_COOLDOWN
@@ -184,7 +163,6 @@ class Bumps(commands.Cog):
                 total_seconds = int(time_remaining.total_seconds())
                 hours = total_seconds // 3600
                 minutes = (total_seconds % 3600) // 60
-                # Discord Timestamp-Format für relative Zeitangabe
                 timestamp_str = f"<t:{int(next_bump_time.timestamp())}:R>"
 
                 embed = discord.Embed(
@@ -197,7 +175,7 @@ class Bumps(commands.Cog):
         await ctx.send(embed=embed)
 
     # ------------------------------------------------------------
-    # Top Bumper (Gesamt) (Unverändert)
+    # Top Bumper (Gesamt) 
     # ------------------------------------------------------------
     @commands.hybrid_command(
         name="topb",
@@ -218,7 +196,6 @@ class Bumps(commands.Cog):
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
             try:
-                # Versuche Member zu finden, ansonsten User holen
                 user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
             except Exception:
                 user = None
@@ -233,7 +210,7 @@ class Bumps(commands.Cog):
         await ctx.send(embed=embed)
 
     # ------------------------------------------------------------
-    # Top monatliche Bumper (Unverändert)
+    # Top monatliche Bumper
     # ------------------------------------------------------------
     @commands.hybrid_command(
         name="topmb",
@@ -268,7 +245,7 @@ class Bumps(commands.Cog):
         await ctx.send(embed=embed)
 
     # ------------------------------------------------------------
-    # Rollen selbst zuweisen / entfernen (Unverändert)
+    # Rollen selbst zuweisen / entfernen
     # ------------------------------------------------------------
     @commands.hybrid_command(
         name="getbumprole",
