@@ -13,7 +13,6 @@ class SelfInfo(commands.Cog):
     @commands.hybrid_command(name="selfinfo", description="Zeigt alle gespeicherten Infos über dich.")
     async def selfinfo(self, ctx: commands.Context):
         
-        # Stelle sicher, dass der Befehl auf einem Server ausgeführt wird
         if ctx.guild is None:
              await ctx.send("Dieser Befehl kann nur in einem Server ausgeführt werden.", ephemeral=True)
              return
@@ -43,7 +42,7 @@ class SelfInfo(commands.Cog):
             level_data = cursor.fetchone()
 
             # ------------------------------------------------------------
-            # GEBURTSTAG (bereits korrekte Abfrage)
+            # GEBURTSTAG
             # ------------------------------------------------------------
             cursor.execute("""
                 SELECT birthday 
@@ -75,13 +74,12 @@ class SelfInfo(commands.Cog):
             cursor.close()
             
         except Exception as e:
-            # Hier kann ein Fehler-Logging eingefügt werden
             print(f"Datenbankfehler in selfinfo: {e}")
             await ctx.send("Beim Abrufen deiner Daten ist ein Fehler aufgetreten.", ephemeral=True)
             return # Fehlerfall beenden
             
         finally:
-            conn.close() # 🚩 SICHERSTELLUNG: Verbindung wird immer geschlossen
+            conn.close() 
 
         # ------------------------------------------------------------
         # EMBED
@@ -93,7 +91,6 @@ class SelfInfo(commands.Cog):
         )
         embed.set_thumbnail(url=ctx.author.display_avatar)
 
-        # Levelsystem
         if level_data:
             embed.add_field(
                 name="🏆 Levelsystem",
@@ -103,7 +100,6 @@ class SelfInfo(commands.Cog):
         else:
             embed.add_field(name="🏆 Levelsystem", value="Keine Daten gefunden.", inline=False)
 
-        # Geburtstag
         if birthday_data:
             embed.add_field(
                 name="🎂 Geburtstag",
@@ -113,7 +109,6 @@ class SelfInfo(commands.Cog):
         else:
             embed.add_field(name="🎂 Geburtstag", value="Kein Geburtstag gespeichert.", inline=False)
 
-        # Verwarnungen
         if warn_data and warn_data["count"] > 0:
             embed.add_field(
                 name="⚠️ Verwarnungen",
@@ -123,9 +118,7 @@ class SelfInfo(commands.Cog):
         else:
             embed.add_field(name="⚠️ Verwarnungen", value="Keine Verwarnungen.", inline=False)
 
-        # Quiz-Ergebnisse
         if quiz_data:
-            # Stellen Sie sicher, dass das Datum korrekt formatiert wird, falls es ein datetime-Objekt ist
             date_str = quiz_data['date_played'].strftime("%d.%m.%Y") if isinstance(quiz_data['date_played'], datetime) else str(quiz_data['date_played'])
             embed.add_field(
                 name="🧠 Quiz",
