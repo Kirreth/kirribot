@@ -9,7 +9,6 @@ import os
 
 load_dotenv()
 
-# Lade die Channel ID aus der Umgebungsvariable (Sollte eine ID > 0 sein)
 ALLOWED_CHANNEL_ID_ENV: int = int(os.getenv("ALLOWED_CHANNEL_ID", "0")) 
 
 class Moderation(commands.Cog):
@@ -98,7 +97,6 @@ class Moderation(commands.Cog):
             return
 
         db_mod.add_warn(str(member.id), str(ctx.guild.id), reason)
-        # Die Warnungen in 24h basieren auf der Annahme, dass db_mod.get_warns nur Warns innerhalb der letzten 24 Stunden liefert.
         warns = db_mod.get_warns(str(member.id), str(ctx.guild.id), within_hours=24) 
 
         await ctx.send(
@@ -120,29 +118,23 @@ class Moderation(commands.Cog):
     # Sanktionen des Users anzeigen
     # ------------------------------------------------------------
     @commands.hybrid_command(name="sanctions", description="Zeigt alle Sanktionen (Warns, Mutes, Bans) eines Benutzers an")
-    # 🚩 KORREKTUR: Verwende self.ALLOWED_CHANNEL_ID für den dynamischen Check
     @commands.check(lambda ctx: ctx.cog.ALLOWED_CHANNEL_ID != 0 and ctx.channel.id == ctx.cog.ALLOWED_CHANNEL_ID) 
     async def sanctions(self, ctx: commands.Context, member: discord.Member) -> None:
         guild_id = str(ctx.guild.id)
         member_id = str(member.id)
         
-        # 1. Daten abrufen (Annahme: Funktionen existieren und liefern [(timestamp, reason, info...), ...])
-        # Hier wird nur innerhalb von 24h abgefragt, was mit der Footer-Beschreibung (Gesamt-Warnungen (letzte 24h)) konsistent ist.
         warns = db_mod.get_warns(member_id, guild_id, within_hours=24) 
         timeouts = db_mod.get_timeouts(member_id, guild_id)
         bans = db_mod.get_bans(member_id, guild_id)
         
         all_sanctions = []
 
-        # 2. Daten formatieren
         for timestamp, reason in warns:
             all_sanctions.append(
                 (timestamp, "⚠️ Warn", reason)
             )
         
-        # Annahme: timeouts liefert (timestamp, duration_minutes, reason)
         for timestamp, duration, reason in timeouts:
-            # Stelle sicher, dass duration als Integer interpretiert wird, falls es aus der DB als etwas anderes kommt
             duration_str = str(timedelta(minutes=int(duration))) 
             all_sanctions.append(
                 (timestamp, "🔇 Timeout", f"{reason} ({duration_str})")
@@ -153,7 +145,6 @@ class Moderation(commands.Cog):
                 (timestamp, "🔨 Ban", reason)
             )
 
-        # 3. Nach Zeitstempel sortieren
         all_sanctions.sort(key=lambda x: x[0], reverse=True)
         
         if not all_sanctions:
@@ -162,7 +153,6 @@ class Moderation(commands.Cog):
 
         description = ""
         
-        # Nur die letzten 10 Sanktionen anzeigen, um die Nachricht nicht zu überladen
         for idx, (timestamp, type_emoji, reason_text) in enumerate(all_sanctions[:10], start=1):
             dt = datetime.fromtimestamp(timestamp)
             time_str = dt.strftime("%Y-%m-%d %H:%M")
@@ -179,9 +169,7 @@ class Moderation(commands.Cog):
         
     @sanctions.error
     async def sanctions_error(self, ctx: commands.Context, error: commands.CommandError):
-        # Behandelt den Fehler, wenn der Check fehlschlägt (Commands.CheckFailure)
         if isinstance(error, commands.CheckFailure):
-            # 🚩 KORREKTUR: Verwende die Instanzvariable für die Channel-ID
             allowed_id = self.ALLOWED_CHANNEL_ID 
             
             if allowed_id != 0:
@@ -189,11 +177,9 @@ class Moderation(commands.Cog):
             else:
                  msg = "❌ Dieser Befehl kann nur in einem bestimmten Channel ausgeführt werden. Bitte Admin bitten, ALLOWED_CHANNEL_ID in der .env zu setzen."
         else:
-            # Bei anderen Fehlern (z.B. fehlende Argumente)
             msg = f"🚫 Ein Fehler ist aufgetreten: {error}"
             
         if ctx.interaction:
-            # Stellt sicher, dass die Interaction beantwortet wird
             if not ctx.interaction.response.is_done():
                 await ctx.interaction.response.send_message(msg, ephemeral=True)
             else:
