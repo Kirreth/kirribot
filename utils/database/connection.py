@@ -97,7 +97,6 @@ def setup_database():
                 if 'Can\'t DROP PRIMARY' not in str(e):
                      print(f"WARNUNG beim Löschen des alten PK in user-Tabelle: {e}")
             
-            # 4. Neuen Primärschlüssel (guild_id, id) setzen
             cursor.execute("ALTER TABLE user ADD PRIMARY KEY (guild_id, id)")
             print("✅ Levelsystem (user-Tabelle) erfolgreich auf Multi-Server migriert.")
 
@@ -149,7 +148,7 @@ def setup_database():
     """)
 
     # ------------------------------------------------------------
-    # Moderation: Warns, Timeouts, Bans (Alle bereits korrekt mit guild_id)
+    # Moderation: Warns, Timeouts, Bans
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
@@ -184,35 +183,28 @@ def setup_database():
 
 
     # ------------------------------------------------------------
-    # Geburtstage (birthdays) - MIGRATION DES PRIMARY KEY
+    # Geburtstage (birthdays)
     # ------------------------------------------------------------
     
-    # 1. Prüfen, ob die guild_id Spalte fehlt im Schlüssel (Indikator für alte Struktur)
     cursor.execute("SHOW COLUMNS FROM birthdays LIKE 'guild_id'")
     if cursor.fetchone() is not None:
-         # Da die Spalte existiert, prüfen wir, ob der Schlüssel korrekt ist
          cursor.execute("SHOW KEYS FROM birthdays WHERE Key_name = 'PRIMARY'")
          keys = cursor.fetchall()
          
-         # Wenn der Primärschlüssel NICHT (user_id, guild_id) ist, migrieren wir.
-         if len(keys) == 1 and keys[0][4] == 'user_id': # Prüft, ob nur 'user_id' der PK ist
+         if len(keys) == 1 and keys[0][4] == 'user_id':
              try:
-                # 1. Spalte mit der alten Server-ID befüllen
                 print(f"INFO: Fülle birthdays-Tabelle mit alter Server-ID: {EXISTING_GUILD_ID}")
                 cursor.execute(f"UPDATE birthdays SET guild_id = '{EXISTING_GUILD_ID}' WHERE guild_id IS NULL OR guild_id = ''")
                 conn.commit()
 
-                # 2. Alten Primärschlüssel (user_id) entfernen
                 cursor.execute("ALTER TABLE birthdays DROP PRIMARY KEY")
                 
-                # 3. Neuen Primärschlüssel (user_id, guild_id) setzen
                 cursor.execute("ALTER TABLE birthdays ADD PRIMARY KEY (user_id, guild_id)")
                 print("✅ Geburtstags-Tabelle erfolgreich auf Multi-Server migriert.")
              except Error as e:
                 print(f"❌ FATALER FEHLER bei der birthdays-Tabelle Migration: {e}")
 
-    
-    # Definition der Tabelle
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS birthdays (
             user_id VARCHAR(50), 
