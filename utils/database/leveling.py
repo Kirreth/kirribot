@@ -17,7 +17,6 @@ def berechne_level_und_rest(counter: int):
     Berechnet Level und Nachrichten, die bis zum nächsten Level fehlen.
     """
     level = berechne_level(counter)
-    # Nächstes Level = (level + 1)^2
     next_level_threshold = (level + 1) ** 2
     rest = max(0, next_level_threshold - counter)
     return level, rest
