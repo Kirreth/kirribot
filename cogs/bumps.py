@@ -144,8 +144,7 @@ class Bumps(commands.Cog):
 
                 embed = discord.Embed(
                     title="⏳ Nächster Bump",
-                    description=f"Der nächste Bump ist in **{hours} Stunden und {minutes} Minuten** möglich.\n\n"
-                                f"Das ist {timestamp_str}.",
+                    description=f"Der nächste Bump ist in **{hours} Stunden und {minutes} Minuten** möglich.\n\n",
                     color=discord.Color.orange()
                 )
 
