@@ -132,8 +132,16 @@ def get_bans(user_id: str, guild_id: str) -> List[Tuple[Any, ...]]:
     return results
 
 # ------------------------------------------------------------
-# Sanktionen-Kanal setzen  
+# Sanktionen-Kanal 
 # ------------------------------------------------------------
+
+
+def get_sanctions_channel(guild_id: str) -> str | None:
+    """Gibt die gespeicherte Sanctions-Channel-ID für einen Server zurück"""
+    cur = get_connection().cursor()
+    cur.execute("SELECT sanctions_channel FROM guilds WHERE guild_id = %s", (guild_id,))
+    result = cur.fetchone()
+    return result[0] if result and result[0] else None
 
 
 def set_sanctions_channel(guild_id: str, channel_id: str | None):

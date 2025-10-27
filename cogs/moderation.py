@@ -4,28 +4,27 @@ from discord.ext.commands import Context
 from datetime import timedelta, datetime
 from utils.database import moderation as db_mod
 from typing import Optional
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-ALLOWED_CHANNEL_ID_ENV: int = int(os.getenv("ALLOWED_CHANNEL_ID", "0")) 
 
 class Moderation(commands.Cog):
     """Bietet Moderationsbefehle wie Clear, Mute, Warn, Ban und Sanctions"""
     
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        # Instanzvariable verwenden
-        self.ALLOWED_CHANNEL_ID = ALLOWED_CHANNEL_ID_ENV 
-        
-        if self.ALLOWED_CHANNEL_ID == 0:
-             print("❌ WARNUNG: ALLOWED_CHANNEL_ID wurde nicht in der .env-Datei gefunden oder ist 0.")
+        self.ALLOWED_CHANNEL_ID: int = 0  # wird beim Laden aus der DB gesetzt
+
+    async def cog_load(self) -> None:
+        """Beim Laden die Sanctions-Channel-ID aus der DB holen"""
+        for guild in self.bot.guilds:
+            channel_id_str = db_mod.get_sanctions_channel(str(guild.id))
+            if channel_id_str:
+                self.ALLOWED_CHANNEL_ID = int(channel_id_str)
+            else:
+                print(f"❌ WARNUNG: Kein Sanctions-Channel für Server {guild.id} gefunden.")
 
     # ------------------------------------------------------------
     # Cog-weit: Nur Moderatoren/Admins dürfen Commands ausführen
     # ------------------------------------------------------------
-    async def cog_check(self, ctx: commands.Context):
+    async def cog_check(self, ctx: Context):
         if not ctx.guild:
             return False
         perms = ctx.author.guild_permissions
@@ -35,7 +34,7 @@ class Moderation(commands.Cog):
     # Clear Befehl
     # ------------------------------------------------------------
     @commands.hybrid_command(name="clear", description="Löscht Nachrichten im Channel")
-    async def clear(self, ctx: commands.Context, anzahl: int) -> None:
+    async def clear(self, ctx: Context, anzahl: int) -> None:
         if ctx.interaction:
             await ctx.interaction.response.defer(ephemeral=True)
 
@@ -57,7 +56,7 @@ class Moderation(commands.Cog):
                if ctx.interaction else ctx.send(msg, delete_after=5))
 
     @clear.error
-    async def clear_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
+    async def clear_error(self, ctx: Context, error: commands.CommandError) -> None:
         msg = "🚫 Du hast keine Berechtigung oder es ist ein Fehler aufgetreten."
         if ctx.interaction:
             if not ctx.interaction.response.is_done():
@@ -71,7 +70,7 @@ class Moderation(commands.Cog):
     # User muten
     # ------------------------------------------------------------
     @commands.hybrid_command(name="mute", description="Setzt einen Benutzer auf Timeout")
-    async def mute(self, ctx: commands.Context, member: discord.Member, minuten: int, *, reason: str) -> None:
+    async def mute(self, ctx: Context, member: discord.Member, minuten: int, *, reason: str) -> None:
         guild = ctx.guild
         if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
             await ctx.send("❌ Du kannst keine Moderatoren/Admins muten.", ephemeral=True)
@@ -91,7 +90,7 @@ class Moderation(commands.Cog):
     # User verwarnen
     # ------------------------------------------------------------
     @commands.hybrid_command(name="warn", description="Verwarnt einen Benutzer")
-    async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
+    async def warn(self, ctx: Context, member: discord.Member, *, reason: str) -> None:
         if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
             await ctx.send("❌ Du kannst keine Moderatoren/Admins verwarnen.", ephemeral=True)
             return
@@ -117,9 +116,13 @@ class Moderation(commands.Cog):
     # ------------------------------------------------------------
     # Sanktionen des Users anzeigen
     # ------------------------------------------------------------
-    @commands.hybrid_command(name="sanctions", description="Zeigt alle Sanktionen (Warns, Mutes, Bans) eines Benutzers an")
-    @commands.check(lambda ctx: ctx.cog.ALLOWED_CHANNEL_ID != 0 and ctx.channel.id == ctx.cog.ALLOWED_CHANNEL_ID) 
-    async def sanctions(self, ctx: commands.Context, member: discord.Member) -> None:
+    @commands.hybrid_command(name="sanctions", description="Zeigt alle Sanktionen eines Benutzers an")
+    async def sanctions(self, ctx: Context, member: discord.Member) -> None:
+        # Prüfen, ob der Befehl im erlaubten Channel ausgeführt wird
+        if ctx.channel.id != self.ALLOWED_CHANNEL_ID:
+            await ctx.send(f"❌ Dieser Befehl kann nur im Sanctions-Channel (<#{self.ALLOWED_CHANNEL_ID}>) verwendet werden.", ephemeral=True)
+            return
+
         guild_id = str(ctx.guild.id)
         member_id = str(member.id)
         
@@ -130,20 +133,14 @@ class Moderation(commands.Cog):
         all_sanctions = []
 
         for timestamp, reason in warns:
-            all_sanctions.append(
-                (timestamp, "⚠️ Warn", reason)
-            )
+            all_sanctions.append((timestamp, "⚠️ Warn", reason))
         
         for timestamp, duration, reason in timeouts:
             duration_str = str(timedelta(minutes=int(duration))) 
-            all_sanctions.append(
-                (timestamp, "🔇 Timeout", f"{reason} ({duration_str})")
-            )
+            all_sanctions.append((timestamp, "🔇 Timeout", f"{reason} ({duration_str})"))
             
         for timestamp, reason in bans:
-            all_sanctions.append(
-                (timestamp, "🔨 Ban", reason)
-            )
+            all_sanctions.append((timestamp, "🔨 Ban", reason))
 
         all_sanctions.sort(key=lambda x: x[0], reverse=True)
         
@@ -152,12 +149,10 @@ class Moderation(commands.Cog):
             return
 
         description = ""
-        
         for idx, (timestamp, type_emoji, reason_text) in enumerate(all_sanctions[:10], start=1):
             dt = datetime.fromtimestamp(timestamp)
             time_str = dt.strftime("%Y-%m-%d %H:%M")
             description += f"**{idx}.** {time_str} **{type_emoji}** - {reason_text}\n"
-
 
         embed = discord.Embed(
             title=f"🚨 Letzte Sanktionen für {member}",
@@ -166,70 +161,9 @@ class Moderation(commands.Cog):
         )
         embed.set_footer(text=f"Gesamt-Warnungen (letzte 24h): {len(warns)}")
         await ctx.send(embed=embed)
-        
-    @sanctions.error
-    async def sanctions_error(self, ctx: commands.Context, error: commands.CommandError):
-        if isinstance(error, commands.CheckFailure):
-            allowed_id = self.ALLOWED_CHANNEL_ID 
-            
-            if allowed_id != 0:
-                 msg = f"❌ Dieser Befehl kann nur im dafür vorgesehenen Channel (<#{allowed_id}>) ausgeführt werden."
-            else:
-                 msg = "❌ Dieser Befehl kann nur in einem bestimmten Channel ausgeführt werden. Bitte Admin bitten, ALLOWED_CHANNEL_ID in der .env zu setzen."
-        else:
-            msg = f"🚫 Ein Fehler ist aufgetreten: {error}"
-            
-        if ctx.interaction:
-            if not ctx.interaction.response.is_done():
-                await ctx.interaction.response.send_message(msg, ephemeral=True)
-            else:
-                await ctx.interaction.followup.send(msg, ephemeral=True)
-        else:
-            await ctx.send(msg, delete_after=5)
-
 
     # ------------------------------------------------------------
-    # Verwarnungen des Users löschen
+    # Setup Cog
     # ------------------------------------------------------------
-    @commands.hybrid_command(name="clearwarns", description="Löscht alle Warnungen eines Benutzers")
-    async def clearwarns(self, ctx: commands.Context, member: discord.Member) -> None:
-        db_mod.clear_warns(str(member.id), str(ctx.guild.id))
-        await ctx.send(f"🧹 Alle Warnungen für {member.mention} wurden gelöscht.")
-
-    # ------------------------------------------------------------
-    # User bannen
-    # ------------------------------------------------------------
-    @commands.hybrid_command(name="ban", description="Bannt einen Benutzer")
-    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str) -> None:
-        if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
-            await ctx.send("❌ Du kannst keine Moderatoren/Admins bannen.", ephemeral=True)
-            return
-
-        try:
-            await member.ban(reason=reason)
-            db_mod.add_ban(str(member.id), str(ctx.guild.id), reason)
-            await ctx.send(f"🔨 {member.mention} wurde gebannt.\nGrund: {reason}")
-        except discord.Forbidden:
-            await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu bannen.", ephemeral=True)
-        except discord.HTTPException as e:
-            await ctx.send(f"⚠️ Fehler beim Bannen: {e}", ephemeral=True)
-
-    # ------------------------------------------------------------
-    # User entbannen
-    # ------------------------------------------------------------
-    @commands.hybrid_command(name="unban", description="Entbannt einen Benutzer")
-    async def unban(self, ctx: commands.Context, user: discord.User) -> None:
-        try:
-            await ctx.guild.unban(user)
-            await ctx.send(f"✅ {user.mention} wurde entbannt.")
-        except discord.Forbidden:
-            await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu entbannen.", ephemeral=True)
-        except discord.HTTPException as e:
-            await ctx.send(f"⚠️ Fehler beim Entbannen: {e}", ephemeral=True)
-
-
-# ------------------------------------------------------------
-# Setup Cog
-# ------------------------------------------------------------
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Moderation(bot))
