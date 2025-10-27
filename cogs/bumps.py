@@ -24,39 +24,63 @@ class Bumps(commands.Cog):
     # ------------------------------------------------------------
     # HINTERGRUNDAUFGABE: Cooldown-Prüfung und Erinnerung (sekundengenau)
     # ------------------------------------------------------------
-    @tasks.loop(seconds=1)
-    async def bump_reminder_check(self) -> None:
-        """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
-        guild_settings: List[Tuple[str, Optional[int]]] = db_bumps.get_all_guild_settings()
+@tasks.loop(seconds=1)
+async def bump_reminder_check(self) -> None:
+    """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
+    try:
+        # Holt alle Gilden mit Reminder-Channel + ggf. Bumper-Rolle
+        guild_settings = db_bumps.get_all_guild_settings_with_roles()
+        # Erwartetes Format: [(guild_id, reminder_channel_id, bumper_role_id), ...]
+    except Exception as e:
+        print(f"[ERROR] Fehler beim Abrufen aller Guild-Einstellungen: {e}")
+        return
 
-        now_utc = utcnow()
-        for guild_id_str, reminder_channel_id in guild_settings:
-            if not reminder_channel_id:
-                continue
+    now_utc = utcnow()
 
-            last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id_str)
-            if last_bump_time is None:
-                continue
+    for guild_id_str, reminder_channel_id, bumper_role_id in guild_settings:
+        if not reminder_channel_id:
+            continue
 
-            if last_bump_time.tzinfo is None:
-                last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
+        last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id_str)
+        if last_bump_time is None:
+            continue
 
-            next_bump_time = last_bump_time + BUMP_COOLDOWN
+        if last_bump_time.tzinfo is None:
+            last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
 
-            # Sekundengenau prüfen
-            if now_utc >= next_bump_time:
-                channel = self.bot.get_channel(reminder_channel_id)
-                if channel:
-                    try:
-                        await channel.send(
-                            f"⏰ **Bump-Zeit!** Der 2-stündige Cooldown ist abgelaufen. "
-                            f"Jemand kann jetzt `/bump` nutzen! <t:{int(next_bump_time.timestamp())}:R>"
-                        )
-                        db_bumps.set_notified_status(guild_id_str, True)
-                    except discord.Forbidden:
-                        print(f"[ERROR] Keine Berechtigung, in Channel {reminder_channel_id} zu schreiben.")
-                    except Exception as e:
-                        print(f"[ERROR] Fehler beim Senden der Erinnerung: {e}")
+        next_bump_time = last_bump_time + BUMP_COOLDOWN
+        if now_utc < next_bump_time:
+            continue  # Cooldown läuft noch
+
+        reminded = db_bumps.get_notified_status(guild_id_str)
+        if reminded:
+            continue  # Schon erinnert
+
+        # Channel & Rolle abrufen
+        channel = self.bot.get_channel(reminder_channel_id)
+        if not channel:
+            continue
+
+        bumper_role_mention = ""
+        guild = self.bot.get_guild(int(guild_id_str))
+        if guild and bumper_role_id:
+            role = guild.get_role(int(bumper_role_id))
+            if role:
+                bumper_role_mention = role.mention
+
+        try:
+            await channel.send(
+                f"⏰ **Bump-Zeit!** Der 2-stündige Cooldown ist abgelaufen.\n"
+                f"{bumper_role_mention} – jemand kann jetzt `/bump` nutzen! "
+                f"<t:{int(next_bump_time.timestamp())}:R>"
+            )
+            db_bumps.set_notified_status(guild_id_str, True)
+        except discord.Forbidden:
+            print(f"[ERROR] Keine Berechtigung, in Channel {reminder_channel_id} zu schreiben.")
+        except Exception as e:
+            print(f"[ERROR] Fehler beim Senden der Erinnerung: {e}")
+
+
 
     @bump_reminder_check.before_loop
     async def before_bump_reminder_check(self) -> None:

@@ -181,3 +181,27 @@ def get_all_guild_settings() -> List[Tuple[str, Optional[int]]]:
     finally:
         cur.close()
         conn.close()
+
+
+def get_notified_status(guild_id: str) -> bool:
+    """Prüft, ob bereits eine Erinnerung gesendet wurde."""
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT reminder_sent FROM server_status WHERE guild_id = %s", (guild_id,))
+        row = cur.fetchone()
+        return bool(row and row[0])
+    finally:
+        cur.close()
+        conn.close()
+
+def get_all_guild_settings_with_roles():
+    """Gibt alle Server mit Reminder-Channel und Bumper-Rolle zurück."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT guild_id, bump_reminder_channel_id, bumper_role_id
+        FROM guild_settings
+    """)
+    results = cur.fetchall()
+    return [(str(row[0]), row[1], row[2]) for row in results]
