@@ -141,10 +141,14 @@ class Bumps(commands.Cog):
                 hours = total_seconds // 3600
                 minutes = (total_seconds % 3600) // 60
                 timestamp_str = f"<t:{int(next_bump_time.timestamp())}:R>"
+                if hours > 0:
+                    time_str = f"{hours} Stunden und {minutes} Minuten"
+                else:
+                    time_str = f"{minutes} Minuten"
 
                 embed = discord.Embed(
                     title="⏳ Nächster Bump",
-                    description=f"Der nächste Bump ist in **{hours} Stunden und {minutes} Minuten** möglich.\n\n",
+                    description=f"Der nächste Bump ist in **{time_str}** möglich.\n\n",
                     color=discord.Color.orange()
                 )
 
