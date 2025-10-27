@@ -141,8 +141,10 @@ class Bumps(commands.Cog):
                 hours = total_seconds // 3600
                 minutes = (total_seconds % 3600) // 60
                 timestamp_str = f"<t:{int(next_bump_time.timestamp())}:R>"
-                if hours > 0:
+                if hours > 1:
                     time_str = f"{hours} Stunden und {minutes} Minuten"
+                elif hours == 1:
+                    time_str = f"1 Stunde und {minutes} Minuten"
                 else:
                     time_str = f"{minutes} Minuten"
 
