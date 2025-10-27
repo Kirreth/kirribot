@@ -169,3 +169,15 @@ def get_reminder_channel(guild_id: str) -> Optional[int]:
         cur.close()
         conn.close()
     return result
+
+
+def get_all_guild_settings() -> List[Tuple[str, Optional[int]]]:
+    """Liefert alle Server mit ihrem Reminder-Channel."""
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT guild_id, reminder_channel FROM server_status")
+        return cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
