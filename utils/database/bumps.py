@@ -87,6 +87,20 @@ def get_last_bump_time(guild_id: str) -> Optional[datetime]:
     timestamp_int = result[0]
     return datetime.fromtimestamp(timestamp_int, tz=timezone.utc)
 
+def set_notified_status(guild_id: str, status: bool) -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO server_status (guild_id, reminder_sent)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE reminder_sent = VALUES(reminder_sent)
+        """, (guild_id, int(status)))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
 # ------------------------------------------------------------
 # Top Bumper abrufen
 # ------------------------------------------------------------
@@ -121,3 +135,37 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> L
         conn.close()
         
     return results
+
+
+def set_reminder_channel(guild_id: str, channel_id: str | None) -> None:
+    """Speichert den Channel, in dem Bump-Erinnerungen gepostet werden."""
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO server_status (guild_id, reminder_channel)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE reminder_channel = VALUES(reminder_channel)
+        """, (guild_id, channel_id))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+
+def get_reminder_channel(guild_id: str) -> Optional[int]:
+    """Ruft die ID des Channels für Bump-Erinnerungen ab."""
+    conn = get_connection()
+    cur = conn.cursor()
+    result = None
+    try:
+        cur.execute("""
+            SELECT reminder_channel FROM server_status WHERE guild_id = %s
+        """, (guild_id,))
+        row = cur.fetchone()
+        if row and row[0]:
+            result = int(row[0])
+    finally:
+        cur.close()
+        conn.close()
+    return result

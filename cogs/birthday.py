@@ -8,7 +8,6 @@ from utils.database import birthday as db_birthday
 
 GERMANY_TIMEZONE = pytz.timezone('Europe/Berlin')
 
-
 class Birthday(commands.Cog):
     """Verwaltet Geburtstage und sendet Glückwünsche pünktlich um 00:00 Uhr deutscher Zeit"""
 
@@ -26,8 +25,8 @@ class Birthday(commands.Cog):
     async def set_birthday(self, ctx: Context, datum: str):
         """Speichert den Geburtstag eines Users"""
         if ctx.guild is None:
-             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
-             return
+            await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
+            return
              
         try:
             parsed_date = datetime.strptime(datum, "%d.%m.%Y").date()
@@ -39,23 +38,6 @@ class Birthday(commands.Cog):
         await ctx.send(f"🎂 Dein Geburtstag wurde gespeichert: **{parsed_date.strftime('%d.%m.%Y')}**", ephemeral=True)
 
     # ------------------------------------------------------------
-    # Command: Channel für Geburtstage setzen
-    # ------------------------------------------------------------
-    @commands.hybrid_command(name="birthdaychannel", description="Setzt den Channel für Geburtstagsnachrichten")
-    @commands.has_permissions(manage_guild=True)
-    async def set_birthday_channel(self, ctx: Context, channel: Optional[discord.TextChannel] = None):
-        """Legt fest, in welchem Channel Geburtstagsgrüße gepostet werden"""
-        if ctx.guild is None:
-             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
-             return
-             
-        if channel is None:
-            channel = ctx.channel
-
-        db_birthday.set_birthday_channel(str(ctx.guild.id), str(channel.id))
-        await ctx.send(f"✅ Geburtstagsnachrichten werden nun in {channel.mention} gepostet.", ephemeral=True)
-
-    # ------------------------------------------------------------
     # Hintergrund-Task: Geburtstage prüfen (Ablauf um 00:00 DE-Zeit)
     # ------------------------------------------------------------
     @tasks.loop(hours=24)
@@ -63,7 +45,6 @@ class Birthday(commands.Cog):
         """Wird täglich um 00:00 Uhr DE-Zeit ausgeführt und gratuliert automatisch"""
         
         today_germany = datetime.now(GERMANY_TIMEZONE).date()
-        
         birthdays = db_birthday.get_today_birthdays()
 
         for user_id, guild_id, birthday_date, last_congratulated in birthdays:
@@ -98,11 +79,8 @@ class Birthday(commands.Cog):
                 print(f"WARNUNG: Keine Sendeberechtigung in Channel {channel.id} in Guild {guild.id}")
                 continue
 
-            db_birthday.mark_congratulated(user_id, guild_id) 
+            db_birthday.mark_congratulated(user_id, guild_id)
 
-    # ------------------------------------------------------------
-    # Task starten: Verzögert den Start auf 00:00 Uhr deutscher Zeit
-    # ------------------------------------------------------------
     @check_birthdays.before_loop
     async def before_check_birthdays(self):
         await self.bot.wait_until_ready()
@@ -115,7 +93,6 @@ class Birthday(commands.Cog):
             target_datetime_germany = datetime.combine(next_day, target_time, tzinfo=GERMANY_TIMEZONE)
 
         target_datetime_utc = target_datetime_germany.astimezone(pytz.utc)
-
         now_utc = datetime.now(pytz.utc)
         wait_seconds = (target_datetime_utc - now_utc).total_seconds()
         
@@ -128,14 +105,12 @@ class Birthday(commands.Cog):
     # ------------------------------------------------------------
     @commands.hybrid_command(name="removebirthday", description="Entfernt deinen gespeicherten Geburtstag")
     async def remove_birthday(self, ctx: Context):
-        """Löscht den gespeicherten Geburtstag eines Users"""
         if ctx.guild is None:
-             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
-             return
+            await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
+            return
              
         db_birthday.remove_birthday(str(ctx.author.id), str(ctx.guild.id))
         await ctx.send("✅ Dein Geburtstag wurde entfernt.", ephemeral=True)
-
 
 # ------------------------------------------------------------
 # Cog Setup

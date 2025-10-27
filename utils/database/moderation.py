@@ -130,3 +130,23 @@ def get_bans(user_id: str, guild_id: str) -> List[Tuple[Any, ...]]:
         cur.close()
         conn.close()
     return results
+
+# ------------------------------------------------------------
+# Sanktionen-Kanal setzen  
+# ------------------------------------------------------------
+
+
+def set_sanctions_channel(guild_id: str, channel_id: str | None):
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO server_status (guild_id, sanctions_channel)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE
+                sanctions_channel = VALUES(sanctions_channel)
+        """, (guild_id, channel_id))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
