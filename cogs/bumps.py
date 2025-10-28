@@ -1,11 +1,10 @@
-# cogs/bumps.py
 import discord
 from discord.ext import commands, tasks
 from discord.utils import utcnow
 from datetime import datetime, timedelta, timezone
 from typing import Union, Optional, List, Tuple
 from utils.database import bumps as db_bumps
-from utils.database import roles as db_roles
+from utils.database import roles as db_roles # Wichtig: Diese Datei muss die Rolle aus guild_settings holen!
 
 DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
@@ -14,6 +13,7 @@ class Bumps(commands.Cog):
     """Verwaltet Disboard Bumps, Rollenbefehle und Statistiken und sendet Bump-Erinnerungen"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        # DIESE ZUWEISUNG IST JETZT KORREKT, DA DIE FUNKTION TEIL DER KLASSE IST
         if not self.bump_reminder_check.is_running():
             self.bump_reminder_check.start()
 
@@ -24,62 +24,63 @@ class Bumps(commands.Cog):
     # ------------------------------------------------------------
     # HINTERGRUNDAUFGABE: Cooldown-Prüfung und Erinnerung (sekundengenau)
     # ------------------------------------------------------------
-@tasks.loop(seconds=1)
-async def bump_reminder_check(self) -> None:
-    """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
-    try:
-        # Holt alle Gilden mit Reminder-Channel + ggf. Bumper-Rolle
-        guild_settings = db_bumps.get_all_guild_settings_with_roles()
-        # Erwartetes Format: [(guild_id, reminder_channel_id, bumper_role_id), ...]
-    except Exception as e:
-        print(f"[ERROR] Fehler beim Abrufen aller Guild-Einstellungen: {e}")
-        return
-
-    now_utc = utcnow()
-
-    for guild_id_str, reminder_channel_id, bumper_role_id in guild_settings:
-        if not reminder_channel_id:
-            continue
-
-        last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id_str)
-        if last_bump_time is None:
-            continue
-
-        if last_bump_time.tzinfo is None:
-            last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
-
-        next_bump_time = last_bump_time + BUMP_COOLDOWN
-        if now_utc < next_bump_time:
-            continue  # Cooldown läuft noch
-
-        reminded = db_bumps.get_notified_status(guild_id_str)
-        if reminded:
-            continue  # Schon erinnert
-
-        # Channel & Rolle abrufen
-        channel = self.bot.get_channel(reminder_channel_id)
-        if not channel:
-            continue
-
-        bumper_role_mention = ""
-        guild = self.bot.get_guild(int(guild_id_str))
-        if guild and bumper_role_id:
-            role = guild.get_role(int(bumper_role_id))
-            if role:
-                bumper_role_mention = role.mention
-
+    @tasks.loop(seconds=1)
+    async def bump_reminder_check(self) -> None:
+        """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
         try:
-            await channel.send(
-                f"⏰ **Bump-Zeit!** Der 2-stündige Cooldown ist abgelaufen.\n"
-                f"{bumper_role_mention} – jemand kann jetzt `/bump` nutzen! "
-                f"<t:{int(next_bump_time.timestamp())}:R>"
-            )
-            db_bumps.set_notified_status(guild_id_str, True)
-        except discord.Forbidden:
-            print(f"[ERROR] Keine Berechtigung, in Channel {reminder_channel_id} zu schreiben.")
+            # Holt alle Gilden mit Reminder-Channel + Bumper-Rolle aus guild_settings
+            guild_settings = db_bumps.get_all_guild_settings_with_roles()
+            # Erwartetes Format: [(guild_id, reminder_channel_id, bumper_role_id), ...]
         except Exception as e:
-            print(f"[ERROR] Fehler beim Senden der Erinnerung: {e}")
+            print(f"[ERROR] Fehler beim Abrufen aller Guild-Einstellungen: {e}")
+            return
 
+        now_utc = utcnow()
+
+        for guild_id_str, reminder_channel_id, bumper_role_id in guild_settings:
+            if not reminder_channel_id:
+                continue
+
+            last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id_str)
+            if last_bump_time is None:
+                continue
+
+            if last_bump_time.tzinfo is None:
+                last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
+
+            next_bump_time = last_bump_time + BUMP_COOLDOWN
+            if now_utc < next_bump_time:
+                continue  # Cooldown läuft noch
+
+            reminded = db_bumps.get_notified_status(guild_id_str)
+            if reminded:
+                continue  # Schon erinnert
+
+            # Channel & Rolle abrufen
+            channel = self.bot.get_channel(reminder_channel_id)
+            if not channel:
+                continue
+
+            bumper_role_mention = ""
+            guild = self.bot.get_guild(int(guild_id_str))
+            
+            # Die Rolle wird erwähnt, wenn eine ID aus der DB vorhanden ist
+            if guild and bumper_role_id:
+                role = guild.get_role(int(bumper_role_id))
+                if role:
+                    bumper_role_mention = role.mention
+
+            try:
+                await channel.send(
+                    f"⏰ **Bump-Zeit!** Der 2-stündige Cooldown ist abgelaufen.\n"
+                    f"{bumper_role_mention} – jemand kann jetzt `/bump` nutzen! "
+                    f"<t:{int(next_bump_time.timestamp())}:R>"
+                )
+                db_bumps.set_notified_status(guild_id_str, True)
+            except discord.Forbidden:
+                print(f"[ERROR] Keine Berechtigung, in Channel {reminder_channel_id} zu schreiben.")
+            except Exception as e:
+                print(f"[ERROR] Fehler beim Senden der Erinnerung: {e}")
 
 
     @bump_reminder_check.before_loop
@@ -120,6 +121,7 @@ async def bump_reminder_check(self) -> None:
         db_bumps.log_bump(user_id, guild_id, current_time)
         db_bumps.increment_total_bumps(user_id, guild_id)
         db_bumps.set_last_bump_time(guild_id, current_time)
+        db_bumps.set_notified_status(guild_id, False) # Setze Benachrichtigungs-Status zurück
 
     # ------------------------------------------------------------
     # Nächster Bump
@@ -253,7 +255,8 @@ async def bump_reminder_check(self) -> None:
     )
     async def getbumprole(self, ctx: commands.Context) -> None:
         guild_id = str(ctx.guild.id)
-        role_id = db_roles.get_bumper_role(guild_id)
+        # ANNAHME: db_roles.get_bumper_role holt die ID aus guild_settings.bumper_role_id
+        role_id = db_roles.get_bumper_role(guild_id) 
         if not role_id:
             return await ctx.send("❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
@@ -277,6 +280,7 @@ async def bump_reminder_check(self) -> None:
     )
     async def delbumprole(self, ctx: commands.Context) -> None:
         guild_id = str(ctx.guild.id)
+        # ANNAHME: db_roles.get_bumper_role holt die ID aus guild_settings.bumper_role_id
         role_id = db_roles.get_bumper_role(guild_id)
         if not role_id:
             return await ctx.send("❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)

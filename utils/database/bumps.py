@@ -1,4 +1,3 @@
-# utils/database/bumps.py
 from .connection import get_connection
 from datetime import datetime, timezone
 from typing import Optional, List, Tuple
@@ -42,11 +41,11 @@ def increment_total_bumps(user_id: str, guild_id: str) -> None:
         conn.close()
 
 # ------------------------------------------------------------
-# Cooldown-Funktionen
+# Cooldown-Funktionen (Nutzen weiterhin 'server_status' für Cooldown-Zeiten)
 # ------------------------------------------------------------
 
 def set_last_bump_time(guild_id: str, timestamp: datetime) -> None:
-    """Speichert den UTC-Zeitstempel des letzten Bumps für den Cooldown-Check (MySQL-korrigiert)."""
+    """Speichert den UTC-Zeitstempel des letzten Bumps für den Cooldown-Check."""
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -88,9 +87,11 @@ def get_last_bump_time(guild_id: str) -> Optional[datetime]:
     return datetime.fromtimestamp(timestamp_int, tz=timezone.utc)
 
 def set_notified_status(guild_id: str, status: bool) -> None:
+    """Speichert den Benachrichtigungsstatus (True/False)."""
     conn = get_connection()
     cur = conn.cursor()
     try:
+        # Wir nutzen 'reminder_sent' wie in Ihrem Code und Datenbankauszug gezeigt
         cur.execute("""
             INSERT INTO server_status (guild_id, reminder_sent)
             VALUES (%s, %s)
@@ -100,6 +101,26 @@ def set_notified_status(guild_id: str, status: bool) -> None:
     finally:
         cur.close()
         conn.close()
+
+def get_notified_status(guild_id: str) -> bool:
+    """Ruft den Benachrichtigungsstatus für einen Server ab."""
+    conn = get_connection()
+    cur = conn.cursor()
+    result = False
+    try:
+        cur.execute("""
+            SELECT reminder_sent FROM server_status WHERE guild_id = %s
+        """, (guild_id,))
+        row = cur.fetchone()
+        
+        if row and row[0] is not None:
+            result = bool(row[0])
+            
+    finally:
+        cur.close()
+        conn.close()
+        
+    return result
 
 # ------------------------------------------------------------
 # Top Bumper abrufen
@@ -136,16 +157,20 @@ def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 3) -> L
         
     return results
 
+# ------------------------------------------------------------
+# Erinnerungseinstellungen (Nutzen nun 'guild_settings' Tabelle)
+# ------------------------------------------------------------
 
 def set_reminder_channel(guild_id: str, channel_id: str | None) -> None:
-    """Speichert den Channel, in dem Bump-Erinnerungen gepostet werden."""
+    """Speichert den Channel, in dem Bump-Erinnerungen gepostet werden (nutzt guild_settings)."""
     conn = get_connection()
     cur = conn.cursor()
     try:
+        # Nutzung der korrekten Tabelle/Spalte: guild_settings / bump_reminder_channel_id
         cur.execute("""
-            INSERT INTO server_status (guild_id, reminder_channel)
+            INSERT INTO guild_settings (guild_id, bump_reminder_channel_id)
             VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE reminder_channel = VALUES(reminder_channel)
+            ON DUPLICATE KEY UPDATE bump_reminder_channel_id = VALUES(bump_reminder_channel_id)
         """, (guild_id, channel_id))
         conn.commit()
     finally:
@@ -154,13 +179,14 @@ def set_reminder_channel(guild_id: str, channel_id: str | None) -> None:
 
 
 def get_reminder_channel(guild_id: str) -> Optional[int]:
-    """Ruft die ID des Channels für Bump-Erinnerungen ab."""
+    """Ruft die ID des Channels für Bump-Erinnerungen ab (nutzt guild_settings)."""
     conn = get_connection()
     cur = conn.cursor()
     result = None
     try:
+        # Nutzung der korrekten Tabelle/Spalte: guild_settings / bump_reminder_channel_id
         cur.execute("""
-            SELECT reminder_channel FROM server_status WHERE guild_id = %s
+            SELECT bump_reminder_channel_id FROM guild_settings WHERE guild_id = %s
         """, (guild_id,))
         row = cur.fetchone()
         if row and row[0]:
@@ -171,37 +197,30 @@ def get_reminder_channel(guild_id: str) -> Optional[int]:
     return result
 
 
-def get_all_guild_settings() -> List[Tuple[str, Optional[int]]]:
-    """Liefert alle Server mit ihrem Reminder-Channel."""
+def get_all_guild_settings_with_roles() -> List[Tuple[str, Optional[int], Optional[int]]]:
+    """
+    Ruft Guild-ID, Reminder-Channel-ID und Bumper-Rolle-ID ab (nutzt guild_settings).
+    Ergebnisformat: (guild_id, reminder_channel_id, bumper_role_id)
+    """
     conn = get_connection()
     cur = conn.cursor()
+    results: List[Tuple[str, Optional[int], Optional[int]]] = []
     try:
-        cur.execute("SELECT guild_id, reminder_channel FROM server_status")
-        return cur.fetchall()
+        # Abfrage der drei benötigten Spalten aus der Tabelle 'guild_settings'
+        cur.execute("""
+            SELECT guild_id, bump_reminder_channel_id, bumper_role_id 
+            FROM guild_settings 
+            WHERE bump_reminder_channel_id IS NOT NULL
+        """)
+        rows = cur.fetchall()
+        for guild_id_str, channel_id_str, role_id_str in rows:
+            channel_id = int(channel_id_str) if channel_id_str else None
+            role_id = int(role_id_str) if role_id_str else None
+            
+            # Format: (guild_id, reminder_channel_id, bumper_role_id)
+            results.append((guild_id_str, channel_id, role_id)) 
     finally:
         cur.close()
         conn.close()
-
-
-def get_notified_status(guild_id: str) -> bool:
-    """Prüft, ob bereits eine Erinnerung gesendet wurde."""
-    conn = get_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT reminder_sent FROM server_status WHERE guild_id = %s", (guild_id,))
-        row = cur.fetchone()
-        return bool(row and row[0])
-    finally:
-        cur.close()
-        conn.close()
-
-def get_all_guild_settings_with_roles():
-    """Gibt alle Server mit Reminder-Channel und Bumper-Rolle zurück."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT guild_id, bump_reminder_channel_id, bumper_role_id
-        FROM guild_settings
-    """)
-    results = cur.fetchall()
-    return [(str(row[0]), row[1], row[2]) for row in results]
+        
+    return results
