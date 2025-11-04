@@ -3,14 +3,15 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from datetime import timedelta, datetime
 from utils.database import moderation as db_mod
-from typing import Optional
+from utils.database import guilds as db_guilds
+from typing import Optional, Dict, Tuple, List
 
 class Moderation(commands.Cog):
     """Bietet Moderationsbefehle wie Clear, Mute, Warn, Ban und Sanctions"""
     
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.ALLOWED_CHANNEL_ID: int = 0  # wird beim Laden aus der DB gesetzt
+        self.sanction_channels: Dict[int, int] = {}
 
     async def cog_load(self) -> None:
         """Beim Laden die Sanctions-Channel-ID aus der DB holen"""
