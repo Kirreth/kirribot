@@ -1,18 +1,19 @@
+```
   _  _______ _____  _____  _____ ____   ____ _______ 
  | |/ /_   _|  __ \|  __ \|_   _|  _ \ / __ \__   __|
  | ' /  | | | |__) | |__) | | | | |_) | |  | | | |   
  |  <   | | |  _  /|  _  /  | | |  _ <| |  | | | |   
  | . \ _| |_| | \ \| | \ \ _| |_| |_) | |__| | | |   
  |_|\_\_____|_|  \_\_|  \_\_____|____/ \____/  |_|   
-
+```
  
-Ein robuster, multiserverfähiger Discord-Bot mit Fokus auf Community-Management, spezialisierten Tools und interaktiver Unterhaltung.
+## Ein robuster, multiserverfähiger Discord-Bot mit Fokus auf Community-Management, spezialisierten Tools und interaktiver Unterhaltung.
 
 🌟 Über das Projekt
 Kirribot ist eine vielseitige Discord-Anwendung, die entwickelt wurde, um Entwickler-Communities und allgemeine Server gleichermaßen zu unterstützen. Der Bot bietet spezialisierte Funktionen wie ein Coder-Qualifikationsquiz, einen Musik-Link-Konverter und ein modernes, grafisches Levelsystem (realisiert mit Pillow).
 
 Der Kirribot ist von Grund auf multiserverfähig konzipiert. Alle Konfigurationen, Warnungen und Benutzerfortschritte (Level) werden persistent in einer Datenbank gespeichert.
-
+```
 ======================================================================================================================================
 | KATEGORIE       | FUNKTION (COG)        | BESCHREIBUNG                                                                             |
 ======================================================================================================================================
@@ -40,7 +41,7 @@ Der Kirribot ist von Grund auf multiserverfähig konzipiert. Alle Konfiguratione
 |                 +-----------------------+------------------------------------------------------------------------------------------+
 |                 | TextFormatter         | Wandelt reinen Text in formatierte Discord-Codeblöcke um.                                |
 ======================================================================================================================================
-
+```
 🚀 Setup und Installation
 Voraussetzungen
 Python 3.10+ (oder höher)
@@ -52,7 +53,7 @@ Eine Datenbank-Instanz (z.B. PostgreSQL oder SQLite) zur Speicherung der Multise
 Die Pillow-Bibliothek zur Erzeugung der Level-Grafiken (muss systemweit oder in der virtuellen Umgebung korrekt installiert sein).
 
 Kernfunktionen des Bots
-
+```
 Befehl                          |   Modul        | Beschreibung
 
 /setup channel voice <channel>	|   DynamicVoice |	Definiert den Sprachkanal, der zum Erstellen neuer, temporärer Kanäle dient.
@@ -60,7 +61,7 @@ Befehl                          |   Modul        | Beschreibung
 /warn <user> <reason>	        |   Moderation	 |  Erteilt einem Benutzer eine Verwarnung.
 /quiz start coder	            |   CoderQuiz    |	Startet das Coder-Qualifikationsquiz zur Wissensprüfung.
 /quiz start party	            |   PartyQuiz    |	Startet eine allgemeine Wissensrunde.
-
+```
 
 📧 Kontakt
 Bei Fragen, Problemen oder Funktionswünschen wenden Sie sich bitte an:
