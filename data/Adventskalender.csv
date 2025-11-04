@@ -1,0 +1,25 @@
+Tag;Frage;Antwort;Tipp
+1;Zu welchem Wort gehört die folgende Zeichenkette: `55067a5a9ca4a4b340a671bd58e87b37`;Advent;Die Zeichenkette ist ein MD5 Hash. ||Um herauszufinden was der Ursprungswert eines Hashes ist, kann man sogenannte Rainbowtables verwenden: https://crackstation.net/||
+2;Was ist das für eine Farbe und wie heißt der Farbraum: #FFFF00 Antwortformat: ‘blauHSV’;gelbRGB;Suchmaschine
+3;Welche Zahl bezeichnet den ersten Index eines Arrays in den meisten Programmiersprachen?;0;Suchmaschine
+4;In welchem Format wird Heutzutage Text meistens encodiert? ;UTF-8;Suchmaschine
+5;Wie viele Zyklen pro Sekunde entsprechen 2,3kHz? Nur die Zahl;2300;1 Hertz (hz) entspricht einem Zyklus pro Sekunde
+6;Löse das Labyrinth. Jede Richtung wird mit N, O, S, W, also den Himmelsrichtungen angegeben ohne Leerzeichen oder Komma. Anschließend bilde den MD5 Hash deiner Lösung.;MD5-Hash;
+7;Welche Taktfrequenz hat DDR RAM bei 6000MT/s? Nur die Zahl in MHz;3000;DDR steht für Double Data Rate. Das heißt, dass DDR RAM pro Taktzyklus 2 mal Daten übertragen kann. MT/s stehen für die effektive Datenübertragungsrate. Die Tatsächliche Taktfrequenz wird in MHz angegeben.
+8;Wie heiÃŸt die Javascript und WASM Engine, die aktuell von der Chromium Browser Engine verwendet wird?;V8;Suchmaschine
+9;Wie wird die Codierung genannt, die alle gängigen Computer nutzen um Daten zu verarbeiten?;Binär;Computer können nur mit 2 Zuständen arbeiten. An und aus oder auch 0 und 1.
+10;Wie nennt man das Logikgatter, das nur an ist, wenn einer von 2 Eingängen “An” ist?;XOR;Suchmaschine
+11;Auf welcher Technologie basieren Kryptowährungen wie Bitcoin oder Ethereum?;Blockchain;Suchmaschine
+12;Welches ist das neuste, in Wi-Fi genutzte Frequenzband? Nur die Zahl in GHz;6;Es wird seit Wi-Fi 6E unterstützt und ist auch Teil des neueren Wi-Fi 7 Standarts.
+13;Wie viele PCIE Lanes kann eine M.2 NVME SSD üblicherweise nutzen?;4;Suchmaschine
+14;Wer waren die „Väter“ des Internets durch die Versendung von Daten in Form von Paketen?; Robert Kahn und Vinton Cerf;Suchmaschine
+15;;;
+16;;;
+17;;;
+18;;;
+19;;;
+20;;;
+21;;;
+22;;;
+23;;;
+24;;;
