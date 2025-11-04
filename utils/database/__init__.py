@@ -7,3 +7,4 @@ from .bumps import *
 from .moderation import *
 from .birthday import *
 from .roles import *
+from .guilds import *
