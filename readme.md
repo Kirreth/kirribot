@@ -56,12 +56,12 @@ Die Pillow-Bibliothek zur Erzeugung der Level-Grafiken (muss systemweit oder in 
 Kernfunktionen des Bots
 ```
 Befehl                          |   Modul        | Beschreibung
-
+--------------------------------------------------------------------------------------------------------------------------------
 /setup channel voice <channel>	|   DynamicVoice |	Definiert den Sprachkanal, der zum Erstellen neuer, temporärer Kanäle dient.
-/level [user]	                |   Levelsystem  |	Zeigt das Level des Benutzers oder eines markierten Mitglieds an.
+/rank [user]	                |   Levelsystem  |	Zeigt das Level des Benutzers oder eines markierten Mitglieds an.
 /warn <user> <reason>	        |   Moderation	 |  Erteilt einem Benutzer eine Verwarnung.
-/quiz start coder	            |   CoderQuiz    |	Startet das Coder-Qualifikationsquiz zur Wissensprüfung.
-/quiz start party	            |   PartyQuiz    |	Startet eine allgemeine Wissensrunde.
+/quiz 	                        |   CoderQuiz    |	Startet das Coder-Qualifikationsquiz zur Wissensprüfung.
+/partyquiz      	            |   PartyQuiz    |	Startet eine allgemeine Wissensrunde.
 ```
 
 📧 Kontakt
