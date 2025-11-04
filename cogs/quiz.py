@@ -1,11 +1,13 @@
 import os
 import json
+import csv
 import random
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
 from discord import app_commands
 from utils.database import quiz as db_quiz
+from utils.database import guilds as db_guilds
 
 
 # ------------------------------------------------------------
@@ -13,6 +15,8 @@ from utils.database import quiz as db_quiz
 # ------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 QUIZ_FILE = os.path.join(BASE_DIR, "data", "quiz_questions.json")
+
+
 
 
 # ------------------------------------------------------------
@@ -139,20 +143,16 @@ class Quiz(commands.Cog):
 
 
         # ------------------------------------------------------------
-        # Auswertung & Belohnung
+        # Auswertung & Belohnung (ZENTRALISIERT)
         # ------------------------------------------------------------
-        result_text = f"Du hast **{score}/{total_questions}** Fragen richtig beantwortet!" # total_questions verwenden
+        result_text = f"Du hast **{score}/{total_questions}** Fragen richtig beantwortet!" 
 
-        if score >= 8:
-            role_name = "Coder"
-            role = discord.utils.get(ctx.guild.roles, name=role_name)
+        if score >= 8 and ctx.guild:
+            role_id_str = db_guilds.get_quiz_reward_role(str(ctx.guild.id))
+            role = None
 
-            if not role:
-                try:
-                    role = await ctx.guild.create_role(name=role_name, color=discord.Color.gold())
-                except discord.Forbidden:
-                    pass
-
+            if role_id_str:
+                role = ctx.guild.get_role(int(role_id_str))
 
             if role:
                 try:
@@ -160,6 +160,10 @@ class Quiz(commands.Cog):
                     result_text += f"\n🏆 Glückwunsch! Du hast die Rolle {role.mention} erhalten!"
                 except discord.Forbidden:
                     result_text += "\n⚠️ Ich konnte die Rolle nicht vergeben (fehlende Berechtigung)."
+            elif not role and role_id_str:
+                result_text += "\n⚠️ Die konfigurierte Quiz-Rolle existiert nicht mehr."
+            else:
+                result_text += "\nℹ️ Es ist keine Belohnungsrolle für das Quiz konfiguriert."
 
         await ctx.send(
             embed=discord.Embed(
