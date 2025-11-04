@@ -4,7 +4,7 @@ from discord.utils import utcnow
 from datetime import datetime, timedelta, timezone
 from typing import Union, Optional, List, Tuple
 from utils.database import bumps as db_bumps
-from utils.database import roles as db_roles # Wichtig: Diese Datei muss die Rolle aus guild_settings holen!
+from utils.database import guilds as db_guilds
 
 DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
@@ -29,7 +29,7 @@ class Bumps(commands.Cog):
         """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
         try:
             # Holt alle Gilden mit Reminder-Channel + Bumper-Rolle aus guild_settings
-            guild_settings = db_bumps.get_all_guild_settings_with_roles()
+            guild_settings = db_guilds.get_all_bump_settings()
             # Erwartetes Format: [(guild_id, reminder_channel_id, bumper_role_id), ...]
         except Exception as e:
             print(f"[ERROR] Fehler beim Abrufen aller Guild-Einstellungen: {e}")
@@ -255,8 +255,7 @@ class Bumps(commands.Cog):
     )
     async def getbumprole(self, ctx: commands.Context) -> None:
         guild_id = str(ctx.guild.id)
-        # ANNAHME: db_roles.get_bumper_role holt die ID aus guild_settings.bumper_role_id
-        role_id = db_roles.get_bumper_role(guild_id) 
+        role_id = db_guilds.get_bumper_role(guild_id)
         if not role_id:
             return await ctx.send("❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
@@ -281,7 +280,7 @@ class Bumps(commands.Cog):
     async def delbumprole(self, ctx: commands.Context) -> None:
         guild_id = str(ctx.guild.id)
         # ANNAHME: db_roles.get_bumper_role holt die ID aus guild_settings.bumper_role_id
-        role_id = db_roles.get_bumper_role(guild_id)
+        role_id = db_guilds.get_bumper_role(guild_id)
         if not role_id:
             return await ctx.send("❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
