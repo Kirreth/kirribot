@@ -115,9 +115,8 @@ async def check_advent_cog():
                 logger.info(f"✅ HINTERGRUND: {ADVENTSKALENDER_COG} wurde entladen (Januar-Start).")
             except Exception as e:
                 logger.error(f"❌ HINTERGRUND: Fehler beim Entladen von {ADVENTSKALENDER_COG}: {e}", exc_info=True)
-"""
+
 async def check_advent_cog_start_delay():
-    """Berechnet die Wartezeit, um die Loop präzise um 00:01 Uhr zu starten."""
     now = datetime.now()
     next_run = now.replace(hour=0, minute=1, second=0, microsecond=0)
     
@@ -130,7 +129,7 @@ async def check_advent_cog_start_delay():
     
     await asyncio.sleep(delta)
     check_advent_cog.start()
-
+"""
 # ------------------------------------------------------------
 # Async-Funktion für Bot-Start
 # ------------------------------------------------------------
@@ -138,7 +137,7 @@ async def run_bot():
     @bot.event
     async def on_ready() -> None:
         logger.info(f"Bot ist online als {bot.user}")
-        
+
         cogs_to_load = []
 
         # Standard-Cogs
@@ -159,7 +158,8 @@ async def run_bot():
             "cogs.codeextractor",
             "cogs.fakt",
             "cogs.setup",
-            "cogs.dynamicvoice"
+            "cogs.dynamicvoice",
+            "cogs.musicconverter"
         ])
         
         # Lade alle Cogs
