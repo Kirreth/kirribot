@@ -147,6 +147,24 @@ class Setup(commands.Cog):
                 ephemeral=True
             )
 
+    # Join/Leave-Channel
+    @setup_channel.command(
+        name="joinleft",
+        description="Setzt den Channel, in dem Join- und Leave-Nachrichten gepostet werden."
+    )
+    async def channel_joinleft(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
+        from utils.database import joinleft as db_joinleft  # lokal importieren, um zirkuläre Imports zu vermeiden
+
+        guild_id = str(ctx.guild.id)
+
+        if channel is None:
+            db_joinleft.set_welcome_channel(guild_id, None)
+            await ctx.send("✅ Der Join/Leave-Channel wurde entfernt.", ephemeral=True)
+        else:
+            db_joinleft.set_welcome_channel(guild_id, str(channel.id))
+            await ctx.send(f"✅ Join/Leave-Channel gesetzt auf {channel.mention}", ephemeral=True)
+
+
     # ------------------------------------------------------------
     # Rollen
     # ------------------------------------------------------------
