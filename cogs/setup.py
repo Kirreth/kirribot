@@ -7,6 +7,8 @@ from utils.database import birthday as birthday_db
 from utils.database import moderation as mod_db
 from utils.database import roles as roles_db
 from utils.database import bumps as db_bumps
+from utils.database import guilds as db_guilds
+
 
 class Setup(commands.Cog):
     """Zentrale Oberfläche für die Konfiguration von Channels und Rollen."""
@@ -37,6 +39,43 @@ class Setup(commands.Cog):
             )
             await ctx.send(embed=embed, ephemeral=True)
 
+
+# ------------------------------------------------------------
+    # Prefix / Serverweite Einstellungen
+    # ------------------------------------------------------------
+    @setup.group(
+        name="serversettings",
+        description="Konfiguriert serverweite Einstellungen wie den Bot-Prefix."
+    )
+    async def setup_serversettings(self, ctx: Context) -> None:
+        if ctx.invoked_subcommand is None:
+            await ctx.send("Bitte verwende einen Unterbefehl: `/setup serversettings prefix`", ephemeral=True)
+
+    @setup_serversettings.command(
+        name="prefix",
+        description="Ändert den Bot-Prefix für diesen Server."
+    )
+    # KORREKTUR: Parameter auf ctx (Context) geändert
+    async def set_prefix(self, ctx: Context, prefix: str):
+        guild_id = str(ctx.guild.id)
+        
+        if len(prefix) > 5:
+            # KORREKTUR: ctx.send() für Hybrid Commands
+            await ctx.send("❌ Der Prefix darf höchstens 5 Zeichen lang sein.", ephemeral=True)
+            return
+            
+        try:
+            # 🟢 Verwendet die zentrale Funktion aus guilds.py
+            db_guilds.set_prefix(guild_id, prefix) 
+            
+            # KORREKTUR: ctx.send() für Hybrid Commands
+            await ctx.send(f"✅ Prefix wurde auf `{prefix}` geändert!", ephemeral=True)
+            
+        except Exception as e:
+            # KORREKTUR: ctx.send() für Hybrid Commands
+            await ctx.send(f"❌ Fehler beim Speichern des Prefix: {e}", ephemeral=True)
+
+
     # ------------------------------------------------------------
     # Channels
     # ------------------------------------------------------------
@@ -47,7 +86,7 @@ class Setup(commands.Cog):
     )
     async def setup_channel(self, ctx: Context) -> None:
         if ctx.invoked_subcommand is None:
-            await ctx.send("Bitte verwende `/setup channel <birthday/sanctions>`", ephemeral=True)
+            await ctx.send("Bitte verwende `/setup channel <birthday/sanctions/voice>`", ephemeral=True)
 
     # Birthday-Channel
     @setup_channel.command(
@@ -56,10 +95,10 @@ class Setup(commands.Cog):
     )
     async def channel_birthday(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
         if channel is None:
-            birthday_db.set_birthday_channel(str(ctx.guild.id), None)
+            db_guilds.set_birthday_channel(str(ctx.guild.id), None)
             await ctx.send("✅ Der Geburtstags-Channel wurde entfernt.", ephemeral=True)
         else:
-            birthday_db.set_birthday_channel(str(ctx.guild.id), str(channel.id))
+            db_guilds.set_birthday_channel(str(ctx.guild.id), str(channel.id))
             await ctx.send(f"✅ Geburtstags-Channel gesetzt auf {channel.mention}", ephemeral=True)
 
     # Sanctions-Channel
@@ -69,10 +108,10 @@ class Setup(commands.Cog):
     )
     async def channel_sanctions(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
         if channel is None:
-            mod_db.set_sanctions_channel(str(ctx.guild.id), None)
+            db_guilds.set_sanctions_channel(str(ctx.guild.id), None)
             await ctx.send("✅ Der Sanctions-Channel wurde entfernt.", ephemeral=True)
         else:
-            mod_db.set_sanctions_channel(str(ctx.guild.id), str(channel.id))
+            db_guilds.set_sanctions_channel(str(ctx.guild.id), str(channel.id))
             await ctx.send(f"✅ Sanctions-Channel gesetzt auf {channel.mention}", ephemeral=True)
 
     # Bump-Reminder-Channel
@@ -82,12 +121,31 @@ class Setup(commands.Cog):
     )
     async def channel_reminder(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
         if channel is None:
-            db_bumps.set_reminder_channel(str(ctx.guild.id), None)
+            db_guilds.set_bump_reminder_channel(str(ctx.guild.id), None)
             await ctx.send("✅ Bump-Reminder-Channel entfernt.", ephemeral=True)
         else:
-            db_bumps.set_reminder_channel(str(ctx.guild.id), str(channel.id))
+            db_guilds.set_bump_reminder_channel(str(ctx.guild.id), str(channel.id))
             await ctx.send(f"✅ Bump-Reminder-Channel gesetzt auf {channel.mention}", ephemeral=True)
 
+
+    @setup_channel.command(
+        name="voice",
+        description="Setzt den 'Join-to-Create' Starter-Channel für dynamische Sprachkanäle."
+    )
+    # Wichtig: Der Channel-Typ ist VoiceChannel
+    async def channel_voice(self, ctx: Context, channel: Union[discord.VoiceChannel, None]) -> None:
+        guild_id = str(ctx.guild.id)
+        
+        if channel is None:
+            db_guilds.set_dynamic_voice_channel(guild_id, None) 
+            await ctx.send("✅ Der 'Join-to-Create' Starter-Channel für dynamische Sprachkanäle wurde entfernt.", ephemeral=True)
+        else:
+            db_guilds.set_dynamic_voice_channel(guild_id, str(channel.id))
+            await ctx.send(
+                f"✅ 'Join-to-Create' Starter-Channel gesetzt auf {channel.mention}. "
+                "Hier beitreten, um einen neuen Kanal zu erstellen.", 
+                ephemeral=True
+            )
 
     # ------------------------------------------------------------
     # Rollen
@@ -107,10 +165,10 @@ class Setup(commands.Cog):
     )
     async def role_bumper(self, ctx: Context, role: Union[discord.Role, None]) -> None:
         if role is None:
-            roles_db.set_bumper_role(str(ctx.guild.id), None)
+            db_guilds.set_bumper_role(str(ctx.guild.id), None)
             await ctx.send("✅ Bumper-Rolle entfernt.", ephemeral=True)
         else:
-            roles_db.set_bumper_role(str(ctx.guild.id), str(role.id))
+            db_guilds.set_bumper_role(str(ctx.guild.id), str(role.id))
             await ctx.send(f"✅ Bumper-Rolle gesetzt auf {role.mention}", ephemeral=True)
 
 
