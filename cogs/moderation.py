@@ -4,7 +4,7 @@ from discord.ext.commands import Context
 from datetime import timedelta, datetime
 from utils.database import moderation as db_mod
 from utils.database import guilds as db_guilds
-from typing import Optional, Dict, Tuple, List
+from typing import Optional, Dict, Tuple, List, Union
 
 class Moderation(commands.Cog):
     """Bietet Moderationsbefehle wie Clear, Mute, Warn, Ban und Sanctions"""
@@ -16,11 +16,14 @@ class Moderation(commands.Cog):
     async def cog_load(self) -> None:
         """Beim Laden die Sanctions-Channel-ID aus der DB holen"""
         for guild in self.bot.guilds:
-            channel_id_str = db_mod.get_sanctions_channel(str(guild.id))
+            channel_id_str = db_guilds.get_sanctions_channel(str(guild.id))
             if channel_id_str:
-                self.ALLOWED_CHANNEL_ID = int(channel_id_str)
+                channel_id_int = int(channel_id_str)
+                self.sanction_channels[guild.id] = channel_id_int 
+                print(f"✅ Sanctions-Channel für '{guild.name}' ({guild.id}) gesetzt auf {channel_id_int}")
             else:
-                print(f"❌ WARNUNG: Kein Sanctions-Channel für Server {guild.id} gefunden.")
+                print(f"❌ WARNUNG: Kein Sanctions-Channel für Server '{guild.name}' ({guild.id}) gefunden.")
+
 
     # ------------------------------------------------------------
     # Cog-weit: Nur Moderatoren/Admins dürfen Commands ausführen
@@ -42,13 +45,13 @@ class Moderation(commands.Cog):
         if anzahl < 1:
             msg = "⚠️ Bitte gib eine Zahl größer als 0 an."
             await (ctx.interaction.followup.send(msg, ephemeral=True)
-                           if ctx.interaction else ctx.send(msg, delete_after=5))
+                              if ctx.interaction else ctx.send(msg, delete_after=5))
             return
 
         if not isinstance(ctx.channel, discord.TextChannel):
             msg = "❌ Dieser Befehl funktioniert nur in Text-Channels."
             await (ctx.interaction.followup.send(msg, ephemeral=True)
-                           if ctx.interaction else ctx.send(msg, delete_after=5))
+                              if ctx.interaction else ctx.send(msg, delete_after=5))
             return
 
         deleted = await ctx.channel.purge(limit=anzahl)
@@ -118,10 +121,16 @@ class Moderation(commands.Cog):
     # Sanktionen des Users anzeigen
     # ------------------------------------------------------------
     @commands.hybrid_command(name="sanctions", description="Zeigt alle Sanktionen eines Benutzers an")
-    async def sanctions(self, ctx: Context, member: discord.Member) -> None:
+    async def sanctions(self, ctx: Context, member: discord.User) -> None:
+        allowed_channel_id = self.sanction_channels.get(ctx.guild.id)
+        
+        if not allowed_channel_id:
+              await ctx.send("❌ Kein Sanctions-Channel für diesen Server konfiguriert.", ephemeral=True)
+              return
+              
         # Prüfen, ob der Befehl im erlaubten Channel ausgeführt wird
-        if ctx.channel.id != self.ALLOWED_CHANNEL_ID:
-            await ctx.send(f"❌ Dieser Befehl kann nur im Sanctions-Channel (<#{self.ALLOWED_CHANNEL_ID}>) verwendet werden.", ephemeral=True)
+        if ctx.channel.id != allowed_channel_id:
+            await ctx.send(f"❌ Dieser Befehl kann nur im Sanctions-Channel (<#{allowed_channel_id}>) verwendet werden.", ephemeral=True)
             return
 
         guild_id = str(ctx.guild.id)
@@ -146,7 +155,7 @@ class Moderation(commands.Cog):
         all_sanctions.sort(key=lambda x: x[0], reverse=True)
         
         if not all_sanctions:
-            await ctx.send(f"✅ {member.mention} hat keine aktiven Sanktionen.")
+            await ctx.send(f"✅ **{member.display_name}** hat keine Sanktionen.")
             return
 
         description = ""
@@ -156,10 +165,13 @@ class Moderation(commands.Cog):
             description += f"**{idx}.** {time_str} **{type_emoji}** - {reason_text}\n"
 
         embed = discord.Embed(
-            title=f"🚨 Letzte Sanktionen für {member}",
+            title=f"🚨 Letzte Sanktionen für {member.display_name} ({member.id})",
             description=description,
             color=discord.Color.red()
         )
+        if member.avatar:
+            embed.set_thumbnail(url=member.avatar.url)
+
         embed.set_footer(text=f"Gesamt-Warnungen (letzte 24h): {len(warns)}")
         await ctx.send(embed=embed)
 
