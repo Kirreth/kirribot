@@ -29,7 +29,7 @@ def load_questions():
 class PartyQuiz(commands.Cog):
     """Quiz-Spiel mit dynamischer Spieler-Registrierung."""
     
-    REGISTRATION_TIME = 30 
+    REGISTRATION_TIME = 30
     MIN_PLAYERS = 1 
 
     def __init__(self, bot):
