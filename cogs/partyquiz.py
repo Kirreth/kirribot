@@ -10,7 +10,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 QUIZ_FILE = os.path.join(BASE_DIR, "data", "general_knowledge_questions.json")
 
 def ensure_quiz_file():
-    """Stellt sicher, dass das Datenverzeichnis und die Quiz-Datei existieren."""
     data_dir = os.path.join(BASE_DIR, "data")
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -19,7 +18,6 @@ def ensure_quiz_file():
             json.dump([], f, indent=4, ensure_ascii=False)
 
 def load_questions():
-    """Lädt die Fragen aus der JSON-Datei."""
     ensure_quiz_file()
     try:
         with open(QUIZ_FILE, "r", encoding="utf-8") as f:
@@ -28,17 +26,15 @@ def load_questions():
         print("Fehler: general_knowledge_questions.json ist keine gültige JSON-Datei oder ist leer.")
         return []
 
-# --- Haupt-Cog für den Bot ---
-
 class PartyQuiz(commands.Cog):
     """Quiz-Spiel mit dynamischer Spieler-Registrierung."""
     
     REGISTRATION_TIME = 30 
-    MIN_PLAYERS = 1    
+    MIN_PLAYERS = 1 
 
     def __init__(self, bot):
         self.bot = bot
-        self.active_games = {}  
+        self.active_games = {}
 
     @commands.hybrid_command(name="partyquiz", description="Starte ein Quiz und öffne die Anmeldung!")
     async def partyquiz(self, ctx: commands.Context):
@@ -63,7 +59,7 @@ class PartyQuiz(commands.Cog):
         
         await ctx.send(embed=embed, view=registration_view)
         
-        registration_successful = await registration_view.wait()
+        await registration_view.wait()
 
         allowed_player_ids = registration_view.players
         
@@ -81,8 +77,6 @@ class PartyQuiz(commands.Cog):
         
         if guild_id in self.active_games:
             del self.active_games[guild_id]
-
-# --- UI für die Spieler-Registrierung ---
 
 class RegistrationView(View):
     def __init__(self, cog: PartyQuiz):
@@ -126,19 +120,15 @@ class RegistrationButton(Button):
         new_embed.description = f"Drücke den **'Mitspielen!'**-Button, um am Quiz teilzunehmen.\nAngemeldete Spieler: **{len(self.view_ref.players)}**\nDie Anmeldung schließt in Kürze."
         await self.view_ref.message.edit(embed=new_embed, view=self.view_ref)
 
-# -------------------
-#  QuizGame und Quiz-Buttons
-# -------------------
-
 class QuizGame:
     """Verwaltet ein einzelnes Party-Quiz"""
     
-    TIME_PER_QUESTION = 15  
+    TIME_PER_QUESTION = 15
 
     def __init__(self, ctx: commands.Context, questions, allowed_players: list):
         self.ctx = ctx
         self.questions = questions
-        self.scores = {}  
+        self.scores = {}
         self.current_index = 0
         self.message = None
         self.allowed_players = set(allowed_players) 
@@ -149,7 +139,7 @@ class QuizGame:
             return
 
         question = self.questions[self.current_index]
-        view = PartyQuizView(question["options"], question["answer"], self)
+        view = PartyQuizView(question["options"], question["answer"], self) 
         
         embed = discord.Embed(
             title=f"🧠 Frage {self.current_index + 1}/{len(self.questions)} (Zeit: {self.TIME_PER_QUESTION}s)",
@@ -159,7 +149,7 @@ class QuizGame:
         
         self.message = await self.ctx.send(embed=embed, view=view)
         
-        await asyncio.sleep(self.TIME_PER_QUESTION)
+        await view.wait() 
 
         for item in view.children:
             if isinstance(item, Button):
@@ -168,21 +158,27 @@ class QuizGame:
                     item.style = discord.ButtonStyle.success 
 
         await self.message.edit(
-            content=f"⏱️ Zeit abgelaufen! Die richtige Antwort war: **{question['answer']}**", 
+            content=f"⏱️ Zeit abgelaufen (oder alle geantwortet)! Die richtige Antwort war: **{question['answer']}**", 
             embed=embed, 
             view=view
         )
         
         self.current_index += 1
+        await asyncio.sleep(3) 
         await self.next_question()
 
-    async def register_answer(self, user: discord.User, answer: str, correct_answer: str):
+    async def register_answer(self, user: discord.User, answer: str, correct_answer: str, view: 'PartyQuizView'):
         """Registriert die Antwort eines Spielers und aktualisiert den Score."""
-        if user.id not in self.scores:
-            self.scores[user.id] = 0
+        user_id = user.id
+        
+        if user_id not in self.scores:
+            self.scores[user_id] = 0
             
         if answer == correct_answer:
-            self.scores[user.id] += 1
+            self.scores[user_id] += 1
+            
+        if len(view.already_answered) >= len(self.allowed_players):
+            view.stop()
 
     async def finish(self):
         if not self.scores:
@@ -254,7 +250,8 @@ class PartyQuizButton(Button):
         self.view_ref.already_answered.add(user_id)
         
         is_correct = self.label == self.correct_answer
-        await self.game.register_answer(interaction.user, self.label, self.correct_answer)
+        
+        await self.game.register_answer(interaction.user, self.label, self.correct_answer, self.view_ref) 
         
         result_text = "richtig" if is_correct else "falsch"
         emoji = "✅" if is_correct else "❌"
@@ -263,8 +260,6 @@ class PartyQuizButton(Button):
             f"{emoji} Deine Antwort **{self.label}** wurde registriert. Das war **{result_text}**! Warte auf die nächste Frage.", 
             ephemeral=True
         )
-
-# --- Setup des Cogs ---
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(PartyQuiz(bot))
