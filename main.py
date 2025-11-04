@@ -1,14 +1,16 @@
 import os
 import asyncio
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks 
 from dotenv import load_dotenv
 from utils.database import setup_database
+from utils.database import guilds as db_guilds 
 from typing import List, Optional
 import time
 import mysql.connector
 import logging
 import watchgod
+from datetime import datetime, timedelta 
 
 # ------------------------------------------------------------
 # Logging konfigurieren
@@ -27,14 +29,35 @@ load_dotenv()
 TOKEN: Optional[str] = os.getenv("TOKEN")
 
 # ------------------------------------------------------------
+# Funktion: Server-spezifisches Präfix abrufen
+# ------------------------------------------------------------
+async def get_prefix(bot: commands.Bot, message: discord.Message) -> List[str]:
+    """Ruft das Präfix für die Gilde ab oder verwendet den Standard."""
+    default_prefix = "!" # Der Fallback, falls DB fehlschlägt oder DM
+    
+    # Für DMs oder wenn die Gilde nicht existiert
+    if not message.guild:
+        return [default_prefix]
+    
+    # Präfix aus der zentralen DB abrufen
+    guild_id = str(message.guild.id)
+    prefix = db_guilds.get_prefix(guild_id) 
+    
+    return [prefix, default_prefix] if prefix else [default_prefix]
+
+
+# ------------------------------------------------------------
 # Discord Bot initialisieren
 # ------------------------------------------------------------
 intents: discord.Intents = discord.Intents.all()
 bot: commands.Bot = commands.Bot(
-    command_prefix="!",
+    command_prefix=get_prefix, 
     intents=intents,
     help_command=None
 )
+
+ADVENTSKALENDER_COG = "cogs.adventskalender"
+
 
 # ------------------------------------------------------------
 # Funktion: auf MySQL warten
@@ -68,6 +91,46 @@ wait_for_mysql(
 # Datenbank initialisieren
 setup_database()
 
+
+# ------------------------------------------------------------
+# Tägliche Überprüfung der Advent-Periode (Loop)
+# ------------------------------------------------------------
+"""
+@tasks.loop(hours=24) 
+async def check_advent_cog():
+    current_month = datetime.now().month
+    
+    if current_month == 12:
+        if ADVENTSKALENDER_COG not in bot.extensions:
+            try:
+                await bot.load_extension(ADVENTSKALENDER_COG)
+                logger.info(f"✅ HINTERGRUND: {ADVENTSKALENDER_COG} wurde geladen (Dezember-Start).")
+            except Exception as e:
+                logger.error(f"❌ HINTERGRUND: Fehler beim Laden von {ADVENTSKALENDER_COG}: {e}", exc_info=True)
+                
+    elif current_month == 1:
+        if ADVENTSKALENDER_COG in bot.extensions:
+            try:
+                await bot.unload_extension(ADVENTSKALENDER_COG)
+                logger.info(f"✅ HINTERGRUND: {ADVENTSKALENDER_COG} wurde entladen (Januar-Start).")
+            except Exception as e:
+                logger.error(f"❌ HINTERGRUND: Fehler beim Entladen von {ADVENTSKALENDER_COG}: {e}", exc_info=True)
+"""
+async def check_advent_cog_start_delay():
+    """Berechnet die Wartezeit, um die Loop präzise um 00:01 Uhr zu starten."""
+    now = datetime.now()
+    next_run = now.replace(hour=0, minute=1, second=0, microsecond=0)
+    
+    if now > next_run:
+        next_run += timedelta(days=1)
+        
+    delta = (next_run - now).total_seconds()
+    
+    logger.info(f"⌛ Starte Advent-Check-Loop in {delta:.0f} Sekunden (nächster Lauf: {next_run.strftime('%Y-%m-%d %H:%M:%S')}).")
+    
+    await asyncio.sleep(delta)
+    check_advent_cog.start()
+
 # ------------------------------------------------------------
 # Async-Funktion für Bot-Start
 # ------------------------------------------------------------
@@ -75,8 +138,11 @@ async def run_bot():
     @bot.event
     async def on_ready() -> None:
         logger.info(f"Bot ist online als {bot.user}")
+        
+        cogs_to_load = []
 
-        cogs: List[str] = [
+        # Standard-Cogs
+        cogs_to_load.extend([
             "cogs.leveling",
             "cogs.info",
             "cogs.moderation",
@@ -92,10 +158,12 @@ async def run_bot():
             "cogs.partyquiz",
             "cogs.codeextractor",
             "cogs.fakt",
-            "cogs.setup"
-        ]
-
-        for cog in cogs:
+            "cogs.setup",
+            "cogs.dynamicvoice"
+        ])
+        
+        # Lade alle Cogs
+        for cog in cogs_to_load:
             try:
                 await bot.load_extension(cog)
                 logger.info(f"✅ Cog geladen: {cog}")
