@@ -38,9 +38,21 @@ def setup_database():
             guild_id VARCHAR(20) PRIMARY KEY,
             sanction_channel_id VARCHAR(20),
             birthday_channel_id VARCHAR(20),
-            prefix VARCHAR(5) NOT NULL DEFAULT '/'
+            prefix VARCHAR(5) NOT NULL DEFAULT '/',
+            dynamic_voice_channel_id VARCHAR(20)
         )
     """)
+
+    # ------------------------------------------------------------
+    # Migration für dynamic_voice_channel_id
+    # ------------------------------------------------------------
+    cursor.execute("SHOW COLUMNS FROM guild_settings LIKE 'dynamic_voice_channel_id'")
+    if cursor.fetchone() is None:
+        try:
+            cursor.execute("ALTER TABLE guild_settings ADD COLUMN dynamic_voice_channel_id VARCHAR(20) AFTER prefix")
+            print("✅ Migration: Spalte 'dynamic_voice_channel_id' zur guild_settings hinzugefügt.")
+        except Error as e:
+            print(f"WARNUNG: Spalte dynamic_voice_channel_id konnte nicht hinzugefügt werden: {e}")
 
     # ------------------------------------------------------------
     # Nachrichten loggen (messages) - Korrektur der Spalten und UNIQUE KEY
