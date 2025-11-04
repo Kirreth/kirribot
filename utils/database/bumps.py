@@ -122,6 +122,21 @@ def get_notified_status(guild_id: str) -> bool:
         
     return result
 
+def clear_notified_status(guild_id: str) -> bool:
+    """Setzt den Benachrichtigungsstatus für einen Server zurück."""
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            UPDATE server_status SET reminder_sent = 0 WHERE guild_id = %s
+        """, (guild_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        cur.close()
+        conn.close()
+
+
 # ------------------------------------------------------------
 # Top Bumper abrufen
 # ------------------------------------------------------------
@@ -197,23 +212,30 @@ def get_reminder_channel(guild_id: str) -> Optional[int]:
     return result
 
 
+# In utils/database/bumps.py ersetzen Sie diese Funktion:
+
 def get_all_guild_settings_with_roles() -> List[Tuple[str, Optional[int], Optional[int]]]:
     """
-    Ruft Guild-ID, Reminder-Channel-ID und Bumper-Rolle-ID ab (nutzt guild_settings).
-    Ergebnisformat: (guild_id, reminder_channel_id, bumper_role_id)
+    Ruft Guild-ID, Reminder-Channel-ID (aus server_status) und Bumper-Rolle-ID (aus guild_settings) ab.
+    Die Abfrage stellt sicher, dass NUR Server zurückgegeben werden, die einen Reminder-Channel gesetzt haben.
     """
     conn = get_connection()
     cur = conn.cursor()
     results: List[Tuple[str, Optional[int], Optional[int]]] = []
     try:
-        # Abfrage der drei benötigten Spalten aus der Tabelle 'guild_settings'
+        # Führt einen LEFT JOIN durch. Wir wählen die Channel-ID aus server_status.reminder_channel.
         cur.execute("""
-            SELECT guild_id, bump_reminder_channel_id, bumper_role_id 
-            FROM guild_settings 
-            WHERE bump_reminder_channel_id IS NOT NULL
+            SELECT
+                ss.guild_id,
+                ss.reminder_channel,  -- HOLT DIE CHANNEL-ID VON server_status
+                gs.bumper_role_id
+            FROM server_status ss
+            LEFT JOIN guild_settings gs ON ss.guild_id = gs.guild_id
+            WHERE ss.reminder_channel IS NOT NULL
         """)
         rows = cur.fetchall()
         for guild_id_str, channel_id_str, role_id_str in rows:
+            # WICHTIG: Die gespeicherte ID wird zu Integer konvertiert
             channel_id = int(channel_id_str) if channel_id_str else None
             role_id = int(role_id_str) if role_id_str else None
             
