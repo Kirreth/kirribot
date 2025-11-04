@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 from typing import Union, Optional
-# Stellen Sie sicher, dass Sie 'connection' importieren, falls es in utils/database so definiert ist
 from utils.database import connection as db 
 from utils.database import messages as db_messages
 import random
