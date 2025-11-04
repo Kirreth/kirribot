@@ -66,7 +66,7 @@ async def to_code_callback(interaction: discord.Interaction, message: discord.Me
     await interaction.response.send_message(formatted_message)
 
 # ------------------------------------------------------------
-# Cog für andere Befehle (falls benötigt)
+# Cog für andere Befehle
 # ------------------------------------------------------------
 class CodeExtractor(commands.Cog):
     """Cog für zusätzliche Commands"""
@@ -75,7 +75,7 @@ class CodeExtractor(commands.Cog):
         self.bot = bot
 
 # ------------------------------------------------------------
-# Cog Setup (unverändert)
+# Cog Setup 
 # ------------------------------------------------------------
 async def setup(bot: commands.Bot):
     await bot.add_cog(CodeExtractor(bot))

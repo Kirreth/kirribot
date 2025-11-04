@@ -9,11 +9,11 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASS = os.getenv("DB_PASS", "")
 DB_NAME = os.getenv("DB_NAME", "activity_db")
-
-
 EXISTING_GUILD_ID = os.getenv("EXISTING_GUILD_ID")
 
-
+# ------------------------------------------------------------
+# Verbindung zur Datenbank
+# ------------------------------------------------------------
 def get_connection():
     """Gibt eine MySQL/MariaDB-Verbindung zurück"""
     return mysql.connector.connect(
@@ -21,17 +21,19 @@ def get_connection():
         user=DB_USER,
         password=DB_PASS,
         database=DB_NAME,
-        auth_plugin='mysql_native_password'
+        auth_plugin="mysql_native_password"
     )
 
-
+# ------------------------------------------------------------
+# Setup & Migration der Tabellen
+# ------------------------------------------------------------
 def setup_database():
     """Erstellt alle Tabellen, falls sie nicht existieren, und führt Migrationen durch."""
     conn = get_connection()
     cursor = conn.cursor()
 
     # ------------------------------------------------------------
-    # Servereinstellungen (Setup)
+    # guild_settings (Servereinstellungen)
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS guild_settings (
@@ -39,23 +41,31 @@ def setup_database():
             sanction_channel_id VARCHAR(20),
             birthday_channel_id VARCHAR(20),
             prefix VARCHAR(5) NOT NULL DEFAULT '/',
-            dynamic_voice_channel_id VARCHAR(20)
+            dynamic_voice_channel_id VARCHAR(20),
+            welcome_channel_id VARCHAR(20)
         )
     """)
 
-    # ------------------------------------------------------------
-    # Migration für dynamic_voice_channel_id
-    # ------------------------------------------------------------
+    # Migration: dynamic_voice_channel_id
     cursor.execute("SHOW COLUMNS FROM guild_settings LIKE 'dynamic_voice_channel_id'")
     if cursor.fetchone() is None:
         try:
             cursor.execute("ALTER TABLE guild_settings ADD COLUMN dynamic_voice_channel_id VARCHAR(20) AFTER prefix")
-            print("✅ Migration: Spalte 'dynamic_voice_channel_id' zur guild_settings hinzugefügt.")
+            print("✅ Migration: 'dynamic_voice_channel_id' hinzugefügt.")
         except Error as e:
-            print(f"WARNUNG: Spalte dynamic_voice_channel_id konnte nicht hinzugefügt werden: {e}")
+            print(f"WARNUNG: dynamic_voice_channel_id konnte nicht hinzugefügt werden: {e}")
+
+    # Migration: welcome_channel_id
+    cursor.execute("SHOW COLUMNS FROM guild_settings LIKE 'welcome_channel_id'")
+    if cursor.fetchone() is None:
+        try:
+            cursor.execute("ALTER TABLE guild_settings ADD COLUMN welcome_channel_id VARCHAR(20) AFTER birthday_channel_id")
+            print("✅ Migration: 'welcome_channel_id' hinzugefügt.")
+        except Error as e:
+            print(f"WARNUNG: welcome_channel_id konnte nicht hinzugefügt werden: {e}")
 
     # ------------------------------------------------------------
-    # Nachrichten loggen (messages) - Korrektur der Spalten und UNIQUE KEY
+    # messages
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
@@ -65,8 +75,8 @@ def setup_database():
             channel_id VARCHAR(20)
         )
     """)
-    
-    
+
+    # Migration: action_count
     cursor.execute("SHOW COLUMNS FROM messages LIKE 'action_count'")
     if cursor.fetchone() is None:
         try:
@@ -74,48 +84,30 @@ def setup_database():
         except Error as e:
             print(f"WARNUNG: action_count konnte nicht hinzugefügt werden: {e}")
 
+    # Migration: last_action
     cursor.execute("SHOW COLUMNS FROM messages LIKE 'last_action'")
     if cursor.fetchone() is None:
         try:
-            cursor.execute("ALTER TABLE messages ADD COLUMN last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER action_count")
+            cursor.execute("""
+                ALTER TABLE messages
+                ADD COLUMN last_action TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP AFTER action_count
+            """)
         except Error as e:
             print(f"WARNUNG: last_action konnte nicht hinzugefügt werden: {e}")
-            
+
+    # Unique Index
     try:
         cursor.execute("ALTER TABLE messages ADD UNIQUE KEY unique_activity (guild_id, user_id, channel_id)")
     except Error as e:
-        if 'Duplicate entry' in str(e):
-            print(f"WARNUNG: Unique Index konnte aufgrund bestehender Duplikate nicht hinzugefügt werden. Bitte bereinigen Sie die messages Tabelle. Fehler: {e}")
-        elif 'already exists' in str(e):
-            pass 
+        if "Duplicate" in str(e) or "exists" in str(e):
+            pass
         else:
             print(f"WARNUNG: Index konnte nicht hinzugefügt werden: {e}")
 
     # ------------------------------------------------------------
-    # Levelsystem (user) - MIGRATION DES PRIMARY KEY
+    # user (Levelsystem)
     # ------------------------------------------------------------
-
-    cursor.execute("SHOW COLUMNS FROM user LIKE 'guild_id'")
-    if cursor.fetchone() is None:
-        try:
-            cursor.execute("ALTER TABLE user ADD COLUMN guild_id VARCHAR(20) AFTER id")
-            print(f"INFO: Fülle user-Tabelle mit alter Server-ID: {EXISTING_GUILD_ID}")
-            cursor.execute(f"UPDATE user SET guild_id = '{EXISTING_GUILD_ID}' WHERE guild_id IS NULL OR guild_id = ''")
-            conn.commit()
-
-            try:
-                cursor.execute("ALTER TABLE user DROP PRIMARY KEY")
-            except Error as e:
-                if 'Can\'t DROP PRIMARY' not in str(e):
-                     print(f"WARNUNG beim Löschen des alten PK in user-Tabelle: {e}")
-            
-            cursor.execute("ALTER TABLE user ADD PRIMARY KEY (guild_id, id)")
-            print("✅ Levelsystem (user-Tabelle) erfolgreich auf Multi-Server migriert.")
-
-        except Error as e:
-            print(f"❌ FATALER FEHLER bei der user-Tabelle Migration: {e}")
-            
-    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user (
             guild_id VARCHAR(20) NOT NULL,
@@ -127,8 +119,23 @@ def setup_database():
         )
     """)
 
+    # Migration für user.guild_id (Multi-Server)
+    cursor.execute("SHOW COLUMNS FROM user LIKE 'guild_id'")
+    if cursor.fetchone() is None:
+        try:
+            cursor.execute("ALTER TABLE user ADD COLUMN guild_id VARCHAR(20) AFTER id")
+            print("INFO: Fülle user-Tabelle mit alter Server-ID ...")
+            cursor.execute(f"UPDATE user SET guild_id = '{EXISTING_GUILD_ID}' WHERE guild_id IS NULL OR guild_id = ''")
+            conn.commit()
+
+            cursor.execute("ALTER TABLE user DROP PRIMARY KEY")
+            cursor.execute("ALTER TABLE user ADD PRIMARY KEY (guild_id, id)")
+            print("✅ user-Tabelle erfolgreich migriert (Multi-Server).")
+        except Error as e:
+            print(f"❌ Fehler bei user-Migration: {e}")
+
     # ------------------------------------------------------------
-    # Bumper loggen (total_bumps ist bereits korrekt)
+    # bumps / bump_totals / server_status
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bumps (
@@ -138,19 +145,17 @@ def setup_database():
             PRIMARY KEY (guild_id, user_id, timestamp)
         )
     """)
+
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS bump_totals (
-    guild_id VARCHAR(20) NOT NULL,
-    user_id VARCHAR(20) NOT NULL,
-    total_count INT DEFAULT 1,
-    last_bump_time DATETIME,
-    notified_status BOOLEAN DEFAULT FALSE,
-    
-    -- Definiert den Primary Key und den Unique Key, den MySQL für ODKU benötigt.
-    PRIMARY KEY (guild_id, user_id) 
+        CREATE TABLE IF NOT EXISTS bump_totals (
+            guild_id VARCHAR(20) NOT NULL,
+            user_id VARCHAR(20) NOT NULL,
+            total_count INT DEFAULT 1,
+            last_bump_time DATETIME,
+            notified_status BOOLEAN DEFAULT FALSE,
+            PRIMARY KEY (guild_id, user_id)
         )
-   """)
-    
+    """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS server_status (
@@ -160,7 +165,7 @@ def setup_database():
     """)
 
     # ------------------------------------------------------------
-    # Moderation: Warns, Timeouts, Bans
+    # Moderation: Warns / Timeouts / Bans
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS warns (
@@ -171,6 +176,7 @@ def setup_database():
             timestamp BIGINT NOT NULL
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS timeouts (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -181,6 +187,7 @@ def setup_database():
             timestamp BIGINT NOT NULL
         )
     """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bans (
             log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -191,42 +198,19 @@ def setup_database():
         )
     """)
 
-
-
-
     # ------------------------------------------------------------
-    # Geburtstage (birthdays)
+    # birthdays / birthday_settings
     # ------------------------------------------------------------
-    
-    cursor.execute("SHOW COLUMNS FROM birthdays LIKE 'guild_id'")
-    if cursor.fetchone() is not None:
-         cursor.execute("SHOW KEYS FROM birthdays WHERE Key_name = 'PRIMARY'")
-         keys = cursor.fetchall()
-         
-         if len(keys) == 1 and keys[0][4] == 'user_id':
-             try:
-                print(f"INFO: Fülle birthdays-Tabelle mit alter Server-ID: {EXISTING_GUILD_ID}")
-                cursor.execute(f"UPDATE birthdays SET guild_id = '{EXISTING_GUILD_ID}' WHERE guild_id IS NULL OR guild_id = ''")
-                conn.commit()
-
-                cursor.execute("ALTER TABLE birthdays DROP PRIMARY KEY")
-                
-                cursor.execute("ALTER TABLE birthdays ADD PRIMARY KEY (user_id, guild_id)")
-                print("✅ Geburtstags-Tabelle erfolgreich auf Multi-Server migriert.")
-             except Error as e:
-                print(f"❌ FATALER FEHLER bei der birthdays-Tabelle Migration: {e}")
-
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS birthdays (
-            user_id VARCHAR(50), 
+            user_id VARCHAR(50),
             guild_id VARCHAR(50),
             birthday DATE NOT NULL,
             last_congratulated DATE,
             PRIMARY KEY (user_id, guild_id)
         )
     """)
-    
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS birthday_settings (
             guild_id VARCHAR(50) PRIMARY KEY,
@@ -235,7 +219,7 @@ def setup_database():
     """)
 
     # ------------------------------------------------------------
-    # Max Active Log (Bereits korrekt)
+    # max_active_log
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS max_active_log (
@@ -247,7 +231,7 @@ def setup_database():
     """)
 
     # ------------------------------------------------------------
-    # IT-Quiz Ergebnisse (Bereits korrekt)
+    # quiz_results
     # ------------------------------------------------------------
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS quiz_results (
@@ -258,7 +242,8 @@ def setup_database():
             PRIMARY KEY (user_id, guild_id)
         )
     """)
-    
+
     conn.commit()
     cursor.close()
     conn.close()
+    print("✅ Datenbank-Setup abgeschlossen.")

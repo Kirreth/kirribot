@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
-import os
+from utils.database import joinleft as db_joinleft
 
-WELCOME_CHANNEL_ID = int(os.getenv("WELCOME_CHANNEL_ID", 0))
 
 class WelcomeLeave(commands.Cog):
     """Loggt Member Join/Leave Ereignisse mit Invite-Tracking"""
@@ -10,29 +9,41 @@ class WelcomeLeave(commands.Cog):
         self.bot = bot
         self.invites = {}
 
-# ------------------------------------------------------------
-# Member Join/Leave mit Invite-Tracking
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Bot ist bereit
+    # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_ready(self):
         for guild in self.bot.guilds:
-            self.invites[guild.id] = await guild.invites()
+            try:
+                self.invites[guild.id] = await guild.invites()
+            except discord.Forbidden:
+                self.invites[guild.id] = []
         print("✅ WelcomeLeave Cog bereit!")
 
+    # ------------------------------------------------------------
+    # Member beitritt
+    # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         guild = member.guild
-        channel = guild.get_channel(WELCOME_CHANNEL_ID)
+        channel_id = db_joinleft.get_welcome_channel(str(guild.id))
 
+        if not channel_id:
+            return  # Kein Channel in DB gespeichert
+
+        channel = guild.get_channel(int(channel_id))
         if not channel:
-            return  # Kein Channel gesetzt oder falsche ID
+            return  # Channel wurde gelöscht oder ist ungültig
 
-# ------------------------------------------------------------
-# Neue Einladungen prüfen
-# ------------------------------------------------------------
+        # ------------------------------------------------------------
+        # Invite-Tracking
+        # ------------------------------------------------------------
+        try:
+            new_invites = await guild.invites()
+        except discord.Forbidden:
+            new_invites = []
 
-        new_invites = await guild.invites()
         used_invite = None
         for invite in new_invites:
             for old_invite in self.invites.get(guild.id, []):
@@ -40,32 +51,36 @@ class WelcomeLeave(commands.Cog):
                     used_invite = invite
                     break
 
-        self.invites[guild.id] = new_invites 
+        self.invites[guild.id] = new_invites
 
         embed = discord.Embed(
-            title="👋 Neuer Server-Mitglied",
+            title="👋 Neues Mitglied ist beigetreten!",
             color=discord.Color.green()
         )
         embed.add_field(name="User", value=member.mention, inline=True)
+
         if used_invite:
             embed.add_field(
                 name="Eingeladen von",
                 value=f"{used_invite.inviter.mention} ({used_invite.code})",
                 inline=True
             )
-        embed.set_footer(text=f"ID: {member.id}")
 
+        embed.set_footer(text=f"ID: {member.id}")
         await channel.send(embed=embed)
 
-# ------------------------------------------------------------
-# Server verlassen loggen
-# ------------------------------------------------------------
-
+    # ------------------------------------------------------------
+    # Member verlässt den Server
+    # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         guild = member.guild
-        channel = guild.get_channel(WELCOME_CHANNEL_ID)
+        channel_id = db_joinleft.get_welcome_channel(str(guild.id))
 
+        if not channel_id:
+            return  # Kein Channel gespeichert
+
+        channel = guild.get_channel(int(channel_id))
         if not channel:
             return
 
@@ -74,6 +89,7 @@ class WelcomeLeave(commands.Cog):
             description=f"{member.name} ({member.id})",
             color=discord.Color.red()
         )
+
         await channel.send(embed=embed)
 
 
