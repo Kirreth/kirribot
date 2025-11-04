@@ -9,7 +9,8 @@
  
 ## Ein robuster, multiserverfähiger Discord-Bot mit Fokus auf Community-Management, spezialisierten Tools und interaktiver Unterhaltung.
 
-🌟 Über das Projekt
+**🌟 Über das Projekt**
+
 Kirribot ist eine vielseitige Discord-Anwendung, die entwickelt wurde, um Entwickler-Communities und allgemeine Server gleichermaßen zu unterstützen. Der Bot bietet spezialisierte Funktionen wie ein Coder-Qualifikationsquiz, einen Musik-Link-Konverter und ein modernes, grafisches Levelsystem (realisiert mit Pillow).
 
 Der Kirribot ist von Grund auf multiserverfähig konzipiert. Alle Konfigurationen, Warnungen und Benutzerfortschritte (Level) werden persistent in einer Datenbank gespeichert.
