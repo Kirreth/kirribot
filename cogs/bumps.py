@@ -142,7 +142,7 @@ class Bumps(commands.Cog):
             embed = discord.Embed(
                 title="⏳ Nächster Bump",
                 description="Der Server wurde noch nicht gebumpt. **Du kannst sofort bumpen!**",
-                color=discord.Color.green()
+                color=discord.Color(int("24B8B8", 16))
             )
         else:
             if last_bump_time.tzinfo is None:
@@ -154,7 +154,7 @@ class Bumps(commands.Cog):
                 embed = discord.Embed(
                     title="✅ Nächster Bump",
                     description="**Der Cooldown ist abgelaufen!** Du kannst jetzt sofort `/bump` nutzen.",
-                    color=discord.Color.green()
+                    color=discord.Color(int("24B8B8", 16))
                 )
             else:
                 time_remaining = next_bump_time - now_utc
@@ -170,8 +170,8 @@ class Bumps(commands.Cog):
 
                 embed = discord.Embed(
                     title="⏳ Nächster Bump",
-                    description=f"Der nächste Bump ist in **{time_str}** möglich.\n\n",
-                    color=discord.Color.orange()
+                    description=f"Der nächste Bump ist **<t:{int(next_bump_time.timestamp())}:R>** möglich.\n\n",
+                    color=discord.Color(int("24B8B8", 16))
                 )
 
         await ctx.send(embed=embed)
@@ -207,7 +207,7 @@ class Bumps(commands.Cog):
         embed = discord.Embed(
             title="🏆 Top 3 Bumper (Gesamt)",
             description=description,
-            color=discord.Color.gold()
+            color=discord.Color(int("24B8B8", 16))
         )
         await ctx.send(embed=embed)
 
@@ -242,7 +242,7 @@ class Bumps(commands.Cog):
         embed = discord.Embed(
             title="⏳ Top 3 Bumper (Letzte 30 Tage)",
             description=description,
-            color=discord.Color.blue()
+            color=discord.Color(int("24B8B8", 16))
         )
         await ctx.send(embed=embed)
 
