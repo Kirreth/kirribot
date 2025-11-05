@@ -210,9 +210,9 @@ async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.Byte
 
     # Farben und Fonts
     fill_color = "#E0E0E0"
-    accent = "#00FFFF"  # Neon-Cyan
+    accent = "#00FFFF" # Neon-Cyan
     neon_violet = "#9D00FF"
-    rank_color = (255, 215, 0, 255)  # Gold
+    rank_color = (255, 215, 0, 255) # Gold
 
 
     # 🏆 Titel mit Glow-Effekt
@@ -228,7 +228,12 @@ async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.Byte
 
     # 🔁 Einträge durchlaufen
     for i, (uid, counter, level) in enumerate(results):
-        member = ctx.guild.get_member(int(uid))
+        # Wir wissen, dass 'results' bereits gefiltert ist, also muss das Mitglied existieren.
+        # Wir verwenden hier get_member(), da fetch_member() im Befehl top5 bereits verwendet wurde, 
+        # um die Ergebnisse zu filtern. get_member() ist ausreichend, da es im Cache sein sollte.
+        member = ctx.guild.get_member(int(uid)) 
+
+        # Dies sollte nicht passieren, da wir in top5 filtern, aber zur Sicherheit:
         if member is None:
             continue
 
@@ -279,7 +284,7 @@ async def create_top5_card(ctx: Context[commands.Bot], results: list) -> io.Byte
 
         # Fortschritt korrekt berechnen
         progress, xp_current, xp_needed = berechne_fortschritt(counter, level)
-        progress = max(0.0, min(1.0, progress))  # Clamp auf 0–1
+        progress = max(0.0, min(1.0, progress)) # Clamp auf 0–1
 
         # Hintergrund des Balkens
         draw.rounded_rectangle((bar_x1, bar_y, bar_x2, bar_y + 10), radius=5, fill=(70, 70, 90))
@@ -372,7 +377,7 @@ class Leveling(commands.Cog):
             try:
                 emoji = discord.utils.get(message.guild.emojis, name="plusmedium")
                 if emoji is None:
-                    emoji = "➕"  # fallback
+                    emoji = "➕" # fallback
                 await message.add_reaction(emoji)
             except Exception as e:
                 print(f"⚠️ Konnte Reaktion nicht hinzufügen: {e}")
@@ -433,29 +438,52 @@ class Leveling(commands.Cog):
         conn = db.get_connection()
         cursor = conn.cursor()
 
-        # 🚩 Angepasst: SELECT ist auf guild_id beschränkt
+        # 1. Datenbankabfrage mit Puffer (Wir holen mehr Einträge, um sicherzustellen, dass wir 5 aktive Mitglieder finden.)
         cursor.execute("""
             SELECT id, counter, level 
             FROM user 
             WHERE guild_id = %s
             ORDER BY counter DESC 
-            LIMIT 5
+            LIMIT 15 
         """, (guild_id,)) # guild_id als Tupel übergeben
-        results = cursor.fetchall()
+        db_results = cursor.fetchall()
 
         cursor.close()
         conn.close()
+        
+        # 2. Ergebnisse in Python auf aktive Server-Mitglieder filtern
+        active_results = []
+        for uid, counter, level in db_results:
+            member = None
+            try:
+                # fetch_member ist robuster als get_member
+                member = await ctx.guild.fetch_member(int(uid)) 
+            except discord.NotFound:
+                # Benutzer hat den Server verlassen
+                continue 
+            except Exception:
+                # Andere Fehler beim Abrufen
+                continue
 
-        if not results:
+            if member is not None:
+                active_results.append((uid, counter, level))
+            
+            # Stoppen, sobald wir die Top 5 aktiven Mitglieder gefunden haben
+            if len(active_results) >= 5:
+                break 
+
+
+        if not active_results: 
             await ctx.send(embed=discord.Embed(
-                title="Noch keine Daten vorhanden 😢",
-                description="Es wurden noch keine Nachrichten auf diesem Server gezählt.",
+                title="Keine aktiven Top-User gefunden 😢",
+                description="Es wurden noch keine Nachrichten auf diesem Server gezählt, oder die Top-User haben den Server verlassen.",
                 color=discord.Color.red()
             ))
             return
 
         # 🖼️ BILD ERSTELLEN
-        image_stream = await create_top5_card(ctx, results)
+        # Wir übergeben die gefilterte Liste mit maximal 5 aktiven Usern
+        image_stream = await create_top5_card(ctx, active_results)
         await ctx.send(file=discord.File(image_stream, filename="top5_leaderboard.png"))
 
 
