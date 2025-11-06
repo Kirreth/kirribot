@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bot Dashboard</title>
+</head>
+<body>
+    <h1>Serverliste</h1>
+    <ul>
+        {% for server in servers %}
+            <li><a href="/server/{{ server.id }}">{{ server.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

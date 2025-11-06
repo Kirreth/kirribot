@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Dashboard</title>
+</head>
+<body>
+<h1>Server Dashboard</h1>
+<form action="/server/{{ guild_id }}/update" method="post">
+    <label>Prefix:</label>
+    <input type="text" name="prefix" value="{{ prefix }}"><br><br>
+
+    <label>Birthday Channel:</label>
+    <select name="birthday_channel">
+        <option value="">—</option>
+        {% for ch in text_channels %}
+            <option value="{{ ch.id }}" {% if ch.id|string == birthday_channel %}selected{% endif %}>{{ ch.name }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Sanctions Channel:</label>
+    <select name="sanctions_channel">
+        <option value="">—</option>
+        {% for ch in text_channels %}
+            <option value="{{ ch.id }}" {% if ch.id|string == sanctions_channel %}selected{% endif %}>{{ ch.name }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Bump-Reminder Channel:</label>
+    <select name="bump_channel">
+        <option value="">—</option>
+        {% for ch in text_channels %}
+            <option value="{{ ch.id }}" {% if ch.id|string == bump_channel %}selected{% endif %}>{{ ch.name }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Join/Leave Channel:</label>
+    <select name="joinleft_channel">
+        <option value="">—</option>
+        {% for ch in text_channels %}
+            <option value="{{ ch.id }}" {% if ch.id|string == joinleft_channel %}selected{% endif %}>{{ ch.name }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Voice Channel:</label>
+    <select name="voice_channel">
+        <option value="">—</option>
+        {% for ch in voice_channels %}
+            <option value="{{ ch.id }}" {% if ch.id|string == voice_channel %}selected{% endif %}>{{ ch.name }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label>Bumper Role:</label>
+    <select name="bumper_role">
+        <option value="">—</option>
+        {% for r in roles %}
+            <option value="{{ r.id }}" {% if r.id|string == bumper_role %}selected{% endif %}>{{ r.name }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <button type="submit">Speichern</button>
+</form>
+</body>
+</html>
