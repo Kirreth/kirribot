@@ -150,12 +150,4 @@ def create_dashboard(bot) -> FastAPI:
         # Zurück zum Dashboard leiten (Status 303 für "See Other" nach POST)
         return RedirectResponse(f"/server/{guild_id}", status_code=303)
 
-    # Hinweis: Die alten Einzel-Update-Routen (update_prefix, update_channel) wurden entfernt, 
-    # da sie jetzt redundant sind. Die ursprüngliche update_role Route belasse ich als Beispiel.
-    
-    @app.post("/server/{guild_id}/update_role")
-    async def update_role(guild_id: str, role_id: str = Form(None)):
-        db_guilds.set_bumper_role(guild_id, role_id)
-        return RedirectResponse(f"/server/{guild_id}", status_code=303)
-
     return app
