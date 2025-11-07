@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -75,7 +75,9 @@ def create_dashboard(bot) -> FastAPI:
         user = get_current_user(request)
         if not user:
             return templates.TemplateResponse("login.html", {"request": request})
-        servers = [{"id": str(g.id), "name": g.name} for g in bot.guilds]
+        # KORRIGIERT: Verwende g.icon.with_size(64).url, um eine korrekte CDN-URL mit fester Größe zu generieren.
+        # Dies behebt das Problem, dass g.icon ein Asset-Objekt ist und die URL direkt benötigt wird.
+        servers = [{"id": str(g.id), "name": g.name, "icon_url": g.icon.with_size(64).url if g.icon else None} for g in bot.guilds]
         return templates.TemplateResponse("index.html", {"request": request, "servers": servers})
 
     # ------------------------------------------------------------
@@ -91,27 +93,39 @@ def create_dashboard(bot) -> FastAPI:
         if not guild:
             return HTMLResponse(f"Server {guild_id} nicht gefunden", status_code=404)
 
+        # 1. Daten aus der DB holen (sie sollten Strings oder None sein)
         prefix = db_guilds.get_prefix(guild_id) or "!"
         birthday_channel = db_guilds.get_birthday_channel(guild_id)
         sanctions_channel = db_guilds.get_sanctions_channel(guild_id)
         joinleft_channel = db_joinleft.get_welcome_channel(guild_id)
-        bump_channel = db_guilds.get_bump_reminder_channel(guild_id)
+        bump_channel = db_guilds.get_bump_reminder_channel(guild_id) 		
         voice_channel = db_guilds.get_dynamic_voice_channel(guild_id)
-        bumper_role = db_guilds.get_bumper_role(guild_id)
+        bumper_role = db_guilds.get_bumper_role(guild_id) 		 
+
+        # 2. String-Konvertierung erzwingen, um Konsistenz mit Jinja2 zu gewährleisten
+        # (Selbst wenn die DB einen String zurückgibt, schadet dies nicht, aber es
+        # behebt das Problem, falls der DB-Treiber einen numerischen Typ zurückgibt).
+
+        bumper_role_str = str(bumper_role) if bumper_role else None
+        bump_channel_str = str(bump_channel) if bump_channel else None
+
 
         return templates.TemplateResponse(
             "server_dashboard.html",
             {
                 "request": request,
                 "guild": guild,
-                "guild_id": guild_id,  # <-- Hinzugefügt für die korrekte Formular-Action URL
+                "guild_id": guild_id,
                 "prefix": prefix,
                 "birthday_channel": birthday_channel,
                 "sanctions_channel": sanctions_channel,
                 "joinleft_channel": joinleft_channel,
-                "bump_channel": bump_channel,
+                
+                # WICHTIG: Die konvertierten Variablen verwenden
+                "bump_channel": bump_channel_str,
+                "bumper_role": bumper_role_str,
+
                 "voice_channel": voice_channel,
-                "bumper_role": bumper_role,
                 "text_channels": guild.text_channels,
                 "voice_channels": guild.voice_channels,
                 "roles": guild.roles
