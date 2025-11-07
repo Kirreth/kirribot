@@ -1,14 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <title>Bot Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirribot Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Serverliste</h1>
-    <ul>
-        {% for server in servers %}
-            <li><a href="/server/{{ server.id }}">{{ server.name }}</a></li>
-        {% endfor %}
-    </ul>
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Kirribot Dashboard</a>
+            <nav>
+                <a href="/logout" class="button button-secondary">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container content-area">
+        <div class="dashboard-header">
+            <h1>Willkommen zurück!</h1>
+            <p>Wähle einen Server, um Kirribot zu konfigurieren.</p>
+        </div>
+
+        <div class="server-grid">
+            {% for server in servers %}
+                <a href="/server/{{ server.id }}" class="server-card">
+                    
+                    {% if server.icon_url %}
+                        <!-- Server hat ein Icon (verwendet die komplette URL von Python, inkl. Größe) -->
+                        <img src="{{ server.icon_url }}" 
+                            alt="{{ server.name }} Icon" 
+                            class="server-icon">
+                    {% else %}
+                        <!-- Server hat kein Icon (Verwendung des Fallbacks) -->
+                        <img src="/static/default_guild_icon.png" 
+                            alt="{{ server.name }} Icon (Kein Icon gesetzt)" 
+                            class="server-icon">
+                    {% endif %}
+                    
+                    <h2 class="server-name">{{ server.name }}</h2>
+                    <p class="server-id">{{ server.id }}</p>
+                </a>
+            {% else %}
+                <p class="no-servers-message">Kirribot ist auf keinem deiner Server. Lade ihn jetzt ein!</p>
+            {% endfor %}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Kirribot. Alle Rechte vorbehalten.</p>
+        </div>
+    </footer>
 </body>
 </html>

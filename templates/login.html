@@ -2,23 +2,35 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
-        .login-btn { 
-            background-color: #7289da; 
-            color: white; 
-            padding: 10px 20px; 
-            text-decoration: none; 
-            border-radius: 5px; 
-            font-size: 18px;
-        }
-        .login-btn:hover { background-color: #5b6eae; }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Dashboard Login</h1>
-    <p>Bitte melde dich mit Discord an, um fortzufahren:</p>
-    <a class="login-btn" href="/login">Mit Discord einloggen</a>
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="container">
+            <a href="#" class="logo">Dashboard</a>
+        </div>
+    </header>
+
+    <!-- Hauptinhalt -->
+    <main class="content-area">
+        <section class="dashboard-header">
+            <h1>Dashboard Login</h1>
+            <p>Bitte melde dich mit Discord an, um fortzufahren:</p>
+        </section>
+
+        <section class="container">
+            <div class="card" style="max-width: 400px; margin: 0 auto; text-align: center;">
+                <a href="/login" class="button button-primary">Mit Discord einloggen</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Kirribot – Alle Rechte vorbehalten.</p>
+    </footer>
 </body>
 </html>

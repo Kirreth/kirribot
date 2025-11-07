@@ -1,57 +1,128 @@
-<h1>Server Dashboard: {{ guild.name }}</h1>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirribot Dashboard | {{ guild.name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Kirribot Dashboard</a>
+            <nav>
+                <a href="/logout" class="button button-secondary">Logout</a>
+            </nav>
+        </div>
+    </header>
 
-<h2>Prefix</h2>
-<form action="/server/{{ guild_id }}/update" method="post">
-    <label>Prefix:</label>
-    <input type="text" name="prefix" value="{{ prefix }}"><br><br>
+    <main class="container content-area">
+        <div class="dashboard-controls">
+            <a href="/" class="button button-secondary control-button">← Zurück zur Serverauswahl</a>
+        </div>
+        
+        <div class="dashboard-header">
+            {% if guild.icon %}
+            <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png?size=128" 
+                 alt="{{ guild.name }} Icon" 
+                 onerror="this.onerror=null;this.src='/static/default_guild_icon.png';"
+                 class="guild-icon-large">
+            {% else %}
+            <img src="/static/default_guild_icon.png" alt="{{ guild.name }} Icon" class="guild-icon-large">
+            {% endif %}
 
-    <label>Birthday Channel:</label>
-    <select name="birthday_channel">
-        <option value="">—</option>
-        {% for ch in text_channels %}
-            <option value="{{ ch.id }}" {% if ch.id|string == birthday_channel %}selected{% endif %}>{{ ch.name }}</option>
-        {% endfor %}
-    </select><br>
+            <h1>Server Dashboard: {{ guild.name }}</h1>
+            <p>Verwalte alle Einstellungen für diesen Discord-Server.</p>
+        </div>
 
-    <label>Sanctions Channel:</label>
-    <select name="sanctions_channel">
-        <option value="">—</option>
-        {% for ch in text_channels %}
-            <option value="{{ ch.id }}" {% if ch.id|string == sanctions_channel %}selected{% endif %}>{{ ch.name }}</option>
-        {% endfor %}
-    </select><br>
+        <div class="card settings-form-card">
+            <form action="/server/{{ guild_id }}/update" method="post" class="settings-form">
+                
+                <h2>Basis-Einstellungen</h2>
+                <div class="form-group">
+                    <label for="prefix">Prefix:</label>
+                    <input type="text" id="prefix" name="prefix" value="{{ prefix }}" class="text-input" required>
+                </div>
+                
+                <hr>
 
-    <label>Bump-Reminder Channel:</label>
-    <select name="bump_channel">
-        <option value="">—</option>
-        {% for ch in text_channels %}
-            <option value="{{ ch.id }}" {% if ch.id|string == bump_channel %}selected{% endif %}>{{ ch.name }}</option>
-        {% endfor %}
-    </select><br>
+                <h2>Channel-Konfiguration</h2>
 
-    <label>Join/Leave Channel:</label>
-    <select name="joinleft_channel">
-        <option value="">—</option>
-        {% for ch in text_channels %}
-            <option value="{{ ch.id }}" {% if ch.id|string == joinleft_channel %}selected{% endif %}>{{ ch.name }}</option>
-        {% endfor %}
-    </select><br>
+                <div class="form-group">
+                    <label for="birthday_channel">Birthday Channel:</label>
+                    <select id="birthday_channel" name="birthday_channel" class="select-input">
+                        <option value="">— (Deaktiviert)</option>
+                        {% for ch in text_channels %}
+                            <option value="{{ ch.id }}" {% if ch.id|string == birthday_channel %}selected{% endif %}>#{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <label>Voice Channel:</label>
-    <select name="voice_channel">
-        <option value="">—</option>
-        {% for ch in voice_channels %}
-            <option value="{{ ch.id }}" {% if ch.id|string == voice_channel %}selected{% endif %}>{{ ch.name }}</option>
-        {% endfor %}
-    </select><br>
+                <div class="form-group">
+                    <label for="sanctions_channel">Sanctions Channel:</label>
+                    <select id="sanctions_channel" name="sanctions_channel" class="select-input">
+                        <option value="">— (Deaktiviert)</option>
+                        {% for ch in text_channels %}
+                            <option value="{{ ch.id }}" {% if ch.id|string == sanctions_channel %}selected{% endif %}>#{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <label>Bumper Role:</label>
-    <select name="bumper_role">
-        <option value="">—</option>
-        {% for r in roles %}
-            <option value="{{ r.id }}" {% if r.id|string == bumper_role %}selected{% endif %}>{{ r.name }}</option>
-        {% endfor %}
-    </select><br><br>
+                <div class="form-group">
+                    <label for="bump_channel">Bump-Reminder Channel:</label>
+                    <select id="bump_channel" name="bump_channel" class="select-input">
+                        <option value="">— (Deaktiviert)</option>
+                        {% for ch in text_channels %}
+                            <option value="{{ ch.id }}" {% if ch.id|string == bump_channel %}selected{% endif %}>#{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <button type="submit">Speichern</button>
-</form>
+                <div class="form-group">
+                    <label for="joinleft_channel">Join/Leave Channel:</label>
+                    <select id="joinleft_channel" name="joinleft_channel" class="select-input">
+                        <option value="">— (Deaktiviert)</option>
+                        {% for ch in text_channels %}
+                            <option value="{{ ch.id }}" {% if ch.id|string == joinleft_channel %}selected{% endif %}>#{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="voice_channel">Dynamic Voice Channel:</label>
+                    <select id="voice_channel" name="voice_channel" class="select-input">
+                        <option value="">— (Deaktiviert)</option>
+                        {% for ch in voice_channels %}
+                            <option value="{{ ch.id }}" {% if ch.id|string == voice_channel %}selected{% endif %}>{{ ch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <hr>
+
+                <h2>Rollen-Zuweisung</h2>
+                
+                <div class="form-group">
+                    <label for="bumper_role">Bumper Role:</label>
+                    <select id="bumper_role" name="bumper_role" class="select-input">
+                        <option value="">— (Deaktiviert)</option>
+                        {% for r in roles %}
+                            <option value="{{ r.id }}" {% if r.id|string == bumper_role %}selected{% endif %}>@{{ r.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="button button-primary save-button">Speichern</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Kirribot. Alle Rechte vorbehalten.</p>
+        </div>
+    </footer>
+</body>
+</html>
