@@ -93,7 +93,8 @@ async def run_bot():
             "cogs.partyquiz",
             "cogs.codeextractor",
             "cogs.fakt",
-            "cogs.help"
+            "cogs.help",
+            "cogs.weather"
         ]
         for cog in cogs:
             try:
