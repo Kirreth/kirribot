@@ -117,6 +117,48 @@
                 <button type="submit" class="button button-primary save-button">Speichern</button>
             </form>
         </div>
+
+        <!-- ------------------------------------------------------------ -->
+        <!-- Custom Commands Bereich -->
+        <!-- ------------------------------------------------------------ -->
+        <div class="card custom-commands-card">
+            <h2>Custom Commands verwalten</h2>
+
+            <!-- Neues Command hinzufügen -->
+            <form action="/server/{{ guild_id }}/commands/add" method="post" class="settings-form">
+                <div class="form-group">
+                    <label for="command_name">Command Name:</label>
+                    <input type="text" id="command_name" name="command_name" class="text-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="response">Reaktion / Nachricht:</label>
+                    <textarea id="response" name="response" class="text-input" rows="3" required></textarea>
+                    <small>Du kannst {user} verwenden, um den Benutzer zu erwähnen.</small>
+                </div>
+                <button type="submit" class="button button-primary">Command erstellen</button>
+            </form>
+
+            <hr>
+
+            <!-- Bestehende Commands auflisten -->
+            {% if custom_commands %}
+            <h3>Bestehende Commands:</h3>
+            <ul class="custom-command-list">
+                {% for cmd in custom_commands %}
+                <li>
+                    <strong>{{ cmd.name }}</strong>: {{ cmd.response }}
+                    <form action="/server/{{ guild_id }}/commands/remove" method="post" style="display:inline;">
+                        <input type="hidden" name="command_name" value="{{ cmd.name }}">
+                        <button type="submit" class="button button-secondary small-button">Löschen</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>Es wurden noch keine Custom Commands erstellt.</p>
+            {% endif %}
+        </div>
+
     </main>
 
     <footer>

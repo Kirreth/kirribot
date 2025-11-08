@@ -43,9 +43,12 @@
                     <h2 class="server-name">{{ server.name }}</h2>
                     <p class="server-id">{{ server.id }}</p>
                 </a>
+
             {% else %}
                 <p class="no-servers-message">Kirribot ist auf keinem deiner Server. Lade ihn jetzt ein!</p>
+                <a href="https://discord.com/oauth2/authorize?client_id=1427650285748092959&permissions=8&integration_type=0&scope=bot" class="button button-primary" target="_blank">Kirribot einladen</a>
             {% endfor %}
+            <a href="https://discord.com/oauth2/authorize?client_id=1427650285748092959&permissions=8&integration_type=0&scope=bot" class="button button-primary" target="_blank">Kirribot auf weiteren Servern einladen</a>
         </div>
     </main>
 
