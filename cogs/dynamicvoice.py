@@ -3,6 +3,7 @@ from discord.ext import commands
 from utils.database import guilds as db_guilds
 
 class DynamicVoice(commands.Cog):
+    """Erstellt dynamische Voice Channels beim Beitritt in einen speziellen 'Join to Create' Kanal."""
     def __init__(self, bot):
         self.bot = bot
         
