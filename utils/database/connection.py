@@ -243,6 +243,38 @@ def setup_database():
         )
     """)
 
+
+    # ------------------------------------------------------------
+    # Dashboard User Token
+    # ------------------------------------------------------------
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS web_users (
+            id BIGINT PRIMARY KEY AUTO_INCREMENT,
+            discord_id VARCHAR(30) NOT NULL UNIQUE,
+            username VARCHAR(100),
+            avatar_url VARCHAR(255),
+            access_token TEXT,
+            refresh_token TEXT,
+            token_expires DATETIME,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+
+    #------------------------------------------------------------
+    # Custom Commands
+    #------------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS custom_commands (
+            guild_id VARCHAR(20) NOT NULL,
+            command_name VARCHAR(50) NOT NULL,
+            response TEXT NOT NULL,
+            PRIMARY KEY (guild_id, command_name)
+        )
+    """)
+
+
     conn.commit()
     cursor.close()
     conn.close()
