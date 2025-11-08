@@ -94,7 +94,8 @@ async def run_bot():
             "cogs.codeextractor",
             "cogs.fakt",
             "cogs.help",
-            "cogs.weather"
+            "cogs.weather",
+            "cogs.customcommands"
         ]
         for cog in cogs:
             try:
