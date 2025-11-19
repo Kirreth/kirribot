@@ -1,0 +1,19 @@
+# Basis-Image
+FROM python:3.11-slim
+
+# Installiere curl für den Healthcheck in docker-compose
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Arbeitsverzeichnis
+WORKDIR /app
+
+# Abhängigkeiten installieren (sowohl Bot- als auch API-Abhängigkeiten)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Projektdateien kopieren
+COPY . .
+
+# Der Bot-Service wird über 'command' in docker-compose gestartet: ["python", "main.py"]
+# EXPOSE ist nicht zwingend notwendig im Dockerfile, aber gut zur Dokumentation
+EXPOSE 8001
