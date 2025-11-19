@@ -7,7 +7,6 @@ from typing import Optional, List, Tuple
 # ------------------------------------------------------------
 
 def get_prefix(guild_id: str) -> Optional[str]:
-    """Ruft das Command-Präfix für den Server ab (Standard: '!')."""
     conn = db.get_connection()
     cursor = conn.cursor()
     result = None
@@ -17,12 +16,9 @@ def get_prefix(guild_id: str) -> Optional[str]:
     finally:
         cursor.close()
         conn.close()
-    
-    # Standard-Präfix zurückgeben, falls kein Eintrag gefunden wird
     return result[0] if result and result[0] else '!'
 
 def set_prefix(guild_id: str, prefix: str) -> None:
-    """Setzt das Command-Präfix für den Server."""
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -36,13 +32,11 @@ def set_prefix(guild_id: str, prefix: str) -> None:
         cursor.close()
         conn.close()
 
-
 # ------------------------------------------------------------
-# Sanctions/Mod-Log Channel setzen/abrufen
+# Sanctions/Mod-Log Channel
 # ------------------------------------------------------------
 
 def get_sanctions_channel(guild_id: str) -> Optional[str]:
-    """Ruft die ID des Channels für Mod-Logs/Sanctions ab."""
     conn = db.get_connection()
     cursor = conn.cursor()
     result = None
@@ -52,11 +46,9 @@ def get_sanctions_channel(guild_id: str) -> Optional[str]:
     finally:
         cursor.close()
         conn.close()
-    
     return result[0] if result else None
 
 def set_sanctions_channel(guild_id: str, channel_id: str | None) -> None:
-    """Setzt die ID des Channels für Mod-Logs/Sanctions."""
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -70,13 +62,11 @@ def set_sanctions_channel(guild_id: str, channel_id: str | None) -> None:
         cursor.close()
         conn.close()
 
-
 # ------------------------------------------------------------
-# Birthday Channel setzen/abrufen
+# Birthday Channel
 # ------------------------------------------------------------
 
 def get_birthday_channel(guild_id: str) -> Optional[str]:
-    """Ruft die ID des Channels für Geburtstagsglückwünsche ab."""
     conn = db.get_connection()
     cursor = conn.cursor()
     result = None
@@ -86,11 +76,9 @@ def get_birthday_channel(guild_id: str) -> Optional[str]:
     finally:
         cursor.close()
         conn.close()
-    
     return result[0] if result else None
 
 def set_birthday_channel(guild_id: str, channel_id: str | None) -> None:
-    """Setzt die ID des Channels für Geburtstagsglückwünsche."""
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -104,13 +92,11 @@ def set_birthday_channel(guild_id: str, channel_id: str | None) -> None:
         cursor.close()
         conn.close()
 
-
 # ------------------------------------------------------------
-# Bump Channel setzen/abrufen
+# Bump Reminder Channel
 # ------------------------------------------------------------
 
 def get_bump_reminder_channel(guild_id: str) -> Optional[str]:
-    """Ruft die ID des Channels für Bump-Erinnerungen ab."""
     conn = db.get_connection()
     cursor = conn.cursor()
     result = None
@@ -120,11 +106,9 @@ def get_bump_reminder_channel(guild_id: str) -> Optional[str]:
     finally:
         cursor.close()
         conn.close()
-    
     return result[0] if result else None
 
 def set_bump_reminder_channel(guild_id: str, channel_id: str | None) -> None:
-    """Setzt die ID des Channels für Bump-Erinnerungen."""
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -137,14 +121,32 @@ def set_bump_reminder_channel(guild_id: str, channel_id: str | None) -> None:
     finally:
         cursor.close()
         conn.close()
-
+def get_all_bump_settings() -> list[tuple[str, str, str]]:
+    """
+    Ruft alle Gilden-Einstellungen ab, die für Bump-Erinnerungen relevant sind,
+    einschließlich Channel-ID und Bumper-Rollen-ID.
+    Format: List[(guild_id, bump_reminder_channel_id, bumper_role_id), ...]
+    """
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    result = []
+    try:
+        cursor.execute("""
+            SELECT guild_id, bump_reminder_channel_id, bumper_role_id
+            FROM guild_settings
+            WHERE bump_reminder_channel_id IS NOT NULL AND bump_reminder_channel_id != ''
+        """)
+        result = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+    return result
 
 # ------------------------------------------------------------
-# Bumper Rolle setzen/abrufen
+# Bumper Rolle
 # ------------------------------------------------------------
 
 def get_bumper_role(guild_id: str) -> Optional[str]:
-    """Ruft die ID der Bumper-Rolle ab."""
     conn = db.get_connection()
     cursor = conn.cursor()
     result = None
@@ -154,11 +156,9 @@ def get_bumper_role(guild_id: str) -> Optional[str]:
     finally:
         cursor.close()
         conn.close()
-    
     return result[0] if result else None
 
 def set_bumper_role(guild_id: str, role_id: str | None) -> None:
-    """Setzt die ID der Bumper-Rolle."""
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -173,72 +173,10 @@ def set_bumper_role(guild_id: str, role_id: str | None) -> None:
         conn.close()
 
 # ------------------------------------------------------------
-# Alle Bump-Einstellungen abrufen (für die Hintergrundaufgabe)
-# ------------------------------------------------------------
-def get_all_bump_settings() -> List[Tuple[str, str, str]]:
-    """
-    Ruft alle Gilden-Einstellungen ab, die für Bump-Erinnerungen relevant sind,
-    einschließlich Channel-ID und Bumper-Rollen-ID.
-    
-    Format: List[(guild_id, bump_reminder_channel_id, bumper_role_id), ...]
-    """
-    conn = db.get_connection()
-    cursor = conn.cursor()
-    result = []
-    try:
-        # Wir wählen nur Einträge aus, bei denen mindestens ein Reminder-Channel gesetzt ist
-        cursor.execute("""
-            SELECT guild_id, bump_reminder_channel_id, bumper_role_id
-            FROM guild_settings
-            WHERE bump_reminder_channel_id IS NOT NULL AND bump_reminder_channel_id != ''
-        """)
-        result = cursor.fetchall()
-    finally:
-        cursor.close()
-        conn.close()
-        
-    return result
-
-
-# ------------------------------------------------------------
-# Quiz Belohnungsrolle setzen/abrufen
-# ------------------------------------------------------------
-
-def get_quiz_reward_role(guild_id: str) -> Optional[str]:
-    """Ruft die ID der Quiz-Belohnungsrolle ab."""
-    conn = db.get_connection()
-    cursor = conn.cursor()
-    result = None
-    try:
-        cursor.execute("SELECT quiz_reward_role_id FROM guild_settings WHERE guild_id = %s", (guild_id,))
-        result = cursor.fetchone()
-    finally:
-        cursor.close()
-        conn.close()
-    
-    return result[0] if result else None
-
-def set_quiz_reward_role(guild_id: str, role_id: str | None) -> None:
-    """Setzt die ID der Quiz-Belohnungsrolle."""
-    conn = db.get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            INSERT INTO guild_settings (guild_id, quiz_reward_role_id)
-            VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE quiz_reward_role_id = VALUES(quiz_reward_role_id)
-        """, (guild_id, role_id))
-        conn.commit()
-    finally:
-        cursor.close()
-        conn.close()
-
-# ------------------------------------------------------------
-# Dynamic Voice Channel setzen/abrufen
+# Dynamic Voice Channel
 # ------------------------------------------------------------
 
 def get_dynamic_voice_channel(guild_id: str) -> Optional[str]:
-    """Ruft die ID des 'Join-to-Create' Starter-Channels ab."""
     conn = db.get_connection()
     cursor = conn.cursor()
     result = None
@@ -248,11 +186,9 @@ def get_dynamic_voice_channel(guild_id: str) -> Optional[str]:
     finally:
         cursor.close()
         conn.close()
-    
     return result[0] if result else None
 
 def set_dynamic_voice_channel(guild_id: str, channel_id: str | None) -> None:
-    """Setzt die ID des 'Join-to-Create' Starter-Channels."""
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -260,6 +196,62 @@ def set_dynamic_voice_channel(guild_id: str, channel_id: str | None) -> None:
             INSERT INTO guild_settings (guild_id, dynamic_voice_channel_id)
             VALUES (%s, %s)
             ON DUPLICATE KEY UPDATE dynamic_voice_channel_id = VALUES(dynamic_voice_channel_id)
+        """, (guild_id, channel_id))
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+# ------------------------------------------------------------
+# Post Channels
+# ------------------------------------------------------------
+
+def get_checkpost_channel(guild_id: str) -> Optional[str]:
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    result = None
+    try:
+        cursor.execute("SELECT checkpost_channel_id FROM guild_post_channels WHERE guild_id = %s", (guild_id,))
+        result = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+    return result[0] if result else None
+
+def set_checkpost_channel(guild_id: str, channel_id: str | None) -> None:
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO guild_post_channels (guild_id, checkpost_channel_id)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE checkpost_channel_id = VALUES(checkpost_channel_id)
+        """, (guild_id, channel_id))
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_post_channel(guild_id: str) -> Optional[str]:
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    result = None
+    try:
+        cursor.execute("SELECT post_channel_id FROM guild_post_channels WHERE guild_id = %s", (guild_id,))
+        result = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+    return result[0] if result else None
+
+def set_post_channel(guild_id: str, channel_id: str | None) -> None:
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO guild_post_channels (guild_id, post_channel_id)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE post_channel_id = VALUES(post_channel_id)
         """, (guild_id, channel_id))
         conn.commit()
     finally:

@@ -1,6 +1,6 @@
 # utils/database/custom_commands.py
 from utils.database import connection as db
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 # ------------------------------------------------------------
 # Custom Command hinzufügen oder aktualisieren
@@ -20,7 +20,7 @@ def add_command(guild_id: str, command_name: str, response: str):
         conn.close()
 
 # ------------------------------------------------------------
-# Custom Command abrufen
+# Einzelnen Custom Command abrufen
 # ------------------------------------------------------------
 def get_command(guild_id: str, command_name: str) -> Optional[Dict[str, Any]]:
     conn = db.get_connection()
@@ -34,7 +34,8 @@ def get_command(guild_id: str, command_name: str) -> Optional[Dict[str, Any]]:
         """, (guild_id, command_name))
         row = cursor.fetchone()
         if row:
-            result = {"command_name": row[0], "response": row[1]}
+            # Key-Namen an Template & Bot anpassen
+            result = {"name": row[0], "response": row[1]}
     finally:
         cursor.close()
         conn.close()
@@ -60,7 +61,7 @@ def remove_command(guild_id: str, command_name: str) -> bool:
 # ------------------------------------------------------------
 # Alle Commands eines Servers abrufen
 # ------------------------------------------------------------
-def get_all_commands(guild_id: str) -> list[Dict[str, Any]]:
+def get_all_commands(guild_id: str) -> List[Dict[str, Any]]:
     conn = db.get_connection()
     cursor = conn.cursor()
     results = []
@@ -72,7 +73,8 @@ def get_all_commands(guild_id: str) -> list[Dict[str, Any]]:
         """, (guild_id,))
         rows = cursor.fetchall()
         for row in rows:
-            results.append({"command_name": row[0], "response": row[1]})
+            # Key-Namen an Template & Bot anpassen
+            results.append({"name": row[0], "response": row[1]})
     finally:
         cursor.close()
         conn.close()
