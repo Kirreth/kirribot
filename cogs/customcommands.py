@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import Context
 from typing import Optional
 from utils.database import custom_commands as db_commands  # DB-Handler für dynamische Commands
@@ -13,7 +13,11 @@ class CustomCommands(commands.Cog):
     # ------------------------------------------------------------
     # Command: Eigenen Custom Command hinzufügen
     # ------------------------------------------------------------
-    @commands.hybrid_command(name="addcommand", description="Erstellt einen eigenen Server-Command")
+    @commands.hybrid_command(
+        name="addcommand",
+        description="Erstellt einen eigenen Server-Command",
+        with_app_command=True
+    )
     async def add_command(self, ctx: Context, command_name: str, *, response: str):
         """Speichert einen neuen Custom Command für den Server"""
         if ctx.guild is None:
@@ -34,7 +38,11 @@ class CustomCommands(commands.Cog):
     # ------------------------------------------------------------
     # Command: Eigenen Custom Command entfernen
     # ------------------------------------------------------------
-    @commands.hybrid_command(name="removecommand", description="Entfernt einen eigenen Server-Command")
+    @commands.hybrid_command(
+        name="removecommand",
+        description="Entfernt einen eigenen Server-Command",
+        with_app_command=True
+    )
     async def remove_command(self, ctx: Context, command_name: str):
         if ctx.guild is None:
             await ctx.send("❌ Dieser Befehl kann nur in einem Server verwendet werden.", ephemeral=True)
@@ -58,6 +66,9 @@ class CustomCommands(commands.Cog):
         if message.author.bot or message.guild is None:
             return
 
+        # Damit andere Commands (auch die Hybrid-Commands) weiterhin funktionieren
+        await self.bot.process_commands(message)
+
         content = message.content.strip()
         if not content.startswith("!"):
             return
@@ -70,6 +81,7 @@ class CustomCommands(commands.Cog):
             response = cmd_data["response"]
             response = response.replace("{user}", message.author.mention)
             await message.channel.send(response)
+
 
 # ------------------------------------------------------------
 # Cog Setup

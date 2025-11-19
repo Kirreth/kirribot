@@ -2,24 +2,54 @@ import discord
 from discord.ext import commands, tasks
 from discord.utils import utcnow
 from datetime import datetime, timedelta, timezone
-from typing import Union, Optional, List, Tuple
+from typing import Union, Optional
 from utils.database import bumps as db_bumps
 from utils.database import guilds as db_guilds
 
 DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
 
+
 class Bumps(commands.Cog):
     """Verwaltet Disboard Bumps, Rollenbefehle und Statistiken und sendet Bump-Erinnerungen"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # DIESE ZUWEISUNG IST JETZT KORREKT, DA DIE FUNKTION TEIL DER KLASSE IST
         if not self.bump_reminder_check.is_running():
             self.bump_reminder_check.start()
 
     def cog_unload(self) -> None:
-        """Stoppt die Hintergrundaufgabe beim Entladen des Cogs"""
         self.bump_reminder_check.cancel()
+
+    # ----------------------------------------------------
+    # SAUBERES SENDEN FÜR HYBRID-COMMANDS (KEINE DOPPELAUSGABE)
+    # ----------------------------------------------------
+    async def smart_send(self, ctx: commands.Context, /, **kwargs):
+        """
+        Sendet automatisch korrekt für Prefix und Slash und sorgt dafür,
+        dass niemals doppelt gesendet wird.
+        Markiert ctx._reply_sent = True nach erster Antwort.
+        """
+        # Falls schon einmal geantwortet wurde, nichts tun
+        if getattr(ctx, "_reply_sent", False):
+            return
+
+        # Slash-Invocation (Interaction) vorhanden?
+        interaction = getattr(ctx, "interaction", None)
+        try:
+            if interaction:
+                # Wenn noch nicht geantwortet wurde, sende initiale Antwort
+                if not interaction.response.is_done():
+                    await interaction.response.send_message(**kwargs)
+                else:
+                    # Falls bereits deferred/answered, sende Followup
+                    await interaction.followup.send(**kwargs)
+            else:
+                # Prefix-Invocation: ephemeral rausnehmen, weil nicht unterstützt
+                kwargs.pop("ephemeral", None)
+                await ctx.reply(**kwargs)
+        finally:
+            # Markieren, damit spätere Versuche nichts tun
+            setattr(ctx, "_reply_sent", True)
 
     # ------------------------------------------------------------
     # HINTERGRUNDAUFGABE: Cooldown-Prüfung und Erinnerung (sekundengenau)
@@ -28,7 +58,6 @@ class Bumps(commands.Cog):
     async def bump_reminder_check(self) -> None:
         """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
         try:
-            # Holt alle Gilden mit Reminder-Channel + Bumper-Rolle aus guild_settings
             guild_settings = db_guilds.get_all_bump_settings()
             # Erwartetes Format: [(guild_id, reminder_channel_id, bumper_role_id), ...]
         except Exception as e:
@@ -93,35 +122,46 @@ class Bumps(commands.Cog):
     # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        if message.author.id != DISBOARD_ID or not message.guild:
-            return
-        
-        is_success_message = "Bump done" in message.content or "Bump erfolgreich" in message.content
-        if not is_success_message and message.embeds:
-            embed = message.embeds[0]
-            embed_text = (embed.title or "") + (embed.description or "")
-            if "Bump done" in embed_text or "Bump erfolgreich" in embed_text:
-                is_success_message = True
-        
-        if not is_success_message:
-            return
-        
-        bumper: Optional[Union[discord.User, discord.Member]] = None
-        if message.interaction_metadata and message.interaction_metadata.user:
-            bumper = message.interaction_metadata.user
-        elif message.mentions:
-            bumper = message.mentions[0]
-        else:
-            return
+        # Wichtig: wenn andere on_message Listener existieren, sicherstellen, dass process_commands ausgeführt wird
+        try:
+            if message.author.id != DISBOARD_ID or not message.guild:
+                return
+            
+            is_success_message = "Bump done" in message.content or "Bump erfolgreich" in message.content
+            if not is_success_message and message.embeds:
+                embed = message.embeds[0]
+                embed_text = (embed.title or "") + (embed.description or "")
+                if "Bump done" in embed_text or "Bump erfolgreich" in embed_text:
+                    is_success_message = True
+            
+            if not is_success_message:
+                return
+            
+            bumper: Optional[Union[discord.User, discord.Member]] = None
+            if getattr(message, "interaction_metadata", None) and message.interaction_metadata.user:
+                bumper = message.interaction_metadata.user
+            elif message.mentions:
+                bumper = message.mentions[0]
+            else:
+                return
 
-        user_id = str(bumper.id)
-        guild_id = str(message.guild.id)
-        current_time = utcnow()
+            user_id = str(bumper.id)
+            guild_id = str(message.guild.id)
+            current_time = utcnow()
 
-        db_bumps.log_bump(user_id, guild_id, current_time)
-        db_bumps.increment_total_bumps(user_id, guild_id)
-        db_bumps.set_last_bump_time(guild_id, current_time)
-        db_bumps.set_notified_status(guild_id, False) # Setze Benachrichtigungs-Status zurück
+            db_bumps.log_bump(user_id, guild_id, current_time)
+            db_bumps.increment_total_bumps(user_id, guild_id)
+            db_bumps.set_last_bump_time(guild_id, current_time)
+            db_bumps.set_notified_status(guild_id, False) # Setze Benachrichtigungs-Status zurück
+        finally:
+            # sehr wichtig: andere Commands/Listener dürfen weiterlaufen
+            # damit Hybrid/Prefix-Commands nicht in ein inkonsistentes Verhalten rutschen
+            # und damit das Command-Processing garantiert geschieht
+            try:
+                await self.bot.process_commands(message)
+            except Exception:
+                # process_commands kann in manchen Startup-Zuständen fehlschlagen; ignorieren
+                pass
 
     # ------------------------------------------------------------
     # Nächster Bump
@@ -132,8 +172,11 @@ class Bumps(commands.Cog):
     )
     async def nextbump(self, ctx: commands.Context) -> None:
         if not ctx.guild:
-            return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
-        await ctx.defer()
+            return await self.smart_send(ctx, content="Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+
+        # Nur defer, wenn es eine Interaction (Slash) ist
+        if getattr(ctx, "interaction", None):
+            await ctx.defer()
 
         guild_id = str(ctx.guild.id)
         last_bump_time: Optional[datetime] = db_bumps.get_last_bump_time(guild_id)
@@ -144,37 +187,38 @@ class Bumps(commands.Cog):
                 description="Der Server wurde noch nicht gebumpt. **Du kannst sofort bumpen!**",
                 color=discord.Color(int("24B8B8", 16))
             )
+            return await self.smart_send(ctx, embed=embed)
+
+        if last_bump_time.tzinfo is None:
+            last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
+        next_bump_time = last_bump_time + BUMP_COOLDOWN
+        now_utc = utcnow()
+
+        if now_utc >= next_bump_time:
+            embed = discord.Embed(
+                title="✅ Nächster Bump",
+                description="**Der Cooldown ist abgelaufen!** Du kannst jetzt sofort `/bump` nutzen.",
+                color=discord.Color(int("24B8B8", 16))
+            )
         else:
-            if last_bump_time.tzinfo is None:
-                last_bump_time = last_bump_time.replace(tzinfo=timezone.utc)
-            next_bump_time = last_bump_time + BUMP_COOLDOWN
-            now_utc = utcnow()
-
-            if now_utc >= next_bump_time:
-                embed = discord.Embed(
-                    title="✅ Nächster Bump",
-                    description="**Der Cooldown ist abgelaufen!** Du kannst jetzt sofort `/bump` nutzen.",
-                    color=discord.Color(int("24B8B8", 16))
-                )
+            time_remaining = next_bump_time - now_utc
+            total_seconds = int(time_remaining.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            if hours > 1:
+                time_str = f"{hours} Stunden und {minutes} Minuten"
+            elif hours == 1:
+                time_str = f"1 Stunde und {minutes} Minuten"
             else:
-                time_remaining = next_bump_time - now_utc
-                total_seconds = int(time_remaining.total_seconds())
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                if hours > 1:
-                    time_str = f"{hours} Stunden und {minutes} Minuten"
-                elif hours == 1:
-                    time_str = f"1 Stunde und {minutes} Minuten"
-                else:
-                    time_str = f"{minutes} Minuten"
+                time_str = f"{minutes} Minuten"
 
-                embed = discord.Embed(
-                    title="⏳ Nächster Bump",
-                    description=f"Der nächste Bump ist **<t:{int(next_bump_time.timestamp())}:R>** möglich.\n\n",
-                    color=discord.Color(int("24B8B8", 16))
-                )
+            embed = discord.Embed(
+                title="⏳ Nächster Bump",
+                description=f"Der nächste Bump ist **<t:{int(next_bump_time.timestamp())}:R>** möglich.\n\n",
+                color=discord.Color(int("24B8B8", 16))
+            )
 
-        await ctx.send(embed=embed)
+        await self.smart_send(ctx, embed=embed)
 
     # ------------------------------------------------------------
     # Top Bumper (Gesamt)
@@ -185,15 +229,16 @@ class Bumps(commands.Cog):
     )
     async def topb(self, ctx: commands.Context) -> None:
         if not ctx.guild:
-            return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
-        await ctx.defer()
+            return await self.smart_send(ctx, content="Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+
+        if getattr(ctx, "interaction", None):
+            await ctx.defer()
 
         guild_id = str(ctx.guild.id)
         top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
 
         if not top_users:
-            await ctx.send("📊 Es gibt noch keine Bumps in diesem Server.")
-            return
+            return await self.smart_send(ctx, content="📊 Es gibt noch keine Bumps in diesem Server.")
 
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
@@ -209,7 +254,8 @@ class Bumps(commands.Cog):
             description=description,
             color=discord.Color(int("24B8B8", 16))
         )
-        await ctx.send(embed=embed)
+
+        await self.smart_send(ctx, embed=embed)
 
     # ------------------------------------------------------------
     # Top monatliche Bumper
@@ -220,15 +266,16 @@ class Bumps(commands.Cog):
     )
     async def topmb(self, ctx: commands.Context) -> None:
         if not ctx.guild:
-            return await ctx.send("Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
-        await ctx.defer()
+            return await self.smart_send(ctx, content="Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+
+        if getattr(ctx, "interaction", None):
+            await ctx.defer()
 
         guild_id = str(ctx.guild.id)
         top_users = db_bumps.get_bump_top(guild_id, days=30, limit=3)
 
         if not top_users:
-            await ctx.send("📊 Es gibt noch keine Bumps in den letzten 30 Tagen.")
-            return
+            return await self.smart_send(ctx, content="📊 Es gibt noch keine Bumps in den letzten 30 Tagen.")
 
         description = ""
         for index, (user_id, count) in enumerate(top_users, start=1):
@@ -244,7 +291,8 @@ class Bumps(commands.Cog):
             description=description,
             color=discord.Color(int("24B8B8", 16))
         )
-        await ctx.send(embed=embed)
+
+        await self.smart_send(ctx, embed=embed)
 
     # ------------------------------------------------------------
     # Rollen selbst zuweisen / entfernen
@@ -257,21 +305,21 @@ class Bumps(commands.Cog):
         guild_id = str(ctx.guild.id)
         role_id = db_guilds.get_bumper_role(guild_id)
         if not role_id:
-            return await ctx.send("❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
+            return await self.smart_send(ctx, content="❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
         role = ctx.guild.get_role(int(role_id))
         if not role:
-            return await ctx.send("⚠️ Die gespeicherte Bumper-Rolle existiert nicht mehr.", ephemeral=True)
+            return await self.smart_send(ctx, content="⚠️ Die gespeicherte Bumper-Rolle existiert nicht mehr.", ephemeral=True)
 
         member = ctx.author
         if role in member.roles:
-            await ctx.send("✅ Du hast die Bumper-Rolle bereits!", ephemeral=True)
-        else:
-            try:
-                await member.add_roles(role, reason="Selbst zugewiesene Bumper-Rolle")
-                await ctx.send(f"🎉 Du hast die Rolle {role.mention} erhalten!", ephemeral=True)
-            except discord.Forbidden:
-                await ctx.send("⚠️ Ich habe keine Berechtigung, dir die Rolle zu geben.", ephemeral=True)
+            return await self.smart_send(ctx, content="✅ Du hast die Bumper-Rolle bereits!", ephemeral=True)
+
+        try:
+            await member.add_roles(role, reason="Selbst zugewiesene Bumper-Rolle")
+            await self.smart_send(ctx, content=f"🎉 Du hast die Rolle {role.mention} erhalten!", ephemeral=True)
+        except discord.Forbidden:
+            await self.smart_send(ctx, content="⚠️ Ich habe keine Berechtigung, dir die Rolle zu geben.", ephemeral=True)
 
     @commands.hybrid_command(
         name="delbumprole",
@@ -279,24 +327,24 @@ class Bumps(commands.Cog):
     )
     async def delbumprole(self, ctx: commands.Context) -> None:
         guild_id = str(ctx.guild.id)
-        # ANNAHME: db_roles.get_bumper_role holt die ID aus guild_settings.bumper_role_id
         role_id = db_guilds.get_bumper_role(guild_id)
         if not role_id:
-            return await ctx.send("❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
+            return await self.smart_send(ctx, content="❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
         role = ctx.guild.get_role(int(role_id))
         if not role:
-            return await ctx.send("⚠️ Die gespeicherte Bumper-Rolle existiert nicht mehr.", ephemeral=True)
+            return await self.smart_send(ctx, content="⚠️ Die gespeicherte Bumper-Rolle existiert nicht mehr.", ephemeral=True)
 
         member = ctx.author
         if role not in member.roles:
-            await ctx.send("ℹ️ Du hast die Bumper-Rolle nicht.", ephemeral=True)
+            return await self.smart_send(ctx, content="ℹ️ Du hast die Bumper-Rolle nicht.", ephemeral=True)
         else:
             try:
                 await member.remove_roles(role, reason="Selbst entfernt")
-                await ctx.send(f"❌ Die Rolle {role.mention} wurde entfernt.", ephemeral=True)
+                await self.smart_send(ctx, content=f"❌ Die Rolle {role.mention} wurde entfernt.", ephemeral=True)
             except discord.Forbidden:
-                await ctx.send("⚠️ Ich habe keine Berechtigung, die Rolle zu entfernen.", ephemeral=True)
+                await self.smart_send(ctx, content="⚠️ Ich habe keine Berechtigung, die Rolle zu entfernen.", ephemeral=True)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Bumps(bot))
