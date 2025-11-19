@@ -9,12 +9,34 @@ from utils.database import roles as roles_db
 from utils.database import bumps as db_bumps
 from utils.database import guilds as db_guilds
 
-
 class Setup(commands.Cog):
     """Zentrale Oberfläche für die Konfiguration von Channels und Rollen."""
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+
+
+    # ------------------------------------------------------------
+    # Cog-weit: Nur Moderatoren/Admins dürfen Commands ausführen
+    # ------------------------------------------------------------
+    async def cog_check(self, ctx: Context):
+        if not ctx.guild:
+            # Fehlerbehandlung für DMs
+            await ctx.send("❌ Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
+            return False
+            
+        perms = ctx.author.guild_permissions
+        
+        # Prüfung auf Administrator ODER Server verwalten
+        if perms.administrator or perms.manage_guild:
+            return True
+        else:
+            # Benutzerdefinierte Rückmeldung bei fehlender Berechtigung
+            await ctx.send(
+                "❌ **Zugriff verweigert.** Diese Funktion steht nur **Administratoren** oder Nutzern mit der Berechtigung **'Server verwalten'** zur Verfügung.", 
+                ephemeral=True
+            )
+            return False
 
     # ------------------------------------------------------------
     # Hauptbefehlsgruppe
@@ -25,22 +47,21 @@ class Setup(commands.Cog):
         description="Konfiguriere alle wichtigen Channel und Rollen des Bots."
     )
     @commands.guild_only() 
-    @commands.has_permissions(administrator=True) 
+    @commands.has_permissions(administrator=True) # Der cog_check greift zuerst und liefert die Fehlermeldung
     async def setup(self, ctx: Context) -> None:
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(
                 title="⚙️ Bot-Konfiguration",
                 description=(
                     "Bitte verwende einen Unterbefehl:\n\n"
-                    "• `/setup channel` - Konfiguriert Channels (Birthday, Sanctions)\n"
+                    "• `/setup channel` - Konfiguriert Channels (Birthday, Sanctions, Posts)\n"
                     "• `/setup role` - Konfiguriert spezielle Rollen (Bumper-Rolle)"
                 ),
                 color=discord.Color.gold()
             )
             await ctx.send(embed=embed, ephemeral=True)
 
-
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
     # Prefix / Serverweite Einstellungen
     # ------------------------------------------------------------
     @setup.group(
@@ -55,38 +76,29 @@ class Setup(commands.Cog):
         name="prefix",
         description="Ändert den Bot-Prefix für diesen Server."
     )
-    # KORREKTUR: Parameter auf ctx (Context) geändert
     async def set_prefix(self, ctx: Context, prefix: str):
         guild_id = str(ctx.guild.id)
         
         if len(prefix) > 5:
-            # KORREKTUR: ctx.send() für Hybrid Commands
             await ctx.send("❌ Der Prefix darf höchstens 5 Zeichen lang sein.", ephemeral=True)
             return
             
         try:
-            # 🟢 Verwendet die zentrale Funktion aus guilds.py
             db_guilds.set_prefix(guild_id, prefix) 
-            
-            # KORREKTUR: ctx.send() für Hybrid Commands
             await ctx.send(f"✅ Prefix wurde auf `{prefix}` geändert!", ephemeral=True)
-            
         except Exception as e:
-            # KORREKTUR: ctx.send() für Hybrid Commands
             await ctx.send(f"❌ Fehler beim Speichern des Prefix: {e}", ephemeral=True)
-
 
     # ------------------------------------------------------------
     # Channels
     # ------------------------------------------------------------
-    
     @setup.group(
         name="channel", 
-        description="Konfiguriert Channels für Geburtstage und Moderation."
+        description="Konfiguriert Channels für Geburtstage, Moderation und Posts."
     )
     async def setup_channel(self, ctx: Context) -> None:
         if ctx.invoked_subcommand is None:
-            await ctx.send("Bitte verwende `/setup channel <birthday/sanctions/voice>`", ephemeral=True)
+            await ctx.send("Bitte verwende `/setup channel <birthday/sanctions/voice/checkpost/post/reminder/joinleft>`", ephemeral=True)
 
     # Birthday-Channel
     @setup_channel.command(
@@ -127,36 +139,15 @@ class Setup(commands.Cog):
             db_guilds.set_bump_reminder_channel(str(ctx.guild.id), str(channel.id))
             await ctx.send(f"✅ Bump-Reminder-Channel gesetzt auf {channel.mention}", ephemeral=True)
 
-
-    @setup_channel.command(
-        name="voice",
-        description="Setzt den 'Join-to-Create' Starter-Channel für dynamische Sprachkanäle."
-    )
-    # Wichtig: Der Channel-Typ ist VoiceChannel
-    async def channel_voice(self, ctx: Context, channel: Union[discord.VoiceChannel, None]) -> None:
-        guild_id = str(ctx.guild.id)
-        
-        if channel is None:
-            db_guilds.set_dynamic_voice_channel(guild_id, None) 
-            await ctx.send("✅ Der 'Join-to-Create' Starter-Channel für dynamische Sprachkanäle wurde entfernt.", ephemeral=True)
-        else:
-            db_guilds.set_dynamic_voice_channel(guild_id, str(channel.id))
-            await ctx.send(
-                f"✅ 'Join-to-Create' Starter-Channel gesetzt auf {channel.mention}. "
-                "Hier beitreten, um einen neuen Kanal zu erstellen.", 
-                ephemeral=True
-            )
-
     # Join/Leave-Channel
     @setup_channel.command(
         name="joinleft",
         description="Setzt den Channel, in dem Join- und Leave-Nachrichten gepostet werden."
     )
     async def channel_joinleft(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
-        from utils.database import joinleft as db_joinleft  # lokal importieren, um zirkuläre Imports zu vermeiden
+        from utils.database import joinleft as db_joinleft
 
         guild_id = str(ctx.guild.id)
-
         if channel is None:
             db_joinleft.set_welcome_channel(guild_id, None)
             await ctx.send("✅ Der Join/Leave-Channel wurde entfernt.", ephemeral=True)
@@ -164,11 +155,55 @@ class Setup(commands.Cog):
             db_joinleft.set_welcome_channel(guild_id, str(channel.id))
             await ctx.send(f"✅ Join/Leave-Channel gesetzt auf {channel.mention}", ephemeral=True)
 
+    # Voice-Channel
+    @setup_channel.command(
+        name="voice",
+        description="Setzt den 'Join-to-Create' Starter-Channel für dynamische Sprachkanäle."
+    )
+    async def channel_voice(self, ctx: Context, channel: Union[discord.VoiceChannel, None]) -> None:
+        guild_id = str(ctx.guild.id)
+        if channel is None:
+            db_guilds.set_dynamic_voice_channel(guild_id, None) 
+            await ctx.send("✅ Der 'Join-to-Create' Starter-Channel wurde entfernt.", ephemeral=True)
+        else:
+            db_guilds.set_dynamic_voice_channel(guild_id, str(channel.id))
+            await ctx.send(
+                f"✅ 'Join-to-Create' Starter-Channel gesetzt auf {channel.mention}.",
+                ephemeral=True
+            )
+
+    # -----------------------------
+    # Post-System Channels
+    # -----------------------------
+    @setup_channel.command(
+        name="checkpost",
+        description="Setzt den Channel für eingereichte Posts, die geprüft werden."
+    )
+    async def channel_checkpost(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
+        guild_id = str(ctx.guild.id)
+        if channel is None:
+            db_guilds.set_checkpost_channel(guild_id, None)
+            await ctx.send("✅ Checkpost-Channel wurde entfernt.", ephemeral=True)
+        else:
+            db_guilds.set_checkpost_channel(guild_id, str(channel.id))
+            await ctx.send(f"✅ Checkpost-Channel gesetzt auf {channel.mention}", ephemeral=True)
+
+    @setup_channel.command(
+        name="post",
+        description="Setzt den Channel für genehmigte Posts."
+    )
+    async def channel_post(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
+        guild_id = str(ctx.guild.id)
+        if channel is None:
+            db_guilds.set_post_channel(guild_id, None)
+            await ctx.send("✅ Post-Channel wurde entfernt.", ephemeral=True)
+        else:
+            db_guilds.set_post_channel(guild_id, str(channel.id))
+            await ctx.send(f"✅ Post-Channel gesetzt auf {channel.mention}", ephemeral=True)
 
     # ------------------------------------------------------------
     # Rollen
     # ------------------------------------------------------------
-    
     @setup.group(
         name="role",
         description="Konfiguriert Rollen wie die Bumper-Rolle."
