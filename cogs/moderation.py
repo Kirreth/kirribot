@@ -117,6 +117,25 @@ class Moderation(commands.Cog):
             except discord.HTTPException as e:
                 await ctx.send(f"⚠️ Fehler beim automatischen Timeout: {e}", ephemeral=True)
 
+
+    # ------------------------------------------------------------
+    # User bannen
+    # ------------------------------------------------------------
+    @commands.hybrid_command(name="ban", description="Bannt einen Benutzer vom Server") 
+    async def ban(self, ctx: Context, member: discord.Member, *, reason: str) -> None:
+        if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
+            await ctx.send("❌ Du kannst keine Moderatoren/Admins bannen.", ephemeral=True)
+            return
+
+        try:
+            await member.ban(reason=reason)
+            db_mod.add_ban(str(member.id), str(ctx.guild.id), reason)
+            await ctx.send(f"🔨 {member.mention} wurde vom Server gebannt.\nGrund: {reason}")
+        except discord.Forbidden:
+            await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu bannen.", ephemeral=True)
+        except discord.HTTPException as e:
+            await ctx.send(f"⚠️ Fehler beim Bannen: {e}", ephemeral=True)
+
     # ------------------------------------------------------------
     # Sanktionen des Users anzeigen
     # ------------------------------------------------------------
