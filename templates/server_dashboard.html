@@ -2,169 +2,70 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirribot Dashboard | {{ guild.name }}</title>
+    <title>{{ guild.name }} Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header class="navbar">
-        <div class="container">
-            <a href="/" class="logo">Kirribot Dashboard</a>
-            <nav>
-                <a href="/logout" class="button button-secondary">Logout</a>
-            </nav>
-        </div>
-    </header>
+    <div class="container">
+        <h1>{{ guild.name }} Dashboard</h1>
 
-    <main class="container content-area">
-        <div class="dashboard-controls">
-            <a href="/" class="button button-secondary control-button">← Zurück zur Serverauswahl</a>
-        </div>
-        
-        <div class="dashboard-header">
-            {% if guild.icon %}
-            <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png?size=128" 
-                 alt="{{ guild.name }} Icon" 
-                 onerror="this.onerror=null;this.src='/static/default_guild_icon.png';"
-                 class="guild-icon-large">
-            {% else %}
-            <img src="/static/default_guild_icon.png" alt="{{ guild.name }} Icon" class="guild-icon-large">
-            {% endif %}
-
-            <h1>Server Dashboard: {{ guild.name }}</h1>
-            <p>Verwalte alle Einstellungen für diesen Discord-Server.</p>
+        <!-- Server Info -->
+        <div class="card">
+            <p><strong>Prefix:</strong> {{ prefix }}</p>
+            <p><strong>Birthday Channel:</strong> {{ birthday_channel or "Nicht gesetzt" }}</p>
+            <p><strong>Sanctions Channel:</strong> {{ sanctions_channel or "Nicht gesetzt" }}</p>
         </div>
 
-        <div class="card settings-form-card">
-            <form action="/server/{{ guild_id }}/update" method="post" class="settings-form">
-                
-                <h2>Basis-Einstellungen</h2>
-                <div class="form-group">
-                    <label for="prefix">Prefix:</label>
-                    <input type="text" id="prefix" name="prefix" value="{{ prefix }}" class="text-input" required>
-                </div>
-                
-                <hr>
+        <!-- Einstellungen Form -->
+        <form action="/server/{{ guild_id }}/update" method="post" class="card">
+            <label>Prefix</label>
+            <input type="text" name="prefix" value="{{ prefix }}">
 
-                <h2>Channel-Konfiguration</h2>
-
-                <div class="form-group">
-                    <label for="birthday_channel">Birthday Channel:</label>
-                    <select id="birthday_channel" name="birthday_channel" class="select-input">
-                        <option value="">— (Deaktiviert)</option>
-                        {% for ch in text_channels %}
-                            <option value="{{ ch.id }}" {% if ch.id|string == birthday_channel %}selected{% endif %}>#{{ ch.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="sanctions_channel">Sanctions Channel:</label>
-                    <select id="sanctions_channel" name="sanctions_channel" class="select-input">
-                        <option value="">— (Deaktiviert)</option>
-                        {% for ch in text_channels %}
-                            <option value="{{ ch.id }}" {% if ch.id|string == sanctions_channel %}selected{% endif %}>#{{ ch.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="bump_channel">Bump-Reminder Channel:</label>
-                    <select id="bump_channel" name="bump_channel" class="select-input">
-                        <option value="">— (Deaktiviert)</option>
-                        {% for ch in text_channels %}
-                            <option value="{{ ch.id }}" {% if ch.id|string == bump_channel %}selected{% endif %}>#{{ ch.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="joinleft_channel">Join/Leave Channel:</label>
-                    <select id="joinleft_channel" name="joinleft_channel" class="select-input">
-                        <option value="">— (Deaktiviert)</option>
-                        {% for ch in text_channels %}
-                            <option value="{{ ch.id }}" {% if ch.id|string == joinleft_channel %}selected{% endif %}>#{{ ch.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="voice_channel">Dynamic Voice Channel:</label>
-                    <select id="voice_channel" name="voice_channel" class="select-input">
-                        <option value="">— (Deaktiviert)</option>
-                        {% for ch in voice_channels %}
-                            <option value="{{ ch.id }}" {% if ch.id|string == voice_channel %}selected{% endif %}>{{ ch.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <hr>
-
-                <h2>Rollen-Zuweisung</h2>
-                
-                <div class="form-group">
-                    <label for="bumper_role">Bumper Role:</label>
-                    <select id="bumper_role" name="bumper_role" class="select-input">
-                        <option value="">— (Deaktiviert)</option>
-                        {% for r in roles %}
-                            <option value="{{ r.id }}" {% if r.id|string == bumper_role %}selected{% endif %}>@{{ r.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <button type="submit" class="button button-primary save-button">Speichern</button>
-            </form>
-        </div>
-
-        <!-- ------------------------------------------------------------ -->
-        <!-- Custom Commands Bereich -->
-        <!-- ------------------------------------------------------------ -->
-        <div class="card custom-commands-card">
-            <h2>Custom Commands verwalten</h2>
-
-            <!-- Neues Command hinzufügen -->
-            <form action="/server/{{ guild_id }}/commands/add" method="post" class="settings-form">
-                <div class="form-group">
-                    <label for="command_name">Command Name:</label>
-                    <input type="text" id="command_name" name="command_name" class="text-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="response">Reaktion / Nachricht:</label>
-                    <textarea id="response" name="response" class="text-input" rows="3" required></textarea>
-                    <small>Du kannst {user} verwenden, um den Benutzer zu erwähnen.</small>
-                </div>
-                <button type="submit" class="button button-primary">Command erstellen</button>
-            </form>
-
-            <hr>
-
-            <!-- Bestehende Commands auflisten -->
-            {% if custom_commands %}
-            <h3>Bestehende Commands:</h3>
-            <ul class="custom-command-list">
-                {% for cmd in custom_commands %}
-                <li>
-                    <strong>{{ cmd.name }}</strong>: {{ cmd.response }}
-                    <form action="/server/{{ guild_id }}/commands/remove" method="post" style="display:inline;">
-                        <input type="hidden" name="command_name" value="{{ cmd.name }}">
-                        <button type="submit" class="button button-secondary small-button">Löschen</button>
-                    </form>
-                </li>
+            <label>Birthday Channel</label>
+            <select name="birthday_channel">
+                <option value="">Nicht gesetzt</option>
+                {% for channel in text_channels %}
+                <option value="{{ channel.id }}" {% if birthday_channel == channel.id|string %}selected{% endif %}>
+                    {{ channel.name }}
+                </option>
                 {% endfor %}
-            </ul>
-            {% else %}
-            <p>Es wurden noch keine Custom Commands erstellt.</p>
-            {% endif %}
-        </div>
+            </select>
 
-    </main>
+            <label>Sanctions Channel</label>
+            <select name="sanctions_channel">
+                <option value="">Nicht gesetzt</option>
+                {% for channel in text_channels %}
+                <option value="{{ channel.id }}" {% if sanctions_channel == channel.id|string %}selected{% endif %}>
+                    {{ channel.name }}
+                </option>
+                {% endfor %}
+            </select>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2023 Kirribot. Alle Rechte vorbehalten.</p>
+            <div class="form-actions">
+                <button type="submit">Speichern</button>
+            </div>
+        </form>
+
+        <!-- Custom Commands -->
+        <div class="card">
+            <h2>Custom Commands</h2>
+            {% for cmd, resp in custom_commands.items() %}
+            <div class="command">
+                <span><strong>{{ cmd }}</strong>: {{ resp }}</span>
+                <form action="/server/{{ guild_id }}/commands/remove" method="post">
+                    <input type="hidden" name="command_name" value="{{ cmd }}">
+                    <button>Löschen</button>
+                </form>
+            </div>
+            {% endfor %}
+
+            <!-- Add new command -->
+            <form action="/server/{{ guild_id }}/commands/add" method="post" class="flex">
+                <input type="text" name="command_name" placeholder="Name" class="flex-1">
+                <input type="text" name="response" placeholder="Response" class="flex-2">
+                <button type="submit">Hinzufügen</button>
+            </form>
         </div>
-    </footer>
+    </div>
 </body>
 </html>

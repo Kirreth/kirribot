@@ -1,0 +1,10 @@
+<div class="form-group">
+    <label for="{{ name }}">{{ label }}:</label> 
+    <select id="{{ name }}" name="{{ name }}" class="select-input">
+        <option value="">— (Deaktiviert)</option>
+        
+        {% for ch in text_channels %}
+            <option value="{{ ch.id }}" {% if ch.id|string == current_id %}selected{% endif %}>#{{ ch.name }}</option>
+        {% endfor %}
+    </select>
+</div>

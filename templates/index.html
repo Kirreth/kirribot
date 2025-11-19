@@ -25,30 +25,27 @@
         </div>
 
         <div class="server-grid">
-            {% for server in servers %}
-                <a href="/server/{{ server.id }}" class="server-card">
-                    
-                    {% if server.icon_url %}
-                        <!-- Server hat ein Icon (verwendet die komplette URL von Python, inkl. Größe) -->
-                        <img src="{{ server.icon_url }}" 
-                            alt="{{ server.name }} Icon" 
-                            class="server-icon">
-                    {% else %}
-                        <!-- Server hat kein Icon (Verwendung des Fallbacks) -->
-                        <img src="/static/default_guild_icon.png" 
-                            alt="{{ server.name }} Icon (Kein Icon gesetzt)" 
-                            class="server-icon">
-                    {% endif %}
-                    
-                    <h2 class="server-name">{{ server.name }}</h2>
-                    <p class="server-id">{{ server.id }}</p>
-                </a>
-
+            {% if servers %}
+                {% for server in servers %}
+                    <a href="/server/{{ server.id }}" class="server-card">
+                        {% if server.icon_url %}
+                            <img src="{{ server.icon_url }}" 
+                                 alt="{{ server.name }} Icon" 
+                                 class="server-icon">
+                        {% else %}
+                            <img src="/static/default_guild_icon.png" 
+                                 alt="{{ server.name }} Icon (Kein Icon gesetzt)" 
+                                 class="server-icon">
+                        {% endif %}
+                        <h2 class="server-name">{{ server.name }}</h2>
+                        <p class="server-id">{{ server.id }}</p>
+                    </a>
+                {% endfor %}
             {% else %}
                 <p class="no-servers-message">Kirribot ist auf keinem deiner Server. Lade ihn jetzt ein!</p>
-                <a href="https://discord.com/oauth2/authorize?client_id=1427650285748092959&permissions=8&integration_type=0&scope=bot" class="button button-primary" target="_blank">Kirribot einladen</a>
-            {% endfor %}
-            <a href="https://discord.com/oauth2/authorize?client_id=1427650285748092959&permissions=8&integration_type=0&scope=bot" class="button button-primary" target="_blank">Kirribot auf weiteren Servern einladen</a>
+                <a href="https://discord.com/oauth2/authorize?client_id=1427650285748092959&permissions=8&scope=bot" class="button button-primary" target="_blank">Kirribot einladen</a>
+            {% endif %}
+            <a href="https://discord.com/oauth2/authorize?client_id=1427650285748092959&permissions=8&scope=bot" class="button button-primary" target="_blank">Kirribot auf weiteren Servern einladen</a>
         </div>
     </main>
 
