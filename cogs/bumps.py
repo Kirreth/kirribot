@@ -2,12 +2,145 @@ import discord
 from discord.ext import commands, tasks
 from discord.utils import utcnow
 from datetime import datetime, timedelta, timezone
-from typing import Union, Optional
+from typing import Union, Optional, List, Tuple
 from utils.database import bumps as db_bumps
 from utils.database import guilds as db_guilds
 
+# --- HINZUGEFÜGTE IMPORTE FÜR BILDGENERIERUNG ---
+from discord.ext.commands import Context
+from PIL import Image, ImageDraw, ImageFont
+import io
+import os
+import math
+import random
+# ------------------------------------------------
+
 DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
+
+# ------------------------------------------------------------
+# Hilfsfunktionen (Kopiert/Angepasst aus Leveling)
+# ------------------------------------------------------------
+def get_base_path(*paths: str) -> str:
+    """Erstellt einen sicheren Pfad relativ zum Projekt-Wurzelverzeichnis."""
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    return os.path.join(base_dir, *paths)
+
+# ------------------------------------------------------------
+# Schriftarten laden (Kopiert aus Leveling)
+# ------------------------------------------------------------
+try:
+    FONT_PATH = get_base_path("assets", "fonts", "RobotoMono-VariableFont_wght.ttf")
+    font_main = ImageFont.truetype(FONT_PATH, 40)
+    font_small = ImageFont.truetype(FONT_PATH, 25) 
+    font_tiny = ImageFont.truetype(FONT_PATH, 20)
+    # NEUE SCHRIFTART für den Namen
+    font_name = ImageFont.truetype(FONT_PATH, 30) 
+except Exception as e:
+    print(f"⚠️ Fehler beim Laden der Schriftart: {e}")
+    font_main = ImageFont.load_default()
+    font_small = ImageFont.load_default()
+    font_tiny = ImageFont.load_default()
+    font_name = ImageFont.load_default()
+
+# ------------------------------------------------------------
+# Top Bumper Card erstellen
+# ------------------------------------------------------------
+async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
+    """
+    Erstellt ein visuell schickes Leaderboard für Bumps.
+    results -> Liste aus (uid, bumps)
+    total_bumps -> Summe aller Bumps von allen Nutzern
+    """
+
+    width, height = 750, 80 + (len(results) * 130)
+
+    # Hintergrund (anders als Leveling)
+    base = Image.new("RGB", (width, height), "#2B1A2E")   # dunkles Magenta
+    overlay = Image.new("RGB", (width, height), "#1A0C33") # dunkles Violett
+    img = Image.blend(base, overlay, alpha=0.35)
+    draw = ImageDraw.Draw(img)
+
+    # Farben
+    fill_color = "#F0E6FF"
+    accent = "#FF007A"   # Pink
+    accent2 = "#FFB300"  # Orange
+
+    # Titel
+    title_text = "🔥 TOP BUMPERS"
+    bbox_title = draw.textbbox((0, 0), title_text, font=font_main)
+    title_x = (width - (bbox_title[2] - bbox_title[0])) // 2
+    draw.text((title_x + 2, 12 + 2), title_text, fill=accent2, font=font_main)
+    draw.text((title_x, 10), title_text, fill=accent, font=font_main)
+
+    start_y = 80
+    avatar_size = 90
+    medals = ["🔥", "⚡", "🚀", "✨", "💠"]
+
+    # Einträge
+    for i, (uid, bumps) in enumerate(results):
+        member = ctx.guild.get_member(int(uid))
+        if not member:
+            continue
+
+        y_pos = start_y + (i * 130)
+
+        # Card-Hintergrund
+        card = Image.new("RGBA", (width - 40, 110), (60, 30, 80, 220))
+        mask = Image.new("L", (width - 40, 110), 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, width - 40, 110), radius=22, fill=255)
+        img.paste(card, (20, y_pos), mask)
+
+        # Linker Akzentstreifen
+        draw.rectangle([25, y_pos + 10, 30, y_pos + 100], fill=accent)
+
+        # Rang
+        rank_text = medals[i] if i < len(medals) else f"#{i+1}"
+        draw.text((45, y_pos + 35), rank_text, fill=accent2, font=font_name)
+
+        # Avatar
+        try:
+            asset = member.display_avatar.with_format("png").with_size(128)
+            data = io.BytesIO(await asset.read())
+            avatar_img = Image.open(data).resize((avatar_size, avatar_size)).convert("RGBA")
+
+            mask = Image.new("L", (avatar_size, avatar_size), 0)
+            ImageDraw.Draw(mask).ellipse((0, 0, avatar_size, avatar_size), fill=255)
+
+            img.paste(avatar_img, (130, y_pos + 10), mask)
+
+        except Exception as e:
+            print(f"Avatar Load Error: {e}")
+
+        # Text
+        name_x = 130 + avatar_size + 30
+        draw.text((name_x, y_pos + 20), member.display_name, fill=fill_color, font=font_name)
+        draw.text((name_x, y_pos + 60), f"Bumps: {bumps}", fill="#DDDDDD", font=font_small)
+
+        # Fortschrittsbalken (Anteil am Gesamt-Server)
+        bar_x1, bar_x2 = name_x, width - 80
+        bar_y = y_pos + 90
+        progress = bumps / total_bumps if total_bumps > 0 else 0
+
+        draw.rounded_rectangle((bar_x1, bar_y, bar_x2, bar_y + 10), radius=5, fill=(80, 50, 100))
+
+        bar_width = int((bar_x2 - bar_x1) * progress)
+        if bar_width > 0:
+            gradient = Image.new("RGB", (bar_width, 10))
+            g = ImageDraw.Draw(gradient)
+            for x in range(bar_width):
+                r = int(255)
+                g_val = int(0 + (179 * (x / bar_width)))
+                b_val = int(122 - (122 * (x / bar_width)))
+                g.line((x, 0, x, 10), fill=(r, g_val, b_val))
+            img.paste(gradient, (bar_x1, bar_y))
+
+    # Ausgabe
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
 
 
 class Bumps(commands.Cog):
@@ -20,46 +153,27 @@ class Bumps(commands.Cog):
     def cog_unload(self) -> None:
         self.bump_reminder_check.cancel()
 
-    # ----------------------------------------------------
-    # SAUBERES SENDEN FÜR HYBRID-COMMANDS (KEINE DOPPELAUSGABE)
-    # ----------------------------------------------------
     async def smart_send(self, ctx: commands.Context, /, **kwargs):
-        """
-        Sendet automatisch korrekt für Prefix und Slash und sorgt dafür,
-        dass niemals doppelt gesendet wird.
-        Markiert ctx._reply_sent = True nach erster Antwort.
-        """
-        # Falls schon einmal geantwortet wurde, nichts tun
         if getattr(ctx, "_reply_sent", False):
             return
 
-        # Slash-Invocation (Interaction) vorhanden?
         interaction = getattr(ctx, "interaction", None)
         try:
             if interaction:
-                # Wenn noch nicht geantwortet wurde, sende initiale Antwort
                 if not interaction.response.is_done():
                     await interaction.response.send_message(**kwargs)
                 else:
-                    # Falls bereits deferred/answered, sende Followup
                     await interaction.followup.send(**kwargs)
             else:
-                # Prefix-Invocation: ephemeral rausnehmen, weil nicht unterstützt
                 kwargs.pop("ephemeral", None)
                 await ctx.reply(**kwargs)
         finally:
-            # Markieren, damit spätere Versuche nichts tun
             setattr(ctx, "_reply_sent", True)
 
-    # ------------------------------------------------------------
-    # HINTERGRUNDAUFGABE: Cooldown-Prüfung und Erinnerung (sekundengenau)
-    # ------------------------------------------------------------
     @tasks.loop(seconds=1)
     async def bump_reminder_check(self) -> None:
-        """Prüft jede Sekunde, ob der Cooldown abgelaufen ist, und sendet eine Erinnerung."""
         try:
-            guild_settings = db_guilds.get_all_bump_settings()
-            # Erwartetes Format: [(guild_id, reminder_channel_id, bumper_role_id), ...]
+            guild_settings = db_bumps.get_all_guild_settings_with_roles()
         except Exception as e:
             print(f"[ERROR] Fehler beim Abrufen aller Guild-Einstellungen: {e}")
             return
@@ -79,13 +193,12 @@ class Bumps(commands.Cog):
 
             next_bump_time = last_bump_time + BUMP_COOLDOWN
             if now_utc < next_bump_time:
-                continue  # Cooldown läuft noch
+                continue
 
             reminded = db_bumps.get_notified_status(guild_id_str)
             if reminded:
-                continue  # Schon erinnert
+                continue
 
-            # Channel & Rolle abrufen
             channel = self.bot.get_channel(reminder_channel_id)
             if not channel:
                 continue
@@ -93,7 +206,6 @@ class Bumps(commands.Cog):
             bumper_role_mention = ""
             guild = self.bot.get_guild(int(guild_id_str))
             
-            # Die Rolle wird erwähnt, wenn eine ID aus der DB vorhanden ist
             if guild and bumper_role_id:
                 role = guild.get_role(int(bumper_role_id))
                 if role:
@@ -111,18 +223,12 @@ class Bumps(commands.Cog):
             except Exception as e:
                 print(f"[ERROR] Fehler beim Senden der Erinnerung: {e}")
 
-
     @bump_reminder_check.before_loop
     async def before_bump_reminder_check(self) -> None:
-        """Wartet, bis der Bot vollständig bereit ist."""
         await self.bot.wait_until_ready()
 
-    # ------------------------------------------------------------
-    # Bump registrieren
-    # ------------------------------------------------------------
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        # Wichtig: wenn andere on_message Listener existieren, sicherstellen, dass process_commands ausgeführt wird
         try:
             if message.author.id != DISBOARD_ID or not message.guild:
                 return
@@ -152,20 +258,13 @@ class Bumps(commands.Cog):
             db_bumps.log_bump(user_id, guild_id, current_time)
             db_bumps.increment_total_bumps(user_id, guild_id)
             db_bumps.set_last_bump_time(guild_id, current_time)
-            db_bumps.set_notified_status(guild_id, False) # Setze Benachrichtigungs-Status zurück
+            db_bumps.set_notified_status(guild_id, False)
         finally:
-            # sehr wichtig: andere Commands/Listener dürfen weiterlaufen
-            # damit Hybrid/Prefix-Commands nicht in ein inkonsistentes Verhalten rutschen
-            # und damit das Command-Processing garantiert geschieht
             try:
                 await self.bot.process_commands(message)
             except Exception:
-                # process_commands kann in manchen Startup-Zuständen fehlschlagen; ignorieren
                 pass
 
-    # ------------------------------------------------------------
-    # Nächster Bump
-    # ------------------------------------------------------------
     @commands.hybrid_command(
         name="nextbump",
         description="Zeigt an, wann der nächste Disboard Bump möglich ist."
@@ -174,7 +273,6 @@ class Bumps(commands.Cog):
         if not ctx.guild:
             return await self.smart_send(ctx, content="Dieser Befehl kann nur auf einem Server ausgeführt werden.", ephemeral=True)
 
-        # Nur defer, wenn es eine Interaction (Slash) ist
         if getattr(ctx, "interaction", None):
             await ctx.defer()
 
@@ -220,12 +318,9 @@ class Bumps(commands.Cog):
 
         await self.smart_send(ctx, embed=embed)
 
-    # ------------------------------------------------------------
-    # Top Bumper (Gesamt)
-    # ------------------------------------------------------------
     @commands.hybrid_command(
         name="topb",
-        description="Zeigt die Top 3 mit den meisten Bumps insgesamt"
+        description="Zeigt die Top 5 mit den meisten Bumps insgesamt als Bild an"
     )
     async def topb(self, ctx: commands.Context) -> None:
         if not ctx.guild:
@@ -235,31 +330,32 @@ class Bumps(commands.Cog):
             await ctx.defer()
 
         guild_id = str(ctx.guild.id)
-        top_users = db_bumps.get_bump_top(guild_id, days=None, limit=3)
+        
+        top_users = db_bumps.get_bump_top(guild_id, days=None, limit=5)
+        
+        try:
+            total_bumps = db_bumps.get_total_bumps_in_guild(guild_id)
+        except AttributeError:
+            return await self.smart_send(ctx, content="❌ Datenbankfehler: Die Funktion zum Abrufen der gesamten Bumps (get_total_bumps_in_guild) fehlt.", ephemeral=True)
 
         if not top_users:
             return await self.smart_send(ctx, content="📊 Es gibt noch keine Bumps in diesem Server.")
-
-        description = ""
-        for index, (user_id, count) in enumerate(top_users, start=1):
+            
+        active_top_users = []
+        for user_id, count in top_users:
             try:
-                user = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+                member = ctx.guild.get_member(int(user_id)) or await self.bot.fetch_user(int(user_id))
+                if member:
+                    active_top_users.append((user_id, count))
             except Exception:
-                user = None
-            username = user.mention if user else f"Unbekannt ({user_id})"
-            description += f"**#{index}** {username} – **{count} Bumps**\n"
+                continue
+        
+        if not active_top_users:
+            return await self.smart_send(ctx, content="📊 Die Top-Bumper haben alle den Server verlassen oder konnten nicht gefunden werden.", ephemeral=True)
 
-        embed = discord.Embed(
-            title="🏆 Top 3 Bumper (Gesamt)",
-            description=description,
-            color=discord.Color(int("24B8B8", 16))
-        )
+        image_stream = await create_bump_card(ctx, active_top_users, total_bumps)
+        await self.smart_send(ctx, file=discord.File(image_stream, filename="top_bumper_leaderboard.png"))
 
-        await self.smart_send(ctx, embed=embed)
-
-    # ------------------------------------------------------------
-    # Top monatliche Bumper
-    # ------------------------------------------------------------
     @commands.hybrid_command(
         name="topmb",
         description="Zeigt die Top 3 mit den meisten Bumps in den letzten 30 Tagen"
@@ -294,9 +390,6 @@ class Bumps(commands.Cog):
 
         await self.smart_send(ctx, embed=embed)
 
-    # ------------------------------------------------------------
-    # Rollen selbst zuweisen / entfernen
-    # ------------------------------------------------------------
     @commands.hybrid_command(
         name="getbumprole",
         description="Weise dir die Bumper-Rolle selbst zu."
