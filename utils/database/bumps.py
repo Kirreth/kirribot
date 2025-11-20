@@ -246,3 +246,26 @@ def get_all_guild_settings_with_roles() -> List[Tuple[str, Optional[int], Option
         conn.close()
         
     return results
+
+def get_total_bumps_in_guild(guild_id: str) -> int:
+    """Berechnet die Gesamtzahl aller Bumps, die auf diesem Server registriert wurden."""
+    conn = get_connection()
+    cur = conn.cursor()
+    total = 0
+    try:
+        # Hier nutzen wir die bump_totals Tabelle, da diese alle User-Bumps enthält.
+        # Die SUM-Funktion addiert alle total_count Werte für die gegebene guild_id.
+        cur.execute("""
+            SELECT SUM(total_count) FROM bump_totals
+            WHERE guild_id = %s
+        """, (guild_id,))
+        
+        result = cur.fetchone()
+        if result and result[0] is not None:
+            total = int(result[0])
+            
+    finally:
+        cur.close()
+        conn.close()
+        
+    return total
