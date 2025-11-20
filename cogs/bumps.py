@@ -19,7 +19,7 @@ DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
 
 # ------------------------------------------------------------
-# Hilfsfunktionen (Kopiert/Angepasst aus Leveling)
+# Hilfsfunktionen
 # ------------------------------------------------------------
 def get_base_path(*paths: str) -> str:
     """Erstellt einen sicheren Pfad relativ zum Projekt-Wurzelverzeichnis."""
@@ -27,7 +27,7 @@ def get_base_path(*paths: str) -> str:
     return os.path.join(base_dir, *paths)
 
 # ------------------------------------------------------------
-# Schriftarten laden (Kopiert aus Leveling)
+# Schriftarten laden
 # ------------------------------------------------------------
 try:
     FONT_PATH = get_base_path("assets", "fonts", "RobotoMono-VariableFont_wght.ttf")
@@ -55,7 +55,7 @@ async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
 
     width, height = 750, 80 + (len(results) * 130)
 
-    # Hintergrund (anders als Leveling)
+    # Hintergrund
     base = Image.new("RGB", (width, height), "#2B1A2E")   # dunkles Magenta
     overlay = Image.new("RGB", (width, height), "#1A0C33") # dunkles Violett
     img = Image.blend(base, overlay, alpha=0.35)
