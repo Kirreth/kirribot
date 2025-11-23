@@ -10,8 +10,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from authlib.integrations.starlette_client import OAuth
 from starlette.middleware.sessions import SessionMiddleware
+
+# ------------------------------------------------------------
+# Datenbank-Module
+# ------------------------------------------------------------
 from utils.database import guilds as db_guilds, joinleft as db_joinleft
-from utils.database import custom_commands as db_custom
+from utils.database import custom_commands as db_custom, commands as db_commands
 
 # ------------------------------------------------------------
 # Logging
@@ -84,6 +88,7 @@ def create_dashboard(bot=None) -> FastAPI:
 
     @app.get("/login/callback")
     async def login_callback(request: Request):
+        # bisheriger Code für OAuth Callback
         try:
             token = await oauth.discord.authorize_access_token(request)
         except Exception as e:
@@ -112,6 +117,7 @@ def create_dashboard(bot=None) -> FastAPI:
         return response
 
     def get_current_user_data(request: Request):
+        # bisheriger Code zur User-Verifikation
         user_id = request.cookies.get("discord_user")
         jwt_token = request.cookies.get("jwt_token")
         token = request.session.get("discord_token")
@@ -127,15 +133,15 @@ def create_dashboard(bot=None) -> FastAPI:
     # ------------------------------------------------------------
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
+        # bisheriger Code zum Abrufen der Gilden
         user_data = get_current_user_data(request)
         if not user_data:
             return templates.TemplateResponse("login.html", {"request": request})
 
-        # Gilden vom Bot-Service abrufen
+        # Bot-Gilden abrufen
         bot_guild_ids = set()
         max_retries = 10
         retry_delay = 5
-
         for attempt in range(max_retries):
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
@@ -189,7 +195,7 @@ def create_dashboard(bot=None) -> FastAPI:
         if not user_data:
             return RedirectResponse(url="/login")
 
-        # Gilden-Details abrufen
+        # Bot-Gilden-Details abrufen
         max_retries = 5
         retry_delay = 3
         guild_details = {}
@@ -222,6 +228,7 @@ def create_dashboard(bot=None) -> FastAPI:
         }
         prefix = db_guilds.get_prefix(guild_id) or "!"
 
+        # Custom Commands
         raw_custom_commands = db_custom.get_all_commands(guild_id) or {}
         custom_commands = {}
         if isinstance(raw_custom_commands, list):
@@ -232,6 +239,11 @@ def create_dashboard(bot=None) -> FastAPI:
                     custom_commands[name] = response
         elif isinstance(raw_custom_commands, dict):
             custom_commands = raw_custom_commands
+
+        # ------------------------------------------------------------
+        # Command Usage aus DB
+        # ------------------------------------------------------------
+        command_usage = {cmd: uses for cmd, uses in db_commands.get_top_commands(guild_id, 100)}
 
         return templates.TemplateResponse(
             "server_dashboard.html",
@@ -245,6 +257,7 @@ def create_dashboard(bot=None) -> FastAPI:
                 "voice_channels": guild_details.get("voice_channels", []),
                 "roles": guild_details.get("roles", []),
                 "custom_commands": custom_commands,
+                "command_usage": command_usage,  # <--- hier eingebunden
                 "user": user_data['id']
             }
         )
@@ -268,6 +281,7 @@ def create_dashboard(bot=None) -> FastAPI:
         if not user_data:
             return RedirectResponse(url="/login")
 
+        # bisheriger Code für Update
         db_guilds.set_prefix(guild_id, prefix)
         db_guilds.set_birthday_channel(guild_id, birthday_channel or None)
         db_guilds.set_sanctions_channel(guild_id, sanctions_channel or None)

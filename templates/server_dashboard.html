@@ -9,12 +9,8 @@
     <div class="container">
         <h1>{{ guild.name }} Dashboard</h1>
 
-        <!-- Server Info -->
-        <div class="card">
-            <p><strong>Prefix:</strong> {{ prefix }}</p>
-            <p><strong>Birthday Channel:</strong> {{ birthday_channel or "Nicht gesetzt" }}</p>
-            <p><strong>Sanctions Channel:</strong> {{ sanctions_channel or "Nicht gesetzt" }}</p>
-        </div>
+        <a href="/" class="button button-secondary back-button">← Zurück zur Serverauswahl</a>
+
 
         <!-- Einstellungen Form -->
         <form action="/server/{{ guild_id }}/update" method="post" class="card">
@@ -25,9 +21,7 @@
             <select name="birthday_channel">
                 <option value="">Nicht gesetzt</option>
                 {% for channel in text_channels %}
-                <option value="{{ channel.id }}" {% if birthday_channel == channel.id|string %}selected{% endif %}>
-                    {{ channel.name }}
-                </option>
+                <option value="{{ channel.id }}" {% if birthday_channel == channel.id|string %}selected{% endif %}>{{ channel.name }}</option>
                 {% endfor %}
             </select>
 
@@ -35,9 +29,39 @@
             <select name="sanctions_channel">
                 <option value="">Nicht gesetzt</option>
                 {% for channel in text_channels %}
-                <option value="{{ channel.id }}" {% if sanctions_channel == channel.id|string %}selected{% endif %}>
-                    {{ channel.name }}
-                </option>
+                <option value="{{ channel.id }}" {% if sanctions_channel == channel.id|string %}selected{% endif %}>{{ channel.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Bump Reminder Channel</label>
+            <select name="bump_channel">
+                <option value="">Nicht gesetzt</option>
+                {% for channel in text_channels %}
+                <option value="{{ channel.id }}" {% if bump_channel == channel.id|string %}selected{% endif %}>{{ channel.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Join/Left Channel</label>
+            <select name="joinleft_channel">
+                <option value="">Nicht gesetzt</option>
+                {% for channel in text_channels %}
+                <option value="{{ channel.id }}" {% if joinleft_channel == channel.id|string %}selected{% endif %}>{{ channel.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Dynamic Voice Channel</label>
+            <select name="voice_channel">
+                <option value="">Nicht gesetzt</option>
+                {% for channel in voice_channels %}
+                <option value="{{ channel.id }}" {% if voice_channel == channel.id|string %}selected{% endif %}>{{ channel.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Bumper Role</label>
+            <select name="bumper_role">
+                <option value="">Nicht gesetzt</option>
+                {% for role in roles %}
+                <option value="{{ role.id }}" {% if bumper_role == role.id|string %}selected{% endif %}>{{ role.name }}</option>
                 {% endfor %}
             </select>
 
@@ -66,6 +90,13 @@
                 <button type="submit">Hinzufügen</button>
             </form>
         </div>
+
+       
     </div>
+        <footer>
+        <div class="container">
+            <p>&copy; 2023 Kirribot. Alle Rechte vorbehalten.</p>
+        </div>
+    </footer>
 </body>
 </html>

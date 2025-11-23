@@ -9,17 +9,26 @@ import logging
 import uvicorn
 from fastapi import FastAPI, HTTPException
 
+# ------------------------------------------------------------
+# Logging
+# ------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+# ------------------------------------------------------------
+# Load environment
+# ------------------------------------------------------------
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 BOT_API_HOST = os.getenv("BOT_API_HOST", "0.0.0.0")
 BOT_API_PORT = int(os.getenv("BOT_API_PORT", 8001))
 
+# ------------------------------------------------------------
+# Discord Bot
+# ------------------------------------------------------------
 async def get_prefix(bot: commands.Bot, message: discord.Message):
     default_prefix = "!"
     if not message.guild:
@@ -30,18 +39,22 @@ async def get_prefix(bot: commands.Bot, message: discord.Message):
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 
+# ------------------------------------------------------------
+# Interne API für Bot-Daten
+# ------------------------------------------------------------
 internal_api = FastAPI(title="Bot Internal Guild API")
 
 @internal_api.get("/api/guilds")
 async def get_bot_guild_ids():
     if not bot.is_ready():
-        raise HTTPException(status_code=503, detail="Bot ist nicht bereit.")
+        # Bot noch nicht ready, API trotzdem erreichbar
+        return {"guild_ids": []}
     return {"guild_ids": [str(g.id) for g in bot.guilds]}
 
 @internal_api.get("/api/guild/{guild_id}")
 async def get_bot_guild_details(guild_id: str):
     if not bot.is_ready():
-        raise HTTPException(status_code=503, detail="Bot ist nicht bereit.")
+        raise HTTPException(status_code=503, detail="Bot ist noch nicht bereit.")
     
     guild = bot.get_guild(int(guild_id))
     if not guild:
@@ -68,6 +81,9 @@ async def start_internal_api_background():
     server = uvicorn.Server(config)
     await server.serve()
 
+# ------------------------------------------------------------
+# MySQL-Prüfung
+# ------------------------------------------------------------
 def wait_for_mysql():
     import time
     retries = 10
@@ -94,10 +110,14 @@ def wait_for_mysql():
             time.sleep(3)
     raise RuntimeError("MySQL nach mehreren Versuchen nicht erreichbar.")
 
+# ------------------------------------------------------------
+# Bot Ready Event
+# ------------------------------------------------------------
 @bot.event
 async def on_ready():
     logger.info(f"Bot online als {bot.user} ({bot.user.id})")
 
+    # Cogs laden
     cogs = [
         "cogs.leveling", "cogs.info", "cogs.moderation", "cogs.birthday", "cogs.setup", 
         "cogs.dynamicvoice", "cogs.musicconverter", "cogs.bumps", "cogs.roles", 
@@ -117,20 +137,26 @@ async def on_ready():
     synced = await bot.tree.sync()
     logger.info(f"{len(synced)} Slash Commands synchronisiert")
 
-    asyncio.create_task(start_internal_api_background())
-    logger.info("Interne API gestartet.")
-
-async def main():
-    wait_for_mysql()
-    setup_database()
-
+# ------------------------------------------------------------
+# Hauptfunktion: Bot + interne API parallel starten
+# ------------------------------------------------------------
+async def start_bot_and_api():
+    # Start FastAPI parallel
+    api_task = asyncio.create_task(start_internal_api_background())
+    # Start Bot
     await bot.start(TOKEN)
+    await api_task  # Optional, läuft praktisch parallel
 
+# ------------------------------------------------------------
+# Main
+# ------------------------------------------------------------
 if __name__ == "__main__":
     if not TOKEN:
         raise ValueError("Kein TOKEN in .env gefunden")
+    wait_for_mysql()
+    setup_database()
     try:
-        asyncio.run(main())
+        asyncio.run(start_bot_and_api())
     except KeyboardInterrupt:
         logger.info("Bot gestoppt.")
     except Exception as e:

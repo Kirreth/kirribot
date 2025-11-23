@@ -8,6 +8,7 @@ from utils.database import moderation as mod_db
 from utils.database import roles as roles_db
 from utils.database import bumps as db_bumps
 from utils.database import guilds as db_guilds
+from datetime import datetime, timezone
 
 class Setup(commands.Cog):
     """Zentrale Oberfläche für die Konfiguration von Channels und Rollen."""
@@ -132,12 +133,16 @@ class Setup(commands.Cog):
         description="Setzt den Channel für Bump-Erinnerungen."
     )
     async def channel_reminder(self, ctx: Context, channel: Union[discord.TextChannel, None]) -> None:
+        guild_id = str(ctx.guild.id)
         if channel is None:
-            db_guilds.set_bump_reminder_channel(str(ctx.guild.id), None)
+            db_bumps.set_reminder_channel(guild_id, None)
             await ctx.send("✅ Bump-Reminder-Channel entfernt.", ephemeral=True)
         else:
-            db_guilds.set_bump_reminder_channel(str(ctx.guild.id), str(channel.id))
+            db_bumps.set_reminder_channel(guild_id, str(channel.id))
+            # Optional: Setze den letzten Bump-Zeitstempel auf jetzt, falls du einen Reset willst
+            db_bumps.set_last_bump_time(guild_id, datetime.utcnow())
             await ctx.send(f"✅ Bump-Reminder-Channel gesetzt auf {channel.mention}", ephemeral=True)
+
 
     # Join/Leave-Channel
     @setup_channel.command(

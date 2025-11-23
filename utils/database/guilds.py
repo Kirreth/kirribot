@@ -5,7 +5,6 @@ from typing import Optional, List, Tuple
 # ------------------------------------------------------------
 # Präfix setzen/abrufen
 # ------------------------------------------------------------
-
 def get_prefix(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -19,6 +18,8 @@ def get_prefix(guild_id: str) -> Optional[str]:
     return result[0] if result and result[0] else '!'
 
 def set_prefix(guild_id: str, prefix: str) -> None:
+    if not prefix:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -35,7 +36,6 @@ def set_prefix(guild_id: str, prefix: str) -> None:
 # ------------------------------------------------------------
 # Sanctions/Mod-Log Channel
 # ------------------------------------------------------------
-
 def get_sanctions_channel(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -49,6 +49,8 @@ def get_sanctions_channel(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_sanctions_channel(guild_id: str, channel_id: str | None) -> None:
+    if channel_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -65,7 +67,6 @@ def set_sanctions_channel(guild_id: str, channel_id: str | None) -> None:
 # ------------------------------------------------------------
 # Birthday Channel
 # ------------------------------------------------------------
-
 def get_birthday_channel(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -79,6 +80,8 @@ def get_birthday_channel(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_birthday_channel(guild_id: str, channel_id: str | None) -> None:
+    if channel_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -95,7 +98,6 @@ def set_birthday_channel(guild_id: str, channel_id: str | None) -> None:
 # ------------------------------------------------------------
 # Bump Reminder Channel
 # ------------------------------------------------------------
-
 def get_bump_reminder_channel(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -109,6 +111,8 @@ def get_bump_reminder_channel(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_bump_reminder_channel(guild_id: str, channel_id: str | None) -> None:
+    if channel_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -121,12 +125,8 @@ def set_bump_reminder_channel(guild_id: str, channel_id: str | None) -> None:
     finally:
         cursor.close()
         conn.close()
+
 def get_all_bump_settings() -> list[tuple[str, str, str]]:
-    """
-    Ruft alle Gilden-Einstellungen ab, die für Bump-Erinnerungen relevant sind,
-    einschließlich Channel-ID und Bumper-Rollen-ID.
-    Format: List[(guild_id, bump_reminder_channel_id, bumper_role_id), ...]
-    """
     conn = db.get_connection()
     cursor = conn.cursor()
     result = []
@@ -145,7 +145,6 @@ def get_all_bump_settings() -> list[tuple[str, str, str]]:
 # ------------------------------------------------------------
 # Bumper Rolle
 # ------------------------------------------------------------
-
 def get_bumper_role(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -159,6 +158,8 @@ def get_bumper_role(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_bumper_role(guild_id: str, role_id: str | None) -> None:
+    if role_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -175,7 +176,6 @@ def set_bumper_role(guild_id: str, role_id: str | None) -> None:
 # ------------------------------------------------------------
 # Dynamic Voice Channel
 # ------------------------------------------------------------
-
 def get_dynamic_voice_channel(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -189,6 +189,8 @@ def get_dynamic_voice_channel(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_dynamic_voice_channel(guild_id: str, channel_id: str | None) -> None:
+    if channel_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -205,7 +207,6 @@ def set_dynamic_voice_channel(guild_id: str, channel_id: str | None) -> None:
 # ------------------------------------------------------------
 # Post Channels
 # ------------------------------------------------------------
-
 def get_checkpost_channel(guild_id: str) -> Optional[str]:
     conn = db.get_connection()
     cursor = conn.cursor()
@@ -219,6 +220,8 @@ def get_checkpost_channel(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_checkpost_channel(guild_id: str, channel_id: str | None) -> None:
+    if channel_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
@@ -245,6 +248,8 @@ def get_post_channel(guild_id: str) -> Optional[str]:
     return result[0] if result else None
 
 def set_post_channel(guild_id: str, channel_id: str | None) -> None:
+    if channel_id is None:
+        return
     conn = db.get_connection()
     cursor = conn.cursor()
     try:

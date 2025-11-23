@@ -64,13 +64,13 @@ async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
     # Farben
     fill_color = "#F0E6FF"
     accent = "#FF007A"   # Pink
-    accent2 = "#FFB300"  # Orange
+    accent2 = "#FF087B"  # Pink
 
     # Titel
     title_text = "🔥 TOP BUMPERS"
     bbox_title = draw.textbbox((0, 0), title_text, font=font_main)
     title_x = (width - (bbox_title[2] - bbox_title[0])) // 2
-    draw.text((title_x + 2, 12 + 2), title_text, fill=accent2, font=font_main)
+    # draw.text((title_x + 2, 12 + 2), title_text, fill=accent2, font=font_main)
     draw.text((title_x, 10), title_text, fill=accent, font=font_main)
 
     start_y = 80

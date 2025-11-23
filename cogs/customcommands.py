@@ -3,6 +3,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from typing import Optional
 from utils.database import custom_commands as db_commands  # DB-Handler für dynamische Commands
+from utils.database import guilds as db_guilds
+
 
 class CustomCommands(commands.Cog):
     """Ermöglicht Admins, eigene Commands für den Server zu erstellen und zu verwalten."""
@@ -33,7 +35,7 @@ class CustomCommands(commands.Cog):
             return
         
         db_commands.add_command(str(ctx.guild.id), command_name.lower(), response)
-        await ctx.send(f"✅ Custom Command `!{command_name}` wurde hinzugefügt!", ephemeral=True)
+        await ctx.send(f"✅ Custom Command `{command_name}` wurde hinzugefügt!", ephemeral=True)
 
     # ------------------------------------------------------------
     # Command: Eigenen Custom Command entfernen
@@ -66,21 +68,23 @@ class CustomCommands(commands.Cog):
         if message.author.bot or message.guild is None:
             return
 
-        # Damit andere Commands (auch die Hybrid-Commands) weiterhin funktionieren
+        guild_id = str(message.guild.id)
+        prefix = db_guilds.get_prefix(guild_id) or "!"  # Fallback
+
+        # Damit andere Commands weiterhin funktionieren
         await self.bot.process_commands(message)
 
         content = message.content.strip()
-        if not content.startswith("!"):
+        if not content.startswith(prefix):
             return
-        
-        cmd_name = content[1:].split()[0].lower()
-        guild_id = str(message.guild.id)
-        
+
+        cmd_name = content[len(prefix):].split()[0].lower()
+
         cmd_data = db_commands.get_command(guild_id, cmd_name)
         if cmd_data:
-            response = cmd_data["response"]
-            response = response.replace("{user}", message.author.mention)
+            response = cmd_data["response"].replace("{user}", message.author.mention)
             await message.channel.send(response)
+
 
 
 # ------------------------------------------------------------
