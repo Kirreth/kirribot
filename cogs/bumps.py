@@ -6,78 +6,53 @@ from typing import Union, Optional, List, Tuple
 from utils.database import bumps as db_bumps
 from utils.database import guilds as db_guilds
 
-# --- HINZUGEFÜGTE IMPORTE FÜR BILDGENERIERUNG ---
 from discord.ext.commands import Context
 from PIL import Image, ImageDraw, ImageFont
 import io
 import os
 import math
 import random
-# ------------------------------------------------
 
 DISBOARD_ID: int = 302050872383242240
 BUMP_COOLDOWN: timedelta = timedelta(hours=2)
 
-# ------------------------------------------------------------
-# Hilfsfunktionen
-# ------------------------------------------------------------
 def get_base_path(*paths: str) -> str:
-    """Erstellt einen sicheren Pfad relativ zum Projekt-Wurzelverzeichnis."""
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
     return os.path.join(base_dir, *paths)
 
-# ------------------------------------------------------------
-# Schriftarten laden
-# ------------------------------------------------------------
 try:
     FONT_PATH = get_base_path("assets", "fonts", "RobotoMono-VariableFont_wght.ttf")
     font_main = ImageFont.truetype(FONT_PATH, 40)
     font_small = ImageFont.truetype(FONT_PATH, 25) 
     font_tiny = ImageFont.truetype(FONT_PATH, 20)
-    # NEUE SCHRIFTART für den Namen
     font_name = ImageFont.truetype(FONT_PATH, 30) 
 except Exception as e:
-    print(f"⚠️ Fehler beim Laden der Schriftart: {e}")
     font_main = ImageFont.load_default()
     font_small = ImageFont.load_default()
     font_tiny = ImageFont.load_default()
     font_name = ImageFont.load_default()
 
-# ------------------------------------------------------------
-# Top Bumper Card erstellen
-# ------------------------------------------------------------
 async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
-    """
-    Erstellt ein visuell schickes Leaderboard für Bumps.
-    results -> Liste aus (uid, bumps)
-    total_bumps -> Summe aller Bumps von allen Nutzern
-    """
-
     width, height = 750, 80 + (len(results) * 130)
 
-    # Hintergrund
-    base = Image.new("RGB", (width, height), "#2B1A2E")   # dunkles Magenta
-    overlay = Image.new("RGB", (width, height), "#1A0C33") # dunkles Violett
+    base = Image.new("RGB", (width, height), "#2B1A2E")
+    overlay = Image.new("RGB", (width, height), "#1A0C33")
     img = Image.blend(base, overlay, alpha=0.35)
     draw = ImageDraw.Draw(img)
 
-    # Farben
     fill_color = "#F0E6FF"
-    accent = "#FF007A"   # Pink
-    accent2 = "#FF087B"  # Pink
+    accent = "#FF007A"
+    accent2 = "#FF087B"
 
-    # Titel
     title_text = "🔥 TOP BUMPERS"
     bbox_title = draw.textbbox((0, 0), title_text, font=font_main)
     title_x = (width - (bbox_title[2] - bbox_title[0])) // 2
-    # draw.text((title_x + 2, 12 + 2), title_text, fill=accent2, font=font_main)
     draw.text((title_x, 10), title_text, fill=accent, font=font_main)
 
     start_y = 80
     avatar_size = 90
     medals = ["🔥", "⚡", "🚀", "✨", "💠"]
 
-    # Einträge
     for i, (uid, bumps) in enumerate(results):
         member = ctx.guild.get_member(int(uid))
         if not member:
@@ -85,20 +60,16 @@ async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
 
         y_pos = start_y + (i * 130)
 
-        # Card-Hintergrund
         card = Image.new("RGBA", (width - 40, 110), (60, 30, 80, 220))
         mask = Image.new("L", (width - 40, 110), 0)
         ImageDraw.Draw(mask).rounded_rectangle((0, 0, width - 40, 110), radius=22, fill=255)
         img.paste(card, (20, y_pos), mask)
 
-        # Linker Akzentstreifen
         draw.rectangle([25, y_pos + 10, 30, y_pos + 100], fill=accent)
 
-        # Rang
         rank_text = medals[i] if i < len(medals) else f"#{i+1}"
         draw.text((45, y_pos + 35), rank_text, fill=accent2, font=font_name)
 
-        # Avatar
         try:
             asset = member.display_avatar.with_format("png").with_size(128)
             data = io.BytesIO(await asset.read())
@@ -110,14 +81,12 @@ async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
             img.paste(avatar_img, (130, y_pos + 10), mask)
 
         except Exception as e:
-            print(f"Avatar Load Error: {e}")
+            pass
 
-        # Text
         name_x = 130 + avatar_size + 30
         draw.text((name_x, y_pos + 20), member.display_name, fill=fill_color, font=font_name)
         draw.text((name_x, y_pos + 60), f"Bumps: {bumps}", fill="#DDDDDD", font=font_small)
 
-        # Fortschrittsbalken (Anteil am Gesamt-Server)
         bar_x1, bar_x2 = name_x, width - 80
         bar_y = y_pos + 90
         progress = bumps / total_bumps if total_bumps > 0 else 0
@@ -135,7 +104,6 @@ async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
                 g.line((x, 0, x, 10), fill=(r, g_val, b_val))
             img.paste(gradient, (bar_x1, bar_y))
 
-    # Ausgabe
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
@@ -144,7 +112,6 @@ async def create_bump_card(ctx, results: list, total_bumps: int) -> io.BytesIO:
 
 
 class Bumps(commands.Cog):
-    """Verwaltet Disboard Bumps, Rollenbefehle und Statistiken und sendet Bump-Erinnerungen"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         if not self.bump_reminder_check.is_running():
@@ -180,7 +147,7 @@ class Bumps(commands.Cog):
 
         now_utc = utcnow()
 
-        for guild_id_str, reminder_channel_id, bumper_role_id in guild_settings:
+        for guild_id_str, reminder_channel_id, bumper_role_id, reminder_status in guild_settings:
             if not reminder_channel_id:
                 continue
 
@@ -195,8 +162,7 @@ class Bumps(commands.Cog):
             if now_utc < next_bump_time:
                 continue
 
-            reminded = db_bumps.get_notified_status(guild_id_str)
-            if reminded:
+            if reminder_status:
                 continue
 
             channel = self.bot.get_channel(reminder_channel_id)
@@ -217,7 +183,7 @@ class Bumps(commands.Cog):
                     f"{bumper_role_mention} – jemand kann jetzt `/bump` nutzen! "
                     f"<t:{int(next_bump_time.timestamp())}:R>"
                 )
-                db_bumps.set_notified_status(guild_id_str, True)
+                db_bumps.set_reminder_status(guild_id_str, True)
             except discord.Forbidden:
                 print(f"[ERROR] Keine Berechtigung, in Channel {reminder_channel_id} zu schreiben.")
             except Exception as e:
@@ -255,16 +221,17 @@ class Bumps(commands.Cog):
             guild_id = str(message.guild.id)
             current_time = utcnow()
 
-            db_bumps.log_bump(user_id, guild_id, current_time)
+            # Entfernt, da die Tabelle 'bump_logs' laut Fehlermeldung fehlt:
+            # db_bumps.log_bump(user_id, guild_id, current_time)
+            
             db_bumps.increment_total_bumps(user_id, guild_id)
+            
             db_bumps.set_last_bump_time(guild_id, current_time)
-            db_bumps.set_notified_status(guild_id, False)
-        finally:
-            try:
-                await self.bot.process_commands(message)
-            except Exception:
-                pass
+            db_bumps.set_reminder_status(guild_id, False) 
+        except Exception as e:
+            print(f"[ERROR] Fehler beim Verarbeiten der Bump-Nachricht: {e}")
 
+            
     @commands.hybrid_command(
         name="nextbump",
         description="Zeigt an, wann der nächste Disboard Bump möglich ist."
@@ -335,8 +302,8 @@ class Bumps(commands.Cog):
         
         try:
             total_bumps = db_bumps.get_total_bumps_in_guild(guild_id)
-        except AttributeError:
-            return await self.smart_send(ctx, content="❌ Datenbankfehler: Die Funktion zum Abrufen der gesamten Bumps (get_total_bumps_in_guild) fehlt.", ephemeral=True)
+        except Exception:
+            total_bumps = 0
 
         if not top_users:
             return await self.smart_send(ctx, content="📊 Es gibt noch keine Bumps in diesem Server.")
@@ -395,8 +362,9 @@ class Bumps(commands.Cog):
         description="Weise dir die Bumper-Rolle selbst zu."
     )
     async def getbumprole(self, ctx: commands.Context) -> None:
+        if not ctx.guild: return
         guild_id = str(ctx.guild.id)
-        role_id = db_guilds.get_bumper_role(guild_id)
+        role_id = db_guilds.get_bumper_role(guild_id) 
         if not role_id:
             return await self.smart_send(ctx, content="❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
@@ -419,8 +387,9 @@ class Bumps(commands.Cog):
         description="Entfernt die Bumper-Rolle von dir selbst."
     )
     async def delbumprole(self, ctx: commands.Context) -> None:
+        if not ctx.guild: return
         guild_id = str(ctx.guild.id)
-        role_id = db_guilds.get_bumper_role(guild_id)
+        role_id = db_guilds.get_bumper_role(guild_id) 
         if not role_id:
             return await self.smart_send(ctx, content="❌ Keine Bumper-Rolle für diesen Server festgelegt.", ephemeral=True)
 
