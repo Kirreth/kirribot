@@ -3,6 +3,48 @@ from datetime import datetime, timezone
 from typing import Optional, List, Tuple
 
 # ------------------------------------------------------------
+# LOGGING UND STATISTIK
+# ------------------------------------------------------------
+
+def log_bump(user_id: str, guild_id: str, timestamp: datetime) -> None:
+    """
+    Protokolliert einen einzelnen Bump in der bump_logs Tabelle.
+    Geht davon aus, dass eine Tabelle 'bump_logs' mit (user_id, guild_id, timestamp) existiert.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        ts = int(timestamp.timestamp())
+        cur.execute("""
+            INSERT INTO bump_logs (user_id, guild_id, timestamp)
+            VALUES (%s, %s, %s)
+        """, (user_id, guild_id, ts))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+
+def increment_total_bumps(user_id: str, guild_id: str) -> None:
+    """
+    Inkrementiert den Gesamt-Bump-Zähler des Benutzers in der bump_totals Tabelle.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        # Fügt den Benutzer hinzu oder erhöht den Zähler ('total_count')
+        cur.execute("""
+            INSERT INTO bump_totals (user_id, guild_id, total_count)
+            VALUES (%s, %s, 1)
+            ON DUPLICATE KEY UPDATE total_count = total_count + 1
+        """, (user_id, guild_id))
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ------------------------------------------------------------
 # Erinnerungseinstellungen (guild_settings nutzen)
 # ------------------------------------------------------------
 
@@ -117,14 +159,14 @@ def get_last_bump_time(guild_id: str) -> Optional[datetime]:
 # Alle relevanten Guilds für Bump abrufen
 # ------------------------------------------------------------
 
-def get_all_guilds_with_bump_settings() -> List[Tuple[str, Optional[int], Optional[int]]]:
+def get_all_guild_settings_with_roles() -> List[Tuple[str, Optional[int], Optional[int], bool]]:
     """
-    Ruft Guild-ID, Bump-Reminder-Channel-ID, Reminder-Status und Bumper-Rolle-ID ab.
+    Ruft Guild-ID, Bump-Reminder-Channel-ID, Bumper-Rolle-ID und Reminder-Status ab.
     Nur Server mit gesetztem Bump-Reminder-Channel werden zurückgegeben.
     """
     conn = get_connection()
     cur = conn.cursor()
-    results: List[Tuple[str, Optional[int], Optional[int], bool]] = []
+    results: List[Tuple[str, Optional[int], Optional[int], bool]] = [] 
     try:
         cur.execute("""
             SELECT guild_id, bump_reminder_channel_id, bumper_role_id, reminder_sent
@@ -141,3 +183,70 @@ def get_all_guilds_with_bump_settings() -> List[Tuple[str, Optional[int], Option
         cur.close()
         conn.close()
     return results
+
+
+# ------------------------------------------------------------
+# Top Bumper abrufen
+# ------------------------------------------------------------
+
+def get_bump_top(guild_id: str, days: Optional[int] = None, limit: int = 5) -> List[Tuple[str, int]]:
+    """
+    Ruft die Top-Bumper (user_id, count) für eine Gilde ab.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    results: List[Tuple[str, int]] = []
+    
+    # Korrigierter Tabellenname: bump_totals
+    QUERY = f"""
+        SELECT user_id, total_count 
+        FROM bump_totals  
+        WHERE guild_id = %s
+        ORDER BY total_count DESC 
+        LIMIT %s
+    """
+    
+    try:
+        cur.execute(QUERY, (guild_id, limit)) 
+        
+        rows = cur.fetchall()
+        for user_id_str, bump_count in rows:
+            results.append((str(user_id_str), int(bump_count)))
+            
+    finally:
+        cur.close()
+        conn.close()
+        
+    return results
+
+# ------------------------------------------------------------
+# Gesamtanzahl Bumps in Gilde abrufen
+# ------------------------------------------------------------
+
+def get_total_bumps_in_guild(guild_id: str) -> int:
+    """
+    Ruft die Summe aller Bumps (total_count) für eine bestimmte Gilde ab.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    total_bumps = 0
+    
+    # Nutzt die bump_totals Tabelle zur Summation der total_count
+    QUERY = """
+        SELECT SUM(total_count)
+        FROM bump_totals
+        WHERE guild_id = %s
+    """
+    
+    try:
+        cur.execute(QUERY, (guild_id,)) 
+        row = cur.fetchone()
+        
+        if row and row[0] is not None:
+            total_bumps = int(row[0])
+            
+    finally:
+        cur.close()
+        conn.close()
+        
+    return total_bumps
