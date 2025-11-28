@@ -71,9 +71,6 @@ class CustomCommands(commands.Cog):
         guild_id = str(message.guild.id)
         prefix = db_guilds.get_prefix(guild_id) or "!"  # Fallback
 
-        # Damit andere Commands weiterhin funktionieren
-        await self.bot.process_commands(message)
-
         content = message.content.strip()
         if not content.startswith(prefix):
             return
