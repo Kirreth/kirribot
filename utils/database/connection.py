@@ -63,6 +63,15 @@ def setup_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS word_counters (
+            guild_id VARCHAR(20) NOT NULL,
+            word VARCHAR(100) NOT NULL,
+            count INT NOT NULL DEFAULT 0,
+            PRIMARY KEY (guild_id, word)
+        )
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
