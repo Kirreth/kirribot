@@ -1,8 +1,11 @@
 # utils/database/birthday.py
+
 import datetime
 from utils.database import connection as db
 from typing import Optional, List, Tuple, Any
+import pytz
 
+GERMANY_TIMEZONE = pytz.timezone("Europe/Berlin")
 
 # ------------------------------------------------------------
 # Geburtstag speichern oder aktualisieren
@@ -31,14 +34,14 @@ def get_birthday(user_id: str, guild_id: str) -> Optional[datetime.date]:
     result = None
     try:
         cursor.execute(
-            "SELECT birthday FROM birthdays WHERE user_id = %s AND guild_id = %s", 
+            "SELECT birthday FROM birthdays WHERE user_id = %s AND guild_id = %s",
             (user_id, guild_id)
         )
         result = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
-        
+
     return result[0] if result else None
 
 
@@ -68,35 +71,42 @@ def get_birthday_channel(guild_id: str) -> Optional[str]:
     cursor = conn.cursor()
     result = None
     try:
-        cursor.execute("SELECT channel_id FROM birthday_settings WHERE guild_id = %s", (guild_id,))
+        cursor.execute(
+            "SELECT channel_id FROM birthday_settings WHERE guild_id = %s",
+            (guild_id,)
+        )
         result = cursor.fetchone()
     finally:
         cursor.close()
         conn.close()
-        
+
     return result[0] if result else None
 
 
 # ------------------------------------------------------------
-# Alle heutigen Geburtstage abrufen (mit Altersberechnung)
+# Alle heutigen Geburtstage abrufen (inkl. last_congratulated)
 # ------------------------------------------------------------
 def get_today_birthdays() -> List[Tuple[Any, ...]]:
-    today = datetime.date.today()
+    today = datetime.datetime.now(GERMANY_TIMEZONE).date()
+
     conn = db.get_connection()
     cursor = conn.cursor()
     result = []
+
     try:
         cursor.execute("""
-            SELECT user_id, guild_id, birthday
+            SELECT user_id, guild_id, birthday, last_congratulated
             FROM birthdays
-            WHERE MONTH(birthday) = %s AND DAY(birthday) = %s
+            WHERE MONTH(birthday) = %s
+              AND DAY(birthday) = %s
               AND (last_congratulated IS NULL OR last_congratulated < %s)
         """, (today.month, today.day, today))
+
         result = cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
-        
+
     return result
 
 
@@ -104,14 +114,16 @@ def get_today_birthdays() -> List[Tuple[Any, ...]]:
 # Speichern, dass jemand bereits gratuliert wurde
 # ------------------------------------------------------------
 def mark_congratulated(user_id: str, guild_id: str):
-    today = datetime.date.today()
+    today = datetime.datetime.now(GERMANY_TIMEZONE).date()
+
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "UPDATE birthdays SET last_congratulated = %s WHERE user_id = %s AND guild_id = %s", 
-            (today, user_id, guild_id)
-        )
+        cursor.execute("""
+            UPDATE birthdays
+            SET last_congratulated = %s
+            WHERE user_id = %s AND guild_id = %s
+        """, (today, user_id, guild_id))
         conn.commit()
     finally:
         cursor.close()
@@ -125,7 +137,10 @@ def remove_birthday(user_id: str, guild_id: str):
     conn = db.get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM birthdays WHERE user_id = %s AND guild_id = %s", (user_id, guild_id))
+        cursor.execute(
+            "DELETE FROM birthdays WHERE user_id = %s AND guild_id = %s",
+            (user_id, guild_id)
+        )
         conn.commit()
     finally:
         cursor.close()
