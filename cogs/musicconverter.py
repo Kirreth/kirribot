@@ -56,6 +56,7 @@ async def convertToOthers(interaction: discord.Interaction, message: discord.Mes
         'youtube': {"label": "YouTube Music", "emoji": "🔴"},
         'appleMusic': {"label": "Apple Music", "emoji": "🍎"},
         'deezer': {"label": "Deezer", "emoji": "⚫"},
+        'tidal': {"label": "Tidal", "emoji": "🔵"},
     }
     
     # Erstelle Buttons
