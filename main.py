@@ -56,7 +56,7 @@ COGS = [
     "cogs.activitytracker", "cogs.joinleft", "cogs.quiz", "cogs.selfinfo", 
     "cogs.metafrage", "cogs.partyquiz", "cogs.codeextractor", "cogs.fakt", 
     "cogs.help", "cogs.weather", "cogs.customcommands", "cogs.docu_search", 
-    "cogs.userposts", "cogs.about", "cogs.counter"
+    "cogs.userposts", "cogs.about", "cogs.counter", "cogs.antispam"
 ]
 
 # ------------------------------------------------------------
